@@ -1,0 +1,35 @@
+SMODS.Blind{
+    key = "plunger",
+    atlas = "CustomBlinds",
+    pos = { x = 0, y = 12 },
+    boss = { min = 1 },
+    boss_colour = HEX("5555AA"),
+    mult = 2,
+    dollars = 5,
+    loc_txt = {
+        name = "The Plunger",
+        text = {
+            [1] = "All played Flushes",
+            [2] = "are debuffed"
+        }
+    },
+
+    debuff_hand = function(self, cards, hand, handname, check)
+        if handname == "Flush" or handname == "Straight Flush" or handname == "Royal Flush" or handname == "Flush House" or handname == "Flush Five" then
+            return true
+        end
+        return false
+    end,
+
+    set_blind = function(self, reset, silent)
+        if not reset then
+            Porkify_mark_boss_blind_seen(self.key)
+        end
+    end,
+
+    in_pool = function(self)
+        local ante = (G and G.GAME and G.GAME.round_resets and G.GAME.round_resets.ante) or 1
+        return ante >= ((self.boss and self.boss.min) or 1)
+            and Porkify_boss_blind_group_available(self.key)
+    end
+}

@@ -1,0 +1,17 @@
+{
+  "id": "porkify",
+  "name": "Porkify",
+  "author": [
+    "PorkyLIVE"
+  ],
+  "description": "A complete modpack with Jokers, Consumables, card enhancements, decks and more!",
+  "prefix": "porkify",
+  "main_file": "main.lua",
+  "version": "1",
+  "priority": 0,
+  "badge_colour": "ff66fa",
+  "badge_text_colour": "ffffff",
+  "dependencies": [
+    "Steamodded (>=1.0.0~BETA-0827c)"
+  ]
+}
