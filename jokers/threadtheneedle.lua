@@ -107,7 +107,7 @@ SMODS.Joker{ -- Thread (The Needle)
 		  local xm = 1 + 0.1 * diff
 
 		  -- format to 1 decimal like your tooltip
-		  card.joker_display_values.x_mult = string.format("%.1f", xm)
+		  card.joker_display_values.x_mult = xm
 		  card.joker_display_values.prog_text = tostring(current_size) .. "/" .. tostring(start_size)
 		end
 	  }

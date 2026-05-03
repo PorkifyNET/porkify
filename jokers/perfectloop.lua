@@ -124,9 +124,6 @@ SMODS.Joker{ -- Perfect Loop
 		text = {
 		  { ref_table = "card.joker_display_values", ref_value = "hand_text", colour = G.C.IMPORTANT }
 		},
-		reminder_text = {
-			{ ref_table = "card.joker_display_values", ref_value = "state_text", colour = G.C.GREY }
-		},
 
 		calc_function = function(card)
 		  local target = (G and G.GAME and G.GAME.PerfectLoopPokerHand_hand) or "High Card"
