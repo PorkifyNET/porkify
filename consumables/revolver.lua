@@ -6,7 +6,7 @@ SMODS.Consumable {
         name = 'Revolver',
         text = {
             [1] = 'Enhance up to {C:attention}3{} selected',
-            [2] = 'cards to {C:enhanced}Revolving{} cards'
+            [2] = 'cards to {C:enhanced}Resolute{} cards'
         }
     },
     config = { min_highlighted = 1, max_highlighted = 3 },

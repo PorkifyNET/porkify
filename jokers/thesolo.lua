@@ -47,31 +47,26 @@ SMODS.Joker{ --The Solo
     end,
 	
 	joker_display_def = function(JokerDisplay)
+	  ---@type JDJokerDefinition
 	  return {
 		text = {
-		  -- X5 line
 		  {
 			border_nodes = {
 			  { text = "X" },
-			  { text = "5" }
+			  { ref_table = "card.joker_display_values", ref_value = "x_mult", retrigger_type = "exp" }
 			}
 		  }
 		},
-		reminder_text = {
-			{ ref_table = "card.joker_display_values", ref_value = "status_text", colour = G.C.GREY }
-		},
 
 		calc_function = function(card)
-		  local status = "OFF"
+		  local x = 1
 		  local text, _, scoring_hand = JokerDisplay.evaluate_hand()
 
-		  if text ~= "Unknown" and scoring_hand and #scoring_hand == 1 then
-			status = "ON"
-		  else
-			status = "OFF (need 1)"
+		  if scoring_hand and #scoring_hand == 1 then
+			x = 5
 		  end
 
-		  card.joker_display_values.status_text = status
+		  card.joker_display_values.x_mult = x
 		end
 	  }
 	end

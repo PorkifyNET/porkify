@@ -158,6 +158,28 @@ SMODS.current_mod.optional_features = function()
     }
 end
 
+SMODS.current_mod.set_debuff = function(card)
+    local center = card and card.config and card.config.center
+    local center_key = (center and center.key) or (card and card.config and card.config.center_key)
+    if center_key ~= "m_porkify_revolving" then
+        return false
+    end
+
+    local blind = G and G.GAME and G.GAME.blind
+    local is_boss_blind = not not (
+        blind and not blind.disabled and (
+            blind.boss
+            or (blind.config and blind.config.blind and blind.config.blind.boss)
+        )
+    )
+
+    if is_boss_blind then
+        return "prevent_debuff"
+    end
+
+    return false
+end
+
 if JokerDisplay then
     SMODS.load_file("joker_display_definitions.lua")()
 end
@@ -212,12 +234,80 @@ if create_UIBox_blind_popup and not Porkify_create_UIBox_blind_popup then
     end
 end
 
+local function porkify_resolve_badge_colour(value, fallback)
+    if type(value) == "table" then
+        return value
+    end
+    if type(value) == "string" and value ~= "" then
+        local ok, colour = pcall(HEX, value)
+        if ok and colour then
+            return colour
+        end
+    end
+    return fallback
+end
+
+local function porkify_apply_credit_badges(obj, badges)
+    local credit_badges = obj and (obj.credit_badges or obj.porkify_credit_badges)
+    if type(credit_badges) ~= "table" then
+        return
+    end
+
+    for _, badge in ipairs(credit_badges) do
+        local text, colour, text_colour, scale
+
+        if type(badge) == "string" then
+            text = badge
+        elseif type(badge) == "table" then
+            text = badge.text or badge.label
+            colour = porkify_resolve_badge_colour(badge.colour or badge.color, HEX("5B2A86"))
+            text_colour = porkify_resolve_badge_colour(badge.text_colour or badge.text_color, G.C.WHITE)
+            scale = badge.scale
+        end
+
+        if text then
+            badges[#badges + 1] = create_badge(
+                text,
+                colour or HEX("5B2A86"),
+                text_colour or G.C.WHITE,
+                scale or 0.9
+            )
+        end
+    end
+end
+
+function Porkify_attach_credit_badges(obj)
+    if type(obj) ~= "table" or obj.porkify_credit_badges_wrapped then
+        return obj
+    end
+
+    -- Example:
+    -- credit_badges = {
+    --   { text = "Idea: PorkyLIVE", colour = "7A2D8C" },
+    --   { text = "Art: NameHere", colour = "C65D7B", scale = 0.85 }
+    -- }
+    local original_set_badges = obj.set_badges
+    obj.set_badges = function(self, card, badges)
+        if type(original_set_badges) == "function" then
+            original_set_badges(self, card, badges)
+        end
+        porkify_apply_credit_badges(self, badges)
+    end
+    obj.porkify_credit_badges_wrapped = true
+
+    return obj
+end
+
 if generate_card_ui and not Porkify_generate_card_ui then
     Porkify_generate_card_ui = generate_card_ui
     function generate_card_ui(_c, full_UI_table, specific_vars, card_type, badges, hide_desc, main_start, main_end, card)
         local ability = card and card.ability
         local has_bulky = ability and (ability.porkify_bulky or ability.bulky)
         local original_extra_slots_used = has_bulky and ability.extra_slots_used or nil
+
+        if _c then
+            Porkify_attach_credit_badges(_c)
+        end
 
         if has_bulky then
             ability.extra_slots_used = 0
@@ -841,6 +931,14 @@ SMODS.current_mod.optional_features = function()
     return {
         cardareas = {} 
     }
+end
+
+SMODS.current_mod.menu_cards = function()
+	return {
+		{set = 'porkify'}, -- adds a random Porkify card to the menu
+		{key = 'j_porkify_porky'}, -- adds Porky to the menu
+        remove_original = true -- removes the original menu card(s) that this replaces, in this case the original joker card
+	}
 end
 
 if Malverk and type(Malverk.set_defaults) == "function" then
