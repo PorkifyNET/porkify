@@ -10,8 +10,7 @@ SMODS.Joker{ --67
         ['name'] = '67',
         ['text'] = {
             [1] = 'Every played {C:attention}6{} or {C:attention}7{}',
-            [2] = 'grants {C:blue}+6{} Chips and {C:red}+7{} Mult',
-            [3] = '{C:inactive,s:0.75}(God is dead){}'
+            [2] = 'grants {C:blue}+6{} Chips and {C:red}+7{} Mult'
         },
         ['unlock'] = {
             [1] = 'Play a {C:attention}6{} and a {C:attention}7{} in the same hand'
