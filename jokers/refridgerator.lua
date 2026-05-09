@@ -45,24 +45,7 @@ SMODS.Joker{ --Refridgerator
     end,
     
     calculate = function(self, card, context)
-        -- keys of all Food Jokers
-        local food_keys = {
-            j_gros_michel = true,
-            j_egg = true,
-            j_ice_cream = true,
-            j_cavendish = true,
-            j_turtle_bean = true,
-            j_diet_cola = true,
-            j_popcorn = true,
-            j_ramen = true,
-            j_selzer = true,
-            j_porkify_cupofcoffee = true,
-			j_porkify_hotdog = true,
-			j_porkify_hamburger = true,
-            j_porkify_taco = true,
-            j_porkify_pizza = true,
-            j_porkify_leek = true,
-        }
+        local food_keys = PORKIFY_FOOD_JOKERS or {}
 
         -- Consume all non-Eternal Food Jokers when blind is set
         if context.setting_blind and not context.blueprint then
@@ -157,12 +140,7 @@ SMODS.Joker{ --Refridgerator
 		calc_function = function(card)
 		  local stored = (card.ability.extra and card.ability.extra.RefridgeratorXChips) or 1
 
-		  local food_keys = {
-			j_gros_michel = true, j_egg = true, j_ice_cream = true, j_cavendish = true,
-			j_turtle_bean = true, j_diet_cola = true, j_popcorn = true, j_ramen = true,
-			j_selzer = true,
-			j_porkify_cupofcoffee = true, j_porkify_hotdog = true, j_porkify_hamburger = true,
-		  }
+		  local food_keys = PORKIFY_FOOD_JOKERS or {}
 
 		  local count = 0
 		  for _, v in ipairs(G.jokers and G.jokers.cards or {}) do

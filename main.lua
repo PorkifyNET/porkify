@@ -105,24 +105,28 @@ end
 load_jokers_folder()
 load_stickers_folder()
 load_stakes_folder()
+
+PORKIFY_FOOD_JOKERS = {
+    ["j_gros_michel"] = true,
+    ["j_egg"] = true,
+    ["j_ice_cream"] = true,
+    ["j_cavendish"] = true,
+    ["j_turtle_bean"] = true,
+    ["j_diet_cola"] = true,
+    ["j_popcorn"] = true,
+    ["j_ramen"] = true,
+    ["j_selzer"] = true,
+    ["j_porkify_cupofcoffee"] = true,
+    ["j_porkify_hotdog"] = true,
+    ["j_porkify_hamburger"] = true,
+    ["j_porkify_taco"] = true,
+    ["j_porkify_pizza"] = true,
+    ["j_porkify_leek"] = true,
+}
+
 SMODS.ObjectType({
     key = "porkify_food",
-    cards = {
-        ["j_gros_michel"] = true,
-        ["j_egg"] = true,
-        ["j_ice_cream"] = true,
-        ["j_cavendish"] = true,
-        ["j_turtle_bean"] = true,
-        ["j_diet_cola"] = true,
-        ["j_popcorn"] = true,
-        ["j_ramen"] = true,
-        ["j_selzer"] = true,
-		["j_porkify_hotdog"] = true,
-		["j_porkify_hamburger"] = true,
-		["j_porkify_pizza"] = true,
-		["j_porkify_paul"] = true,
-		["j_porkify_mallard"] = true
-    },
+    cards = PORKIFY_FOOD_JOKERS,
 })
 
 SMODS.ObjectType({
@@ -276,8 +280,33 @@ local function porkify_apply_credit_badges(obj, badges)
     end
 end
 
+local function porkify_apply_food_badge(obj, badges)
+    if type(obj) ~= "table" or type(badges) ~= "table" then
+        return
+    end
+
+    local key = obj.key
+    local food_keys = PORKIFY_FOOD_JOKERS or {}
+    local is_food = key and (
+        food_keys[key]
+        or food_keys["j_" .. key]
+        or food_keys["j_porkify_" .. key]
+    )
+
+    if not is_food then
+        return
+    end
+
+    badges[#badges + 1] = create_badge(
+        "Food",
+        HEX("C83F22"),
+        G.C.WHITE,
+        0.9
+    )
+end
+
 function Porkify_attach_credit_badges(obj)
-    if type(obj) ~= "table" or obj.porkify_credit_badges_wrapped then
+    if type(obj) ~= "table" or obj.porkify_badges_wrapped then
         return obj
     end
 
@@ -291,9 +320,10 @@ function Porkify_attach_credit_badges(obj)
         if type(original_set_badges) == "function" then
             original_set_badges(self, card, badges)
         end
+        porkify_apply_food_badge(self, badges)
         porkify_apply_credit_badges(self, badges)
     end
-    obj.porkify_credit_badges_wrapped = true
+    obj.porkify_badges_wrapped = true
 
     return obj
 end
