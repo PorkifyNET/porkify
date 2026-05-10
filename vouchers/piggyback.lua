@@ -22,6 +22,11 @@ SMODS.Voucher {
     can_repeat_soul = false,
     requires = {'v_porkify_gluttony'},
     atlas = 'CustomVouchers',
+
+    credit_badges = {
+        { text = "Art: Cebee", colour = "59A487" }
+     },
+    
     redeem = function(self, voucher)
         G.E_MANAGER:add_event(Event({
             func = function()

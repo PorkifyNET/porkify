@@ -36,6 +36,10 @@ SMODS.Joker{ --Arcana Minor
     atlas = 'CustomJokers',
     pools = { ["modprefix_porkify_jokers"] = true },
     unlock_condition = { type = 'discover_amount', tarot_count = 12 },
+
+    credit_badges = {
+        { text = "Art: cebeedrawz", colour = "59A487" }
+     },
     
     loc_vars = function(self, info_queue, card)
 		local suit = (G.GAME.current_round.ArcanaMinorSuit_card or {}).suit or 'Spades'

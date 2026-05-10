@@ -15,6 +15,10 @@ SMODS.Back {
     no_collection = false,
     atlas = 'CustomDecks',
 
+    credit_badges = {
+        { text = "Art: christopherjacobsanderson", colour = "59A487" }
+     },
+
     apply = function(self, back)
         SMODS.change_voucher_limit(1)
 

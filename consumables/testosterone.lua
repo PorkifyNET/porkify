@@ -18,6 +18,10 @@ SMODS.Consumable {
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
 
+    credit_badges = {
+        { text = "Art: fiboscribbles", colour = "935CC5" }
+     },
+
     loc_vars = function(self, info_queue, card)
         local info_queue_0 = G.P_SEALS and G.P_SEALS["Purple"]
         if info_queue_0 then

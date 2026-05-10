@@ -28,6 +28,10 @@ SMODS.Joker{ --Cerberus
     atlas = 'CustomJokers',
     pools = { ["porkify_porkify_jokers"] = true },
 
+    credit_badges = {
+        { text = "Art: u/Ghhnu_", colour = "FF4500" }
+     },
+
     calculate = function(self, card, context)
     end,
 

@@ -22,6 +22,11 @@ SMODS.Consumable {
     hidden = false,
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
+
+	credit_badges = {
+        { text = "Art: blissful-summit", colour = "F72536" }
+     },
+	
     use = function(self, card, area, copier)
 		local used_card = copier or card
 		if not (G.jokers and G.jokers.cards and G.jokers.config) then return end

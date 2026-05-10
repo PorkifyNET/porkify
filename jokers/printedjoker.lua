@@ -35,6 +35,10 @@ SMODS.Joker{ --Printed Joker
     atlas = 'CustomJokers',
     pools = { ["modprefix_porkify_jokers"] = true },
     unlock_condition = { type = 'c_cards_played', extra = 250 },
+
+    credit_badges = {
+        { text = "Art: AbelSketch", colour = "59A487" }
+     },
     
     loc_vars = function(self, info_queue, card)
         

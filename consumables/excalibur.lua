@@ -16,6 +16,10 @@ SMODS.Consumable {
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
 
+    credit_badges = {
+        { text = "Art: munstudios", colour = "00E59B" }
+     },
+
     loc_vars = function(self, info_queue, card)
         local info_queue_0 = (G.P_STICKERS and G.P_STICKERS["eternal"]) or (G.P_CENTERS and G.P_CENTERS["eternal"])
         if info_queue_0 then

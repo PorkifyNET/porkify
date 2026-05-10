@@ -27,6 +27,11 @@ SMODS.Enhancement {
     discovered = false,
     no_collection = false,
     weight = 5,
+
+    credit_badges = {
+        { text = "Art: Revoo", colour = "59A487" }
+     },
+    
     loc_vars = function(self, info_queue, card)
         local extra = (card and card.ability and card.ability.extra) or (self.config and self.config.extra) or {}
         local odds = extra.odds or 4

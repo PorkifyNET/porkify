@@ -40,6 +40,10 @@ SMODS.Joker{ -- Chicken
     pools = { ["modprefix_porkify_jokers"] = true },
     unlock_condition = { type = 'c_cards_sold', extra = 10 },
 
+    credit_badges = {
+        { text = "Art: ProHama", colour = "E60023" }
+     },
+
     -- Show Egg, Hatched Egg, and destroy odds + show Egg / Hatched Egg in info queue
     loc_vars = function(self, info_queue, card)
 		-- Only show Egg in info queue to avoid circular reference with Hatched Egg

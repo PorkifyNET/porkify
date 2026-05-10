@@ -51,6 +51,11 @@ SMODS.Booster {
     draw_hand = true,
     select_card = "consumeables",
     discovered = false,
+
+    credit_badges = {
+        { text = "Art: burningstapler", colour = "59A487" }
+     },
+    
     loc_vars = function(self, info_queue, card)
         local choose, extra = porkify_booster_display_counts(self, card)
         return {
@@ -111,6 +116,11 @@ SMODS.Booster {
     draw_hand = true,
     select_card = "consumeables",
     discovered = false,
+
+    credit_badges = {
+        { text = "Art: burningstapler", colour = "59A487" }
+     },
+    
     loc_vars = function(self, info_queue, card)
         local choose, extra = porkify_booster_display_counts(self, card)
         return {
@@ -171,6 +181,11 @@ SMODS.Booster {
     draw_hand = true,
     select_card = "consumeables",
     discovered = false,
+
+    credit_badges = {
+        { text = "Art: burningstapler", colour = "59A487" }
+     },
+    
     loc_vars = function(self, info_queue, card)
         local choose, extra = porkify_booster_display_counts(self, card)
         return {
@@ -231,6 +246,11 @@ SMODS.Booster {
     draw_hand = true,
     select_card = "consumeables",
     discovered = false,
+
+    credit_badges = {
+        { text = "Art: burningstapler", colour = "59A487" }
+     },
+
     loc_vars = function(self, info_queue, card)
         local choose, extra = porkify_booster_display_counts(self, card)
         return {
@@ -288,6 +308,11 @@ SMODS.Booster {
     pos = { x = 1, y = 0 },
     group_key = "porkify_boosters",
     discovered = false,
+
+    credit_badges = {
+        { text = "Art: Cavo", colour = "59A487" }
+     },
+    
     loc_vars = function(self, info_queue, card)
         local choose, extra = porkify_booster_display_counts(self, card)
         return {
@@ -330,6 +355,11 @@ SMODS.Booster {
 	kind = 'Common Jokers',
 	group_key = "porkify_boosters",
 	discovered = false,
+
+    credit_badges = {
+        { text = "Art: burningstapler", colour = "59A487" }
+     },
+    
 	loc_vars = function(self, info_queue, card)
 		local choose, extra = porkify_booster_display_counts(self, card)
 		return {
@@ -376,6 +406,11 @@ SMODS.Booster {
 	pos = { x = 3, y = 0 },
 	group_key = "porkify_boosters",
 	discovered = false,
+
+    credit_badges = {
+        { text = "Art: burningstapler", colour = "59A487" }
+     },
+    
 	loc_vars = function(self, info_queue, card)
 		local choose, extra = porkify_booster_display_counts(self, card)
 		return {
@@ -422,6 +457,11 @@ SMODS.Booster {
 	pos = { x = 4, y = 0 },
 	group_key = "porkify_boosters",
 	discovered = false,
+
+	credit_badges = {
+		{ text = "Art: burningstapler", colour = "59A487" }
+	},
+
 	loc_vars = function(self, info_queue, card)
 		local choose, extra = porkify_booster_display_counts(self, card)
 		return {

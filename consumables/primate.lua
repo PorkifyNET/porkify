@@ -17,6 +17,10 @@ SMODS.Consumable {
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
 
+    credit_badges = {
+        { text = "Art: Littlesamu", colour = "59A487" }
+     },
+
     loc_vars = function(self, info_queue, card)
         
         local info_queue_0 = G.P_CENTERS["j_gros_michel"]

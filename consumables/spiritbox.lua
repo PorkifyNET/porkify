@@ -17,6 +17,11 @@ SMODS.Consumable {
     hidden = false,
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
+
+    credit_badges = {
+        { text = "Art: u/ji0na", colour = "FF4500" }
+    },
+
     use = function(self, card, area, copier)
         local used_card = copier or card
         for i = 1, math.min(2, G.consumeables.config.card_limit - #G.consumeables.cards) do

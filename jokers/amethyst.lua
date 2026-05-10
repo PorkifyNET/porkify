@@ -55,6 +55,10 @@ SMODS.Joker{ --Amethyst
         end
         return {vars = {}}
     end,
+
+    credit_badges = {
+        { text = "Art: UnusedParadox", colour = "59A487" }
+     },
     
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play  then

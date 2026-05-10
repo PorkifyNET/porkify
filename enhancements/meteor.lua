@@ -25,6 +25,11 @@ SMODS.Enhancement {
     discovered = false,
     no_collection = false,
     weight = 5,
+
+    credit_badges = {
+        { text = "Art: UnusedParadox", colour = "59A487" }
+     },
+    
     calculate = function(self, card, context)
         if context.main_scoring and context.cardarea == G.play then
             local target_hand

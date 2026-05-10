@@ -34,6 +34,10 @@ SMODS.Joker{ --Enamel Pin
     atlas = 'CustomJokers',
     pools = { ["modprefix_porkify_jokers"] = true },
     unlock_condition = { type = 'run_redeem', extra = 5 },
+
+    credit_badges = {
+        { text = "Art: Finnaware", colour = "59A487" }
+     },
     
     calculate = function(self, card, context)
         if context.end_of_round and context.main_eval and G.GAME.blind.boss  then

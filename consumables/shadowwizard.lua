@@ -15,6 +15,10 @@ SMODS.Consumable{
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
 
+    credit_badges = {
+        { text = "Art: Vroska", colour = "00E59B" }
+     },
+
     use = function(self, card, area, copier)
         local used_card = copier or card
 

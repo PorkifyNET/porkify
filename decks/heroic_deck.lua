@@ -18,6 +18,11 @@ SMODS.Back {
     discovered = true,
     no_collection = false,
     atlas = 'CustomDecks',
+
+    credit_badges = {
+        { text = "Art: Cavo", colour = "59A487" }
+     },
+
     apply = function(self, back)
         G.E_MANAGER:add_event(Event({
             func = function()

@@ -17,6 +17,11 @@ SMODS.Consumable {
     hidden = false,
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
+
+    credit_badges = {
+        { text = "Art: DeltonKeslar1206", colour = "00E59B" }
+     },
+    
     use = function(self, card, area, copier)
         local used_card = copier or card
         if (to_big(#G.hand.highlighted) == to_big(1) and G.hand and #G.hand.cards > 0) then

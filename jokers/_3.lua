@@ -56,6 +56,10 @@ SMODS.Joker{ --:3
         )
         and true
     end,
+
+    credit_badges = {
+        { text = "Art: Glitchkat10", colour = "59A487" }
+     },
     
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play  then

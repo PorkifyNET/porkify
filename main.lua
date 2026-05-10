@@ -60,11 +60,97 @@ SMODS.Atlas({
 })
 
 local NFS = require("nativefs")
+local PORKIFY_MOD = SMODS.current_mod
 to_big = to_big or function(a) return a end
 lenient_bignum = lenient_bignum or function(a) return a end
 
+local PORKIFY_CONFIG_DEFAULTS = {
+    show_credit_badges = true
+}
+
+local function porkify_copy_defaults()
+    return {
+        show_credit_badges = PORKIFY_CONFIG_DEFAULTS.show_credit_badges
+    }
+end
+
+local function porkify_get_config_path()
+    local mod_path = PORKIFY_MOD and PORKIFY_MOD.path
+    return mod_path and (mod_path .. "/config.lua") or "config.lua"
+end
+
+local function porkify_normalize_config(config)
+    local normalized = porkify_copy_defaults()
+    if type(config) == "table" then
+        if config.show_credit_badges ~= nil then
+            normalized.show_credit_badges = not not config.show_credit_badges
+        end
+    end
+    return normalized
+end
+
+local function porkify_load_config()
+    local raw = NFS.read(porkify_get_config_path())
+    if not raw then
+        return porkify_copy_defaults()
+    end
+
+    local ok, unpacked = pcall(STR_UNPACK, raw)
+    if not ok then
+        return porkify_copy_defaults()
+    end
+
+    return porkify_normalize_config(unpacked)
+end
+
+local function porkify_save_config()
+    local config = porkify_normalize_config(PORKIFY_MOD and PORKIFY_MOD.config)
+    if PORKIFY_MOD then
+        PORKIFY_MOD.config = config
+    end
+    NFS.write(porkify_get_config_path(), STR_PACK(config))
+end
+
+if PORKIFY_MOD then
+    PORKIFY_MOD.config = porkify_load_config()
+    PORKIFY_MOD.load_mod_config = function()
+        PORKIFY_MOD.config = porkify_load_config()
+    end
+    PORKIFY_MOD.save_mod_config = porkify_save_config
+    PORKIFY_MOD.config_tab = function()
+        local config = PORKIFY_MOD.config or porkify_copy_defaults()
+        return {
+            n = G.UIT.ROOT,
+            config = { align = "tm", padding = 0.2, colour = G.C.CLEAR },
+            nodes = {
+                {
+                    n = G.UIT.R,
+                    config = { align = "cm", padding = 0.1 },
+                    nodes = {
+                        create_toggle({
+                            label = "Show credit badges",
+                            ref_table = config,
+                            ref_value = "show_credit_badges",
+                            info = {
+                                "Toggles credit badges, such as Idea and Art.",
+                                "This can help with visual clutter if you have",
+                                "a lot of mods that add credit badges, or if you",
+                                "just prefer a cleaner look."
+                            },
+                            active_colour = HEX("ff0095"),
+                            callback = function()
+                                porkify_save_config()
+                            end
+                        })
+                    }
+                }
+            }
+        }
+    end
+end
+
 local function load_jokers_folder()
-    local mod_path = SMODS.current_mod.path
+    local mod_path = PORKIFY_MOD.path
     local jokers_path = mod_path .. "/jokers"
     local files = NFS.getDirectoryItemsInfo(jokers_path)
 
@@ -77,7 +163,7 @@ local function load_jokers_folder()
 end
 
 local function load_stakes_folder()
-    local mod_path = SMODS.current_mod.path
+    local mod_path = PORKIFY_MOD.path
     local stakes_path = mod_path .. "/stakes"
     local files = NFS.getDirectoryItemsInfo(stakes_path)
 
@@ -90,7 +176,7 @@ local function load_stakes_folder()
 end
 
 local function load_stickers_folder()
-    local mod_path = SMODS.current_mod.path
+    local mod_path = PORKIFY_MOD.path
     local stickers_path = mod_path .. "/stickers"
     local files = NFS.getDirectoryItemsInfo(stickers_path)
 
@@ -251,6 +337,27 @@ local function porkify_resolve_badge_colour(value, fallback)
     return fallback
 end
 
+local function porkify_show_credit_badges()
+    local config = PORKIFY_MOD and PORKIFY_MOD.config
+    if type(config) ~= "table" then
+        return PORKIFY_CONFIG_DEFAULTS.show_credit_badges
+    end
+    if config.show_credit_badges == nil then
+        return PORKIFY_CONFIG_DEFAULTS.show_credit_badges
+    end
+    return not not config.show_credit_badges
+end
+
+local function porkify_is_credit_badge_text(text)
+    if type(text) ~= "string" then
+        return false
+    end
+
+    local lowered = text:lower()
+    return lowered:match("^idea:%s*") ~= nil
+        or lowered:match("^art:%s*") ~= nil
+end
+
 local function porkify_apply_credit_badges(obj, badges)
     local credit_badges = obj and (obj.credit_badges or obj.porkify_credit_badges)
     if type(credit_badges) ~= "table" then
@@ -269,7 +376,7 @@ local function porkify_apply_credit_badges(obj, badges)
             scale = badge.scale
         end
 
-        if text then
+        if text and (porkify_show_credit_badges() or not porkify_is_credit_badge_text(text)) then
             badges[#badges + 1] = create_badge(
                 text,
                 colour or HEX("5B2A86"),
@@ -357,13 +464,30 @@ local function porkify_pack_actions_enabled(pack)
     return pack and pack.porkify_pack_actions and pack.group_key == "porkify_boosters"
 end
 
+local function porkify_normalize_consumable_highlight_bounds(card)
+    local center = card and card.config and card.config.center
+    local cfg = center and center.config
+    if not (center and cfg) then
+        return center
+    end
+
+    if center.min_highlighted == nil and cfg.min_highlighted ~= nil then
+        center.min_highlighted = cfg.min_highlighted
+    end
+    if center.max_highlighted == nil and cfg.max_highlighted ~= nil then
+        center.max_highlighted = cfg.max_highlighted
+    end
+
+    return center
+end
+
 local function porkify_can_use_pack_consumeable(card)
     if not card then
         return false
     end
 
-    local center = card.config and card.config.center
-    if card.ability and card.ability.set == 'porkify' and center and type(center.can_use) == "function" then
+    local center = porkify_normalize_consumable_highlight_bounds(card)
+    if center and type(center.can_use) == "function" then
         local ok, result = pcall(center.can_use, center, card)
         return ok and result == true
     end

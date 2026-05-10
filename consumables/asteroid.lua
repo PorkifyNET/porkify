@@ -17,6 +17,10 @@ SMODS.Consumable {
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
 
+    credit_badges = {
+        { text = "Art: u/-yatsu", colour = "FF4500" }
+     },
+
     loc_vars = function(self, info_queue, card)
         local info_queue_0 = G.P_CENTERS["m_porkify_meteor"]
         if info_queue_0 then

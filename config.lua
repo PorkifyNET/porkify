@@ -1,0 +1,1 @@
+return {["show_credit_badges"]=true,}

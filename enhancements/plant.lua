@@ -24,6 +24,11 @@ SMODS.Enhancement {
     discovered = false,
     no_collection = false,
     weight = 5,
+
+    credit_badges = {
+        { text = "Art: AishaKC90", colour = "FF315A" }
+    },
+
     loc_vars = function(self, info_queue, card)
         return {vars = {((G.GAME.round_resets.ante or 0)) * 10}}
     end,

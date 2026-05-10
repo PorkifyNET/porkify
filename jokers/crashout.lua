@@ -37,6 +37,10 @@ SMODS.Joker{ --Crashout
     atlas = 'CustomJokers',
     pools = { ["modprefix_porkify_jokers"] = true },
     unlock_condition = { type = 'c_cards_discarded', extra = 250 },
+
+    credit_badges = {
+        { text = "Art: smoliconboi", colour = "59A487" }
+     },
     
     loc_vars = function(self, info_queue, card)
         

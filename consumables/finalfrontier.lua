@@ -16,6 +16,11 @@ SMODS.Consumable {
     hidden = false,
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
+
+    credit_badges = {
+        { text = "Art: PandaPundus", colour = "FF4500" }
+     },
+    
     use = function(self, card, area, copier)
         local used_card = copier or card
         update_hand_text(

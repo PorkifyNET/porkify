@@ -25,6 +25,11 @@ SMODS.Enhancement {
     discovered = false,
     no_collection = false,
     weight = 5,
+
+    credit_badges = {
+        { text = "Art: ButterStutter", colour = "59A487" }
+     },
+    
     loc_vars = function(self, info_queue, card)
         return {vars = {(G.GAME.dollars or 0)}}
     end,

@@ -34,6 +34,10 @@ SMODS.Joker{ --Voucher Joker
     atlas = 'CustomJokers',
     pools = { ["modprefix_porkify_jokers"] = true },
     unlock_condition = { type = 'run_redeem', extra = 8 },
+
+    credit_badges = {
+        { text = "Art: Cavo", colour = "59A487" }
+     },
     
     calculate = function(self, card, context)
     end,

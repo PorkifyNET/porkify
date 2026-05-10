@@ -26,6 +26,10 @@ SMODS.Joker{ --Doppelganger
     pools = { ["modprefix_porkify_jokers"] = true },
     unlock_condition = { type = 'c_jokers_sold', extra = 10 },
 
+    credit_badges = {
+        { text = "Art: mrjames246", colour = "59A487" }
+     },
+
     loc_vars = function(self, info_queue, card)
         local slot = card.ability.extra.DoppelgangerJokerSlotToCopy or 1
         local jokers = G.jokers and G.jokers.cards

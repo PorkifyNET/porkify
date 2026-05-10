@@ -2,16 +2,14 @@ SMODS.Joker{ --Hatsune Joku
     key = "hatsunejoku",
     config = {
         extra = {
-            odds = 2,
-            dollars = 2
+            x_chips = 1.5
         }
     },
     loc_txt = {
         ['name'] = 'Hatsune Joku',
         ['text'] = {
-            [1] = 'Every played {C:clubs}Club{} card',
-            [2] = 'has a {C:green}#1# in #2#{} chance',
-            [3] = 'to give {C:money}$2{} when scored'
+            [1] = 'Every played {C:attention}3{} or {C:attention}9{}',
+            [2] = 'gives {X:blue,C:white}X#1#{} Chips'
         }
     },
     pos = {
@@ -22,8 +20,8 @@ SMODS.Joker{ --Hatsune Joku
         w = 71,
         h = 95
     },
-    cost = 5,
-    rarity = 1,
+    cost = 6,
+    rarity = 2,
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -32,32 +30,26 @@ SMODS.Joker{ --Hatsune Joku
     atlas = 'CustomJokers',
     pools = { ["modprefix_porkify_jokers"] = true },
 
+    credit_badges = {
+        { text = "Art: u/neatoqueen", colour = "FF4500" }
+     },
+
     loc_vars = function(self, info_queue, card)
         local extra = (card and card.ability and card.ability.extra) or self.config.extra
-        local num, den = SMODS.get_probability_vars(card, 1, (extra and extra.odds) or 2, 'j_porkify_hatsunejoku')
-        return { vars = { num, den } }
+        return { vars = { (extra and extra.x_chips) or 1.5 } }
     end,
 
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play then
             local played_card = context.other_card
             local extra = (card.ability and card.ability.extra) or self.config.extra
-            local odds = (extra and extra.odds) or 2
-            local dollars = (extra and extra.dollars) or 2
+            local x_chips = (extra and extra.x_chips) or 1.5
 
             if played_card
-                and played_card.is_suit
-                and played_card:is_suit("Clubs")
-                and SMODS.pseudorandom_probability(
-                    card,
-                    'group_hatsunejoku_clubs',
-                    1,
-                    odds,
-                    'j_porkify_hatsunejoku',
-                    false
-                ) then
+                and played_card.get_id
+                and (played_card:get_id() == 3 or played_card:get_id() == 9) then
                 return {
-                    dollars = dollars
+                    x_chips = x_chips
                 }
             end
         end
@@ -66,35 +58,30 @@ SMODS.Joker{ --Hatsune Joku
     joker_display_def = function(JokerDisplay)
         return {
             text = {
-                { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY, retrigger_type = "mult" }
-            },
-            reminder_text = {
-                { ref_table = "card.joker_display_values", ref_value = "chance_text", colour = G.C.GREEN }
+                {
+                    border_nodes = {
+                        { text = "X", colour = G.C.WHITE },
+                        { ref_table = "card.joker_display_values", ref_value = "x_chips_text", colour = G.C.WHITE, retrigger_type = "exp" }
+                    },
+                    colour = G.C.BLUE
+                }
             },
 
             calc_function = function(card)
-                local clubs = 0
                 local extra = (card.ability and card.ability.extra) or {}
-                local odds = extra.odds or 2
-                local dollars = extra.dollars or 2
-                local n, d = 1, odds
+                local x_chips = extra.x_chips or 1.5
+                local matches = 0
                 local text, _, scoring_hand = JokerDisplay.evaluate_hand()
-
-                if SMODS.get_probability_vars then
-                    local nn, dd = SMODS.get_probability_vars(card, 1, odds, 'j_porkify_hatsunejoku')
-                    n, d = nn or n, dd or d
-                end
 
                 if text ~= "Unknown" and scoring_hand then
                     for _, c in pairs(scoring_hand) do
-                        if c:is_suit("Clubs") and not c.debuff and c.facing ~= 'back' then
-                            clubs = clubs + JokerDisplay.calculate_card_triggers(c, scoring_hand)
+                        if (c:get_id() == 3 or c:get_id() == 9) and not c.debuff and c.facing ~= 'back' then
+                            matches = matches + JokerDisplay.calculate_card_triggers(c, scoring_hand)
                         end
                     end
                 end
 
-                card.joker_display_values.money_text = "+$" .. tostring(clubs * dollars)
-                card.joker_display_values.chance_text = "(" .. tostring(n) .. " in " .. tostring(d) .. ")"
+                card.joker_display_values.x_chips_text = (matches > 0) and (x_chips ^ matches) or 1
             end
         }
     end

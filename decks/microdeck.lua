@@ -17,6 +17,11 @@ SMODS.Back {
     discovered = true,
     no_collection = false,
     atlas = 'CustomDecks',
+
+    credit_badges = {
+        { text = "Art: Cavo", colour = "59A487" }
+     },
+    
     apply = function(self, back)
         local destroyed_cards = {}
         local temp_hand = {}

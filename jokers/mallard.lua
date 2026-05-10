@@ -131,6 +131,10 @@ SMODS.Joker{ --Mallard
     pools = { ["modprefix_porkify_jokers"] = true },
     unlock_condition = { type = 'c_cards_sold', extra = 20 },
 
+    credit_badges = {
+        { text = "Art: pit_xel", colour = "D70159" }
+     },
+
     loc_vars = function(self, info_queue, card)
         local extra = (card and card.ability and card.ability.extra) or self.config.extra
         return {

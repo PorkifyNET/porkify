@@ -35,6 +35,10 @@ SMODS.Joker{ --Trash Can
     discovered = false,
     atlas = 'CustomJokers',
     pools = { ["modprefix_porkify_jokers"] = true },
+
+    credit_badges = {
+        { text = "Art: ToxicPlayer", colour = "59A487" }
+     },
     
     loc_vars = function(self, info_queue, card)
         local current_round = G and G.GAME and G.GAME.current_round

@@ -49,6 +49,10 @@ SMODS.Joker{ --9-Carats
         end
         return count >= 3
     end,
+
+    credit_badges = {
+        { text = "Art: cebeedrawz", colour = "59A487" }
+     },
     
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play then
