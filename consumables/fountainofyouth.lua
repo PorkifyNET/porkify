@@ -23,6 +23,10 @@ SMODS.Consumable {
         if info_queue_0 then
             info_queue[#info_queue + 1] = info_queue_0
         end
+        local info_queue_1 = (G.P_STICKERS and G.P_STICKERS["perishable"]) or (G.P_CENTERS and G.P_CENTERS["perishable"])
+        if info_queue_1 then
+            info_queue[#info_queue + 1] = info_queue_1
+        end
         return {vars = {}}
     end,
 
@@ -68,6 +72,12 @@ SMODS.Consumable {
             delay = 0.35,
             func = function()
                 j:set_edition(nil, true)
+                if j.ability.perishable then
+                    j.ability.perishable = false
+                    if j.remove_sticker then
+                        pcall(function() j:remove_sticker('perishable') end)
+                    end
+                end
                 j:add_sticker('eternal', true)
                 return true
             end
