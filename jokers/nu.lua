@@ -67,5 +67,13 @@ SMODS.Joker{ --N.U.
                 end
             end
         end
-    end
+    end,
+
+    joker_display_def = function(JokerDisplay)
+	  return {
+        text = {
+            { text = "(1 in 4)", colour = G.C.GREEN }
+        },
+	  }
+	end
 }

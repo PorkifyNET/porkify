@@ -66,6 +66,9 @@ SMODS.Joker{ --Hatsune Joku
                     colour = G.C.BLUE
                 }
             },
+            reminder_text = {
+                { text = "(3, 9)", colour = G.C.GREY }
+            },
 
             calc_function = function(card)
                 local extra = (card.ability and card.ability.extra) or {}

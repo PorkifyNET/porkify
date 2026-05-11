@@ -89,7 +89,7 @@ SMODS.Joker{ --Pizza
             text = {
                 { ref_table = "card.joker_display_values", ref_value = "slot_text", colour = G.C.IMPORTANT }
             },
-            reminder_text = {
+            extra = {
                 { ref_table = "card.joker_display_values", ref_value = "odds_text", colour = G.C.CHANCE }
             },
 

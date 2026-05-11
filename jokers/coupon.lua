@@ -71,6 +71,9 @@ SMODS.Joker{ --Coupon
 		text = {
 		  { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY }
 		},
+        reminder_text = {
+            { text = "(Round)", colour = G.C.GREY }
+        },
 
 		calc_function = function(card)
 		  local per = ((card.ability and card.ability.extra) or {}).dollars_per_voucher or 2

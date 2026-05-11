@@ -82,7 +82,10 @@ SMODS.Joker{ --Cairn
 		text = {
 		  { ref_table = "card.joker_display_values", ref_value = "payout_text", colour = G.C.MONEY }
 		},
-		reminder_text = {
+        reminder_text = {
+           { text = "(Round)", colour = G.C.GREY }
+        },
+		extra = {
 		  { ref_table = "card.joker_display_values", ref_value = "odds_text", colour = G.C.GREEN }
 		},
 

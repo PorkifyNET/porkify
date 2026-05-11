@@ -115,5 +115,13 @@ SMODS.Joker{ -- Hatched Egg
                 end
             }
         end
-    end
+    end,
+
+    joker_display_def = function(JokerDisplay)
+	  return {
+		text = {
+		  { text = "(1 in 2)", scale = 0.3, colour = G.C.GREEN }
+		},
+	  }
+	end
 }

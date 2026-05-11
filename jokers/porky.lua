@@ -24,7 +24,7 @@ SMODS.Joker{ --Porky
     },
     cost = 4,
     rarity = 2,
-    blueprint_compat = false,
+    blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
     unlocked = false,
@@ -34,7 +34,7 @@ SMODS.Joker{ --Porky
     unlock_condition = { type = 'c_hands_played', extra = 100 },
 
     calculate = function(self, card, context)
-        if context.setting_blind and not context.blueprint then
+        if context.setting_blind then
             return {
                 func = function()
                     if G.consumeables

@@ -68,6 +68,11 @@ SMODS.Joker{ --Leek
                     border_colour = G.C.CHIPS
                 }
             },
+            reminder_text = {
+                { text = "(", colour = G.C.GREY },
+                { text = "Clubs", colour = G.C.SUITS["Clubs"] },
+                { text = ")", colour = G.C.GREY }
+            },
 
             calc_function = function(card)
                 local runtime_extra = card and card.ability and card.ability.extra

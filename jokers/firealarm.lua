@@ -25,7 +25,7 @@ SMODS.Joker{ --Fire Alarm
         w = 71 * 1, 
         h = 95 * 1
     },
-    cost = 2,
+    cost = 3,
     rarity = 1,
     blueprint_compat = false,
     eternal_compat = false,
