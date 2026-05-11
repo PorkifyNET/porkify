@@ -17,6 +17,9 @@ SMODS.Challenge{
         { id = "j_midas_mask", eternal = true, edition = "negative" },
         { id = "j_ticket", eternal = true, edition = "negative" },
     },
+	deck = {
+		type = 'Challenge Deck'
+	},
 
     restrictions = {
 		banned_cards = {

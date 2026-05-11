@@ -19,6 +19,9 @@ SMODS.Challenge{
 	vouchers = {
 		
 	},
+	deck = {
+		type = 'Challenge Deck'
+	},
 
     restrictions = {
 		banned_cards = {

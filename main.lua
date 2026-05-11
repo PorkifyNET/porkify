@@ -149,6 +149,39 @@ if PORKIFY_MOD then
     end
 end
 
+local porkify_game_start_run_ref = Game.start_run
+function Game:start_run(args)
+    if args and args.challenge then
+        args.savetext = nil
+        args.deck = { name = 'Challenge Deck' }
+        args.challenge.deck = args.challenge.deck or {}
+        args.challenge.deck.type = 'Challenge Deck'
+    end
+
+    return porkify_game_start_run_ref(self, args)
+end
+
+local function porkify_is_valid_voucher_key(key)
+    local center = key and (
+        (G and G.P_CENTERS and G.P_CENTERS[key]) or
+        (SMODS and SMODS.Centers and SMODS.Centers[key])
+    )
+    return center and center.set == 'Voucher'
+end
+
+local porkify_back_apply_to_run_ref = Back.apply_to_run
+function Back:apply_to_run(...)
+    if self and self.effect and self.effect.config then
+        local config = self.effect.config
+
+        if config.voucher and not porkify_is_valid_voucher_key(config.voucher) then
+            config.voucher = nil
+        end
+    end
+
+    return porkify_back_apply_to_run_ref(self, ...)
+end
+
 local function load_jokers_folder()
     local mod_path = PORKIFY_MOD.path
     local jokers_path = mod_path .. "/jokers"

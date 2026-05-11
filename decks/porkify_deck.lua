@@ -3,7 +3,7 @@ SMODS.Back {
     key = 'porkify_deck',
     pos = { x = 0, y = 0 },
     config = {
-        voucher = {
+        vouchers = {
             'v_porkify_gluttony',
             'v_porkify_piggyback'
         }

@@ -23,6 +23,9 @@ SMODS.Challenge{
 		{ id = "v_grabber" },
 		{ id = "v_nacho_tong" },
 	},
+	deck = {
+		type = 'Challenge Deck'
+	},
 		
     restrictions = {
 		banned_cards = {

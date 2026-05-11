@@ -14,6 +14,9 @@ SMODS.Challenge{
             {id = "no_shop_jokers"},
         },
     },
+	deck = {
+		type = 'Challenge Deck'
+	},
 
     -- Start with the Orchard Spirit (eternal+pinned so it can’t be removed)
     jokers = {

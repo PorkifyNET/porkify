@@ -20,6 +20,9 @@ SMODS.Challenge{
         { id = "j_porkify_hatchedegg" },
         { id = "j_egg" },
     },
+	deck = {
+		type = 'Challenge Deck'
+	},
 
     restrictions = {
 		banned_cards = {
