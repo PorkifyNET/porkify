@@ -8,7 +8,7 @@ SMODS.Joker{ -- Trans Joker
     loc_txt = {
         ['name'] = 'Trans Joker',
         ['text'] = {
-            [1] = 'This Joker gains {X:mult,C:white}X0.5{} Mult',
+            [1] = 'This Joker gains {X:mult,C:white}X1{} Mult',
             [2] = 'whenever {C:tarot}Estrogen{} or',
             [3] = '{C:tarot}Testosterone{} is used',
             [4] = '{C:inactive}(Currently{} {X:mult,C:white}X#1#{} {C:inactive}Mult){}'
@@ -68,7 +68,7 @@ SMODS.Joker{ -- Trans Joker
             if is_hormone then
                 return {
                     func = function()
-                        card.ability.extra.Xmult = (card.ability.extra.Xmult or 1) + 0.5
+                        card.ability.extra.Xmult = (card.ability.extra.Xmult or 1) + 1
                         return true
                     end,
                     message = "Upgrade!",

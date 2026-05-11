@@ -23,7 +23,9 @@ SMODS.Challenge{
 
     restrictions = {
 		banned_cards = {
+			{id = 'j_riff_raff'},
 			{id = 'j_invisible'},
+			{id = 'j_brainstorm'},
 			{id = 'c_judgement'},
 			{id = 'c_wraith'},
 			{id = 'c_soul'},
@@ -31,8 +33,6 @@ SMODS.Challenge{
 				'p_buffoon_normal_1','p_buffoon_normal_2','p_buffoon_jumbo_1','p_buffoon_mega_1',
 			}},
 			{id = 'c_porkify_excalibur'},
-			{id = 'c_porkify_mephiles'},
-			{id = 'c_porkify_top_up_consumable'},
 		},
         banned_tags = {
             { id = "tag_uncommon" },

@@ -41,7 +41,6 @@ SMODS.Challenge{
 			{id = 'j_porkify_cairn'},
 			{id = 'j_porkify_coupon'},
 			{id = 'j_porkify_luckynumber7s'},
-			{id = 'j_porkify_mikujoker'},
 			{id = 'j_porkify_overspeed'},
 			{id = 'j_porkify_recycler'},
 			{id = 'c_hermit'},

@@ -40,6 +40,8 @@ SMODS.Challenge{
 			{id = 'c_porkify_excalibur'},
 			{id = 'c_porkify_freezer'},
 			{id = 'c_porkify_fountainofyouth'},
+            {id = 'c_porkify_mephiles'},
+            {id = 'c_porkify_primate'},
             {id = 'c_porkify_top_up_consumable'},
 		},
         banned_tags = {
