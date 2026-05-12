@@ -28,6 +28,13 @@ SMODS.Consumable {
     use = function(self, card, area, copier)
         local used_card = copier or card
         if not (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) >= to_big(1) and to_big(#G.hand.highlighted) <= to_big(3)) then return end
+        local selected_cards = {}
+        for i = 1, #G.hand.highlighted do
+            selected_cards[i] = {
+                card = G.hand.highlighted[i],
+                was_back = G.hand.highlighted[i].facing == 'back'
+            }
+        end
 
         G.E_MANAGER:add_event(Event({
             trigger = 'after',
@@ -45,9 +52,14 @@ SMODS.Consumable {
                 trigger = 'after',
                 delay = 0.15,
                 func = function()
-                    G.hand.highlighted[i]:flip()
+                    local entry = selected_cards[i]
+                    if entry and entry.card and not entry.was_back then
+                        entry.card:flip()
+                    end
                     play_sound('card1', percent)
-                    G.hand.highlighted[i]:juice_up(0.3, 0.3)
+                    if entry and entry.card then
+                        entry.card:juice_up(0.3, 0.3)
+                    end
                     return true
                 end
             }))
@@ -60,7 +72,11 @@ SMODS.Consumable {
                 trigger = 'after',
                 delay = 0.1,
                 func = function()
-                    G.hand.highlighted[i]:set_ability(G.P_CENTERS.m_porkify_revolving, nil, true)
+                    local entry = selected_cards[i]
+                    if entry and entry.card then
+                        entry.card:set_ability(G.P_CENTERS.m_porkify_revolving, nil, true)
+                        entry.card.ability.wheel_flipped = nil
+                    end
                     return true
                 end
             }))
@@ -72,9 +88,14 @@ SMODS.Consumable {
                 trigger = 'after',
                 delay = 0.15,
                 func = function()
-                    G.hand.highlighted[i]:flip()
+                    local entry = selected_cards[i]
+                    if entry and entry.card and entry.card.facing == 'back' then
+                        entry.card:flip()
+                    end
                     play_sound('tarot2', percent, 0.6)
-                    G.hand.highlighted[i]:juice_up(0.3, 0.3)
+                    if entry and entry.card then
+                        entry.card:juice_up(0.3, 0.3)
+                    end
                     return true
                 end
             }))

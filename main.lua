@@ -303,6 +303,30 @@ SMODS.current_mod.set_debuff = function(card)
     return false
 end
 
+local function porkify_is_resolute_card(card)
+    local center = card and card.config and card.config.center
+    local center_key = (center and center.key) or (card and card.config and card.config.center_key)
+    return center_key == "m_porkify_revolving"
+end
+
+local porkify_blind_stay_flipped_ref = Blind.stay_flipped
+function Blind:stay_flipped(to_area, card, from_area)
+    if porkify_is_resolute_card(card) then
+        return false
+    end
+    return porkify_blind_stay_flipped_ref(self, to_area, card, from_area)
+end
+
+local porkify_cardarea_emplace_ref = CardArea.emplace
+function CardArea:emplace(card, location, stay_flipped)
+    local result = porkify_cardarea_emplace_ref(self, card, location, stay_flipped)
+    if self == G.hand and porkify_is_resolute_card(card) and card and card.facing == 'back' then
+        card:flip()
+        card.ability.wheel_flipped = nil
+    end
+    return result
+end
+
 if JokerDisplay then
     SMODS.load_file("joker_display_definitions.lua")()
 end
