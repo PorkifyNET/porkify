@@ -33,60 +33,51 @@ local function get_rank_chip_bonus(rank_id)
     return 0
 end
 
-local function get_rank_label(rank_id)
-    if rank_id == 11 then
-        return "J"
+local function get_playing_card_chip_value(playing_card)
+    if not playing_card then
+        return 0
     end
-    if rank_id == 12 then
-        return "Q"
-    end
-    if rank_id == 13 then
-        return "K"
-    end
-    if rank_id == 14 then
-        return "A"
-    end
-    return tostring(rank_id or "?")
-end
 
-local function find_random_hand_card()
-    local hand_cards = (G.hand and G.hand.cards) or {}
-    if #hand_cards == 0 then
-        return nil
-    end
-    local index = pseudorandom(pseudoseed("porkify_mallard_first_hand"), 1, #hand_cards)
-    return hand_cards[index]
-end
-
-local function absorb_playing_card_effects(joker, playing_card)
-    local extra = joker.ability.extra or {}
-    local ability = (playing_card and playing_card.ability) or {}
+    local ability = playing_card.ability or {}
     local enhancements = (SMODS and SMODS.get_enhancements and SMODS.get_enhancements(playing_card)) or {}
-    local seal = (playing_card and (playing_card.seal or ability.seal)) or nil
-    local rank_id = get_card_rank_value(playing_card)
+    local total = get_rank_chip_bonus(get_card_rank_value(playing_card))
 
-    extra.chips = (extra.chips or 0) + get_rank_chip_bonus(rank_id)
-    extra.chips = (extra.chips or 0) + (tonumber(ability.perma_bonus) or 0)
-    extra.mult = (extra.mult or 0) + (tonumber(ability.perma_mult) or 0)
-    extra.scored_dollars = (extra.scored_dollars or 0) + (tonumber(ability.perma_p_dollars) or 0)
+    total = total + (tonumber(ability.perma_bonus) or 0)
 
     if enhancements.m_bonus then
-        extra.chips = (extra.chips or 0) + 30
+        total = total + 30
     end
-    if enhancements.m_mult then
-        extra.mult = (extra.mult or 0) + 4
+    if enhancements.m_porkify_plant then
+        local ante = ((G and G.GAME and G.GAME.round_resets and G.GAME.round_resets.ante) or 0)
+        total = total + (ante * 10)
     end
     if enhancements.m_stone then
-        extra.chips = (extra.chips or 0) + 50
-    end
-    if enhancements.m_gold then
-        extra.scored_dollars = (extra.scored_dollars or 0) + 3
+        total = total + 50
     end
 
-    if seal == "Gold" then
-        extra.scored_dollars = (extra.scored_dollars or 0) + 3
+    return total
+end
+
+local function find_random_hand_card(hand_cards)
+    hand_cards = hand_cards or ((G.hand and G.hand.cards) or {})
+    local valid_cards = {}
+    for _, playing_card in ipairs(hand_cards) do
+        local enhancements = (SMODS and SMODS.get_enhancements and SMODS.get_enhancements(playing_card)) or {}
+        if playing_card and not playing_card.debuff and not enhancements.m_porkify_revolving then
+            valid_cards[#valid_cards + 1] = playing_card
+        end
     end
 
+    if #valid_cards == 0 then
+        return nil
+    end
+    local index = pseudorandom(pseudoseed("porkify_mallard_hand_draw"), 1, #valid_cards)
+    return valid_cards[index]
+end
+
+local function absorb_playing_card_chips(joker, playing_card)
+    local extra = joker.ability.extra or {}
+    extra.chips = (extra.chips or 0) + get_playing_card_chip_value(playing_card)
     joker.ability.extra = extra
 end
 
@@ -95,18 +86,17 @@ SMODS.Joker{ --Mallard
     config = {
         extra = {
             chips = 0,
-            mult = 0,
-            scored_dollars = 0
+            last_hands_played = 0,
+            last_discards_used = 0
         }
     },
     loc_txt = {
         ['name'] = 'Mallard',
         ['text'] = {
-            [1] = 'When the {C:attention}first hand{} is drawn,',
+            [1] = 'Whenever a {C:attention}hand{} is drawn,',
             [2] = '{C:red}destroy{} a random playing card,',
-            [3] = 'and absorb its effects',
-            [4] = '{C:inactive}(Currently {}{C:blue}+#1#{} {C:inactive}Chips, {}{C:red}+#2#{} {C:inactive}Mult,{}',
-            [5] = '{C:money}$#3#{} {C:inactive}at end of round{C:inactive}){}'
+            [3] = 'and add its {C:blue}Chips{} to this Joker',
+            [4] = '{C:inactive}(Currently {}{C:blue}+#1#{} {C:inactive}Chips){}'
         },
         ['unlock'] = {
             [1] = 'Sell {C:attention}20{} cards'
@@ -139,24 +129,41 @@ SMODS.Joker{ --Mallard
         local extra = (card and card.ability and card.ability.extra) or self.config.extra
         return {
             vars = {
-                extra.chips or 0,
-                extra.mult or 0,
-                extra.scored_dollars or 0
+                extra.chips or 0
             }
         }
     end,
 
-    calc_dollar_bonus = function(self, card)
-        local extra = (card and card.ability and card.ability.extra) or self.config.extra
-        local payout = tonumber(extra.scored_dollars) or 0
-        if payout > 0 then
-            return payout
-        end
+    set_ability = function(self, card, initial)
+        local extra = card.ability.extra or {}
+        local round = (G and G.GAME and G.GAME.current_round) or {}
+        extra.last_hands_played = round.hands_played or 0
+        extra.last_discards_used = round.discards_used or 0
+        card.ability.extra = extra
     end,
 
     calculate = function(self, card, context)
-        if context.first_hand_drawn and not context.blueprint then
-            local target = find_random_hand_card()
+        if context.hand_drawn and not context.blueprint then
+            local extra = card.ability.extra or {}
+            local round = (G and G.GAME and G.GAME.current_round) or {}
+            local hands_played = round.hands_played or 0
+            local discards_used = round.discards_used or 0
+            local skip_for_discard = discards_used > (extra.last_discards_used or 0)
+                and hands_played == (extra.last_hands_played or 0)
+
+            extra.last_hands_played = hands_played
+            extra.last_discards_used = discards_used
+            card.ability.extra = extra
+
+            if skip_for_discard then
+                return
+            end
+
+            local drawn_cards = type(context.hand_drawn) == "table" and context.hand_drawn or nil
+            local target = find_random_hand_card(drawn_cards)
+            if not target then
+                target = find_random_hand_card()
+            end
             if not target then
                 return
             end
@@ -164,7 +171,7 @@ SMODS.Joker{ --Mallard
             return {
                 func = function()
                     if not target.debuff then
-                        absorb_playing_card_effects(card, target)
+                        absorb_playing_card_chips(card, target)
                     end
 
                     if target.remove_from_deck then
@@ -183,17 +190,10 @@ SMODS.Joker{ --Mallard
 
         if context.cardarea == G.jokers and context.joker_main then
             local extra = card.ability.extra or {}
-            local result = {}
-
             if (extra.chips or 0) > 0 then
-                result.chips = extra.chips
-            end
-            if (extra.mult or 0) > 0 then
-                result.mult = extra.mult
-            end
-
-            if next(result) then
-                return result
+                return {
+                    chips = extra.chips
+                }
             end
         end
     end,
@@ -201,11 +201,7 @@ SMODS.Joker{ --Mallard
     joker_display_def = function(JokerDisplay)
         return {
             text = {
-                { ref_table = "card.joker_display_values", ref_value = "chips_text", colour = G.C.BLUE },
-                { text = " " },
-                { ref_table = "card.joker_display_values", ref_value = "mult_text", colour = G.C.RED },
-                { text = " " },
-                { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY }
+                { ref_table = "card.joker_display_values", ref_value = "chips_text", colour = G.C.BLUE }
             },
             reminder_text = {
                 { ref_table = "card.joker_display_values", ref_value = "status_text", colour = G.C.GREY }
@@ -214,14 +210,12 @@ SMODS.Joker{ --Mallard
             calc_function = function(card)
                 local extra = (card.ability and card.ability.extra) or {}
                 local next_target = find_random_hand_card()
-                local next_rank = next_target and get_card_rank_value(next_target) or nil
+                local next_value = get_playing_card_chip_value(next_target)
 
                 card.joker_display_values.chips_text = "+" .. tostring(extra.chips or 0)
-                card.joker_display_values.mult_text = "+" .. tostring(extra.mult or 0)
-                card.joker_display_values.money_text = "+$" .. tostring(extra.scored_dollars or 0)
 
-                if next_rank then
-                    card.joker_display_values.status_text = "Next target: " .. get_rank_label(next_rank)
+                if next_target then
+                    card.joker_display_values.status_text = "Next bite: +" .. tostring(next_value) .. " Chips"
                 else
                     card.joker_display_values.status_text = "No hand drawn"
                 end
