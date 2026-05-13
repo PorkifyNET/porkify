@@ -521,6 +521,37 @@ local function porkify_pack_actions_enabled(pack)
     return pack and pack.porkify_pack_actions and pack.group_key == "porkify_boosters"
 end
 
+local function porkify_ensure_highlight_tables()
+    local areas = {
+        G and G.hand,
+        G and G.jokers,
+        G and G.consumeables,
+        G and G.pack_cards
+    }
+
+    for i = 1, #areas do
+        local area = areas[i]
+        if area and area.highlighted == nil then
+            area.highlighted = {}
+        end
+    end
+end
+
+local function porkify_prepare_consumable_state(card)
+    if not card then
+        return
+    end
+
+    porkify_ensure_highlight_tables()
+
+    if card.eligible_strength_jokers == nil then
+        card.eligible_strength_jokers = {}
+    end
+    if card.eligible_editionless_jokers == nil then
+        card.eligible_editionless_jokers = {}
+    end
+end
+
 local function porkify_normalize_consumable_highlight_bounds(card)
     local center = card and card.config and card.config.center
     local cfg = center and center.config
@@ -543,6 +574,9 @@ local function porkify_can_use_pack_consumeable(card)
         return false
     end
 
+    porkify_prepare_consumable_state(card)
+    porkify_install_safe_can_use_consumeable_patch()
+
     local center = porkify_normalize_consumable_highlight_bounds(card)
     if center and type(center.can_use) == "function" then
         local ok, result = pcall(center.can_use, center, card)
@@ -554,6 +588,72 @@ local function porkify_can_use_pack_consumeable(card)
     end)
     return ok and result == true
 end
+
+function porkify_install_safe_can_use_consumeable_patch()
+    if not (Card and Card.can_use_consumeable) then
+        return
+    end
+
+    if Porkify_safe_can_use_consumeable == nil then
+        Porkify_safe_can_use_consumeable = function(self, any_state, skip_check)
+            porkify_prepare_consumable_state(self)
+            return Porkify_can_use_consumeable(self, any_state, skip_check)
+        end
+    end
+
+    if Card.can_use_consumeable == Porkify_safe_can_use_consumeable then
+        return
+    end
+
+    Porkify_can_use_consumeable = Card.can_use_consumeable
+    Card.can_use_consumeable = Porkify_safe_can_use_consumeable
+end
+
+porkify_install_safe_can_use_consumeable_patch()
+
+if love and love.update and not Porkify_love_update then
+    Porkify_love_update = love.update
+    love.update = function(dt)
+        porkify_ensure_highlight_tables()
+        porkify_install_safe_can_use_consumeable_patch()
+        porkify_install_safe_can_buy_and_use_patch()
+        return Porkify_love_update(dt)
+    end
+end
+
+function porkify_install_safe_can_buy_and_use_patch()
+    if not (G and G.FUNCS and G.FUNCS.can_buy_and_use) then
+        return
+    end
+
+    if Porkify_safe_can_buy_and_use == nil then
+        Porkify_safe_can_buy_and_use = function(e)
+            local card = e and e.config and e.config.ref_table
+            if not card or card.REMOVED then
+                if e and e.UIBox and e.UIBox.states then
+                    e.UIBox.states.visible = false
+                end
+                if e and e.config then
+                    e.config.colour = G.C.UI.BACKGROUND_INACTIVE
+                    e.config.button = nil
+                end
+                return
+            end
+
+            porkify_prepare_consumable_state(card)
+            return Porkify_can_buy_and_use(e)
+        end
+    end
+
+    if G.FUNCS.can_buy_and_use == Porkify_safe_can_buy_and_use then
+        return
+    end
+
+    Porkify_can_buy_and_use = G.FUNCS.can_buy_and_use
+    G.FUNCS.can_buy_and_use = Porkify_safe_can_buy_and_use
+end
+
+porkify_install_safe_can_buy_and_use_patch()
 
 if G and G.FUNCS and not G.FUNCS.porkify_can_store_pack_card then
     G.FUNCS.porkify_can_store_pack_card = function(e)
@@ -602,6 +702,10 @@ end
 if G and G.UIDEF and G.UIDEF.use_and_sell_buttons and not Porkify_use_and_sell_buttons then
     Porkify_use_and_sell_buttons = G.UIDEF.use_and_sell_buttons
     function G.UIDEF.use_and_sell_buttons(card)
+        porkify_prepare_consumable_state(card)
+        porkify_install_safe_can_use_consumeable_patch()
+        porkify_install_safe_can_buy_and_use_patch()
+
         if card
             and card.ability
             and card.ability.consumeable

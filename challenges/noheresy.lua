@@ -31,6 +31,7 @@ SMODS.Challenge{
 			{ id = "j_porkify_speedrun" },
 			{ id = "j_porkify_summoningcircle" },
 			{ id = "c_porkify_spiritbox" },
+			{ id = "c_porkify_testosterone" },
 			{id = 'p_arcana_normal_1', ids = {
 				'p_arcana_normal_1','p_arcana_normal_2','p_arcana_normal_3','p_arcana_normal_4','p_arcana_jumbo_1','p_arcana_jumbo_2','p_arcana_mega_1','p_arcana_mega_2',
 			}},

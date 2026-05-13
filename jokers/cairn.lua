@@ -86,7 +86,9 @@ SMODS.Joker{ --Cairn
            { text = "(Round)", colour = G.C.GREY }
         },
 		extra = {
-		  { ref_table = "card.joker_display_values", ref_value = "odds_text", colour = G.C.GREEN }
+            {
+                { ref_table = "card.joker_display_values", scale = 0.3, ref_value = "odds_text", colour = G.C.GREEN }
+            }
 		},
 
 		calc_function = function(card)

@@ -93,7 +93,7 @@ SMODS.Joker{ --Mallard
     loc_txt = {
         ['name'] = 'Mallard',
         ['text'] = {
-            [1] = 'Whenever a {C:attention}hand{} is drawn,',
+            [1] = 'After each played {C:attention}hand{},',
             [2] = '{C:red}destroy{} a random playing card,',
             [3] = 'and add its {C:blue}Chips{} to this Joker',
             [4] = '{C:inactive}(Currently {}{C:blue}+#1#{} {C:inactive}Chips){}'

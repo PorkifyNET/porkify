@@ -82,7 +82,9 @@ SMODS.Joker{ --Recycler
 		  { ref_table = "card.joker_display_values", ref_value = "payout_text", colour = G.C.MONEY }
 		},
 		extra = {
-			{ ref_table = "card.joker_display_values", ref_value = "chance_text", colour = G.C.CHANCE }
+			{
+                { ref_table = "card.joker_display_values", scale = 0.3, ref_value = "chance_text", colour = G.C.CHANCE }
+            }
 		},
 
 		calc_function = function(card)

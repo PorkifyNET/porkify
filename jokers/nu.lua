@@ -72,7 +72,7 @@ SMODS.Joker{ --N.U.
     joker_display_def = function(JokerDisplay)
 	  return {
         text = {
-            { text = "(1 in 4)", colour = G.C.GREEN }
+            { text = "(1 in 4)", scale = 0.3, colour = G.C.GREEN }
         },
 	  }
 	end

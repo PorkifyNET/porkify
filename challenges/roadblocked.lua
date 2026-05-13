@@ -43,7 +43,7 @@ SMODS.Challenge{
 			
         },
 		banned_other = {
-			{id = 'bl_porkify_ladder', type = 'blind'},
+			{id = 'bl_porkify_prideful', type = 'blind'},
 		},
     },
 	button_colour = HEX("FF0095"),

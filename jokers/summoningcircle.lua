@@ -90,7 +90,7 @@ SMODS.Joker{ --Summoning Circle
 	joker_display_def = function(JokerDisplay)
 	  return {
 		text = {
-		  { ref_table = "card.joker_display_values", ref_value = "odds_text", colour = G.C.GREEN }
+		  { ref_table = "card.joker_display_values", scale = 0.3, ref_value = "odds_text", colour = G.C.GREEN }
         },
 
 		calc_function = function(card)
