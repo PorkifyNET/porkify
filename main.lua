@@ -59,6 +59,17 @@ SMODS.Atlas({
     }
 })
 
+SMODS.Atlas({
+    key = "CustomSeals",
+    path = "CustomSeals.png",
+    px = 71,
+    py = 95,
+    atlas_table = "ASSET_ATLAS",
+    prefix_config = {
+        atlas = false
+    }
+})
+
 local NFS = require("nativefs")
 local PORKIFY_MOD = SMODS.current_mod
 to_big = to_big or function(a) return a end
@@ -151,6 +162,10 @@ end
 
 local porkify_game_start_run_ref = Game.start_run
 function Game:start_run(args)
+    Porkify_fixed_deck_pending = false
+    Porkify_fixed_deck_opened = false
+    local is_loaded_run = not not (args and args.savetext)
+
     if args and args.challenge then
         args.savetext = nil
         args.deck = { name = 'Challenge Deck' }
@@ -158,7 +173,26 @@ function Game:start_run(args)
         args.challenge.deck.type = 'Challenge Deck'
     end
 
-    return porkify_game_start_run_ref(self, args)
+    local result = porkify_game_start_run_ref(self, args)
+
+    local selected_back = G and G.GAME and G.GAME.selected_back
+    local back_key = selected_back and (
+        selected_back.key
+        or (selected_back.effect and selected_back.effect.center and selected_back.effect.center.key)
+        or (selected_back.config and selected_back.config.center and selected_back.config.center.key)
+    )
+
+    if not is_loaded_run and type(back_key) == "string" and back_key:find("fixed_deck", 1, true) ~= nil then
+        Porkify_fixed_deck_pending = true
+        Porkify_fixed_deck_opened = false
+        if G and G.GAME then
+            G.GAME.modifiers = G.GAME.modifiers or {}
+            G.GAME.modifiers.no_shop_jokers = true
+            G.GAME.joker_rate = 0
+        end
+    end
+
+    return result
 end
 
 local function porkify_is_valid_voucher_key(key)
@@ -217,6 +251,22 @@ local function load_stickers_folder()
         local file_name = info.name
         if file_name:sub(-4) == ".lua" then
             assert(SMODS.load_file("stickers/" .. file_name))()
+        end
+    end
+end
+
+local function load_seals_folder()
+    local mod_path = PORKIFY_MOD.path
+    local seals_path = mod_path .. "/seals"
+    local ok, files = pcall(NFS.getDirectoryItemsInfo, seals_path)
+    if not ok or not files then
+        return
+    end
+
+    for _, info in ipairs(files or {}) do
+        local file_name = info.name
+        if file_name:sub(-4) == ".lua" then
+            assert(SMODS.load_file("seals/" .. file_name))()
         end
     end
 end
@@ -521,6 +571,75 @@ local function porkify_pack_actions_enabled(pack)
     return pack and pack.porkify_pack_actions and pack.group_key == "porkify_boosters"
 end
 
+local function porkify_pack_is_unskippable(pack)
+    return not not (pack and pack.porkify_unskippable)
+end
+
+local function porkify_try_open_fixed_deck_pack()
+    if not (G and G.GAME and G.STATES) then
+        return
+    end
+
+    if not Porkify_fixed_deck_pending or Porkify_fixed_deck_opened then
+        return
+    end
+
+    local selected_back = G.GAME.selected_back
+    local back_key = selected_back and (
+        selected_back.key
+        or (selected_back.effect and selected_back.effect.center and selected_back.effect.center.key)
+        or (selected_back.config and selected_back.config.center and selected_back.config.center.key)
+    )
+
+    if type(back_key) ~= "string" or not back_key:find("fixed_deck", 1, true) then
+        return
+    end
+
+    if G.STATE ~= G.STATES.BLIND_SELECT or not G.blind_select or booster_obj then
+        return
+    end
+
+    local booster_key = "p_porkify_giga_buffoon_pack"
+    local center = G.P_CENTERS and G.P_CENTERS[booster_key]
+    if not center then
+        return
+    end
+
+    local pack = SMODS.create_card({
+        set = "Booster",
+        key = booster_key,
+        area = nil,
+        no_edition = true,
+        skip_materialize = true,
+        bypass_discovery_center = true
+    })
+
+    if not pack then
+        return
+    end
+
+    if G.blind_select and not G.blind_select.alignment.offset.py then
+        G.blind_select.alignment.offset.py = G.blind_select.alignment.offset.y
+        G.blind_select.alignment.offset.y = G.ROOM.T.y + 39
+    end
+
+    G.GAME.PACK_INTERRUPT = G.STATE
+    Porkify_fixed_deck_opened = true
+    Porkify_fixed_deck_pending = false
+
+    pack.cost = 0
+    pack.from_tag = true
+
+    if G.ROOM and G.ROOM.T and pack.T then
+        pack.T.x = G.ROOM.T.x + G.ROOM.T.w * 0.5 - pack.T.w * 0.5
+        pack.T.y = G.ROOM.T.y + G.ROOM.T.h * 0.5 - pack.T.h * 0.5
+    end
+
+    if pack.open then
+        pack:open()
+    end
+end
+
 local function porkify_ensure_highlight_tables()
     local areas = {
         G and G.hand,
@@ -617,6 +736,8 @@ if love and love.update and not Porkify_love_update then
         porkify_ensure_highlight_tables()
         porkify_install_safe_can_use_consumeable_patch()
         porkify_install_safe_can_buy_and_use_patch()
+        porkify_install_safe_can_skip_booster_patch()
+        porkify_try_open_fixed_deck_pack()
         return Porkify_love_update(dt)
     end
 end
@@ -654,6 +775,35 @@ function porkify_install_safe_can_buy_and_use_patch()
 end
 
 porkify_install_safe_can_buy_and_use_patch()
+
+function porkify_install_safe_can_skip_booster_patch()
+    if not (G and G.FUNCS and G.FUNCS.can_skip_booster) then
+        return
+    end
+
+    if Porkify_safe_can_skip_booster == nil then
+        Porkify_safe_can_skip_booster = function(e)
+            if porkify_pack_is_unskippable(booster_obj) then
+                if e and e.config then
+                    e.config.colour = G.C.UI.BACKGROUND_INACTIVE
+                    e.config.button = nil
+                end
+                return
+            end
+
+            return Porkify_can_skip_booster(e)
+        end
+    end
+
+    if G.FUNCS.can_skip_booster == Porkify_safe_can_skip_booster then
+        return
+    end
+
+    Porkify_can_skip_booster = G.FUNCS.can_skip_booster
+    G.FUNCS.can_skip_booster = Porkify_safe_can_skip_booster
+end
+
+porkify_install_safe_can_skip_booster_patch()
 
 if G and G.FUNCS and not G.FUNCS.porkify_can_store_pack_card then
     G.FUNCS.porkify_can_store_pack_card = function(e)
@@ -811,6 +961,48 @@ local function porkify_selected_back_matches(key)
         or back_key:find(key, 1, true) ~= nil
 end
 
+local porkify_get_pack_ref = get_pack
+function get_pack(_key, _type)
+    if porkify_selected_back_matches("fixed_deck") and _key == "shop_pack" and not _type and G and G.GAME then
+        local buffoon_keys = {
+            "p_buffoon_normal_1",
+            "p_buffoon_normal_2",
+            "p_buffoon_jumbo_1",
+            "p_buffoon_mega_1",
+            "p_porkify_giga_buffoon_pack"
+        }
+
+        local original_first_shop_buffoon = G.GAME.first_shop_buffoon
+        local banned_keys = G.GAME.banned_keys or {}
+        G.GAME.banned_keys = banned_keys
+
+        local previous_bans = {}
+        for i = 1, #buffoon_keys do
+            local pack_key = buffoon_keys[i]
+            previous_bans[pack_key] = banned_keys[pack_key]
+            banned_keys[pack_key] = true
+        end
+
+        G.GAME.first_shop_buffoon = true
+
+        local ok, result = pcall(porkify_get_pack_ref, _key, _type)
+
+        G.GAME.first_shop_buffoon = original_first_shop_buffoon
+        for i = 1, #buffoon_keys do
+            local pack_key = buffoon_keys[i]
+            banned_keys[pack_key] = previous_bans[pack_key]
+        end
+
+        if ok then
+            return result
+        end
+
+        error(result)
+    end
+
+    return porkify_get_pack_ref(_key, _type)
+end
+
 local function porkify_has_deck_modifier(key)
     local modifiers = G and G.GAME and G.GAME.modifiers
     return type(modifiers) == "table" and modifiers[key] == true
@@ -923,6 +1115,12 @@ end
 if SMODS and SMODS.get_probability_vars and not Porkify_get_probability_vars then
     Porkify_get_probability_vars = SMODS.get_probability_vars
     SMODS.get_probability_vars = function(card, numerator, denominator, identifier)
+        local current_round = G and G.GAME and G.GAME.current_round
+        if current_round
+            and current_round.porkify_dice_probability_active then
+            local guaranteed = math.max(tonumber(numerator) or 1, 1)
+            return guaranteed, guaranteed
+        end
         local n, d = Porkify_get_probability_vars(card, numerator, denominator, identifier)
         if porkify_active_blind_is("toll") then
             return 0, d
@@ -934,6 +1132,11 @@ end
 if SMODS and SMODS.pseudorandom_probability and not Porkify_pseudorandom_probability then
     Porkify_pseudorandom_probability = SMODS.pseudorandom_probability
     SMODS.pseudorandom_probability = function(card, seed, numerator, denominator, identifier, trigger)
+        local current_round = G and G.GAME and G.GAME.current_round
+        if current_round
+            and current_round.porkify_dice_probability_active then
+            return true
+        end
         if porkify_active_blind_is("toll") then
             return false
         end
@@ -1096,6 +1299,128 @@ end
 porkify_remove_serpent_from_game()
 porkify_install_safe_draw_patch()
 
+local function porkify_is_glitched_seal(card)
+    if not card then
+        return false
+    end
+    local seal = card.seal or (card.ability and card.ability.seal)
+    return seal == "porkify_glitched" or seal == "glitched"
+end
+
+if type(draw_card) == "function" and not Porkify_draw_card_glitched then
+    Porkify_draw_card_glitched = draw_card
+    function draw_card(from, to, percent, dir, sort, card, delay, mute, stay_flipped, vol)
+        local current_round = G and G.GAME and G.GAME.current_round
+        if from == G.play
+            and to == G.discard
+            and card
+            and current_round
+            and porkify_is_glitched_seal(card) then
+            local returned = current_round.porkify_glitched_returned_ids or {}
+            local card_key = card.unique_val or card.sort_id or tostring(card)
+            if not returned[card_key] then
+                current_round.porkify_glitched_returned_ids = returned
+                returned[card_key] = true
+                to = G.hand
+                sort = true
+            end
+        end
+
+        return Porkify_draw_card_glitched(from, to, percent, dir, sort, card, delay, mute, stay_flipped, vol)
+    end
+end
+
+local function porkify_is_pride_seal(card)
+    if not card then
+        return false
+    end
+    local seal = card.seal or (card.ability and card.ability.seal)
+    return seal == "porkify_pride" or seal == "pride"
+end
+
+local function porkify_cards_share_rank_and_suit(a, b)
+    if not (a and b and a.base and b.base and a.base.value and b.base.value) then
+        return false
+    end
+    if a.base.value ~= b.base.value then
+        return false
+    end
+
+    local suits = { "Spades", "Hearts", "Clubs", "Diamonds" }
+    for i = 1, #suits do
+        local suit = suits[i]
+        if a.is_suit and b.is_suit and a:is_suit(suit) and b:is_suit(suit) then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function porkify_append_effect_node(bucket, node)
+    if not bucket then
+        return node
+    end
+
+    local tail = bucket
+    while tail.extra do
+        tail = tail.extra
+    end
+    tail.extra = node
+    return bucket
+end
+
+if type(eval_card) == "function" and not Porkify_eval_card_pride then
+    Porkify_eval_card_pride = eval_card
+    function eval_card(card, context)
+        local eff, post = Porkify_eval_card_pride(card, context)
+
+        if G and G.GAME then
+            G.GAME.current_round = G.GAME.current_round or {}
+            if context and (
+                (context.after and context.cardarea == G.jokers)
+                or context.end_of_round
+                or context.setting_blind
+                or context.hand_drawn
+            ) then
+                G.GAME.current_round.porkify_dice_probability_active = nil
+            end
+        end
+
+        if context
+            and context.individual
+            and context.cardarea == G.play
+            and not context.end_of_round
+            and card
+            and G
+            and G.hand
+            and G.hand.cards then
+            local matching_pride_seals = 0
+
+            for _, held_card in ipairs(G.hand.cards) do
+                if held_card
+                    and not held_card.debuff
+                    and held_card.facing ~= "back"
+                    and porkify_is_pride_seal(held_card)
+                    and porkify_cards_share_rank_and_suit(held_card, card) then
+                    matching_pride_seals = matching_pride_seals + 1
+                end
+            end
+
+            if matching_pride_seals > 0 then
+                eff = eff or {}
+                eff.seals = porkify_append_effect_node(eff.seals, {
+                    Xmult = math.pow(2, matching_pride_seals),
+                    message = "Pride!",
+                    colour = G.C.ORANGE
+                })
+            end
+        end
+
+        return eff, post
+    end
+end
+
 local NFS = require("nativefs")
 to_big = to_big or function(a) return a end
 lenient_bignum = lenient_bignum or function(a) return a end
@@ -1240,6 +1565,7 @@ load_blinds_folder()
 load_decks_folder()
 load_editions_folder()
 load_enhancements_folder()
+load_seals_folder()
 load_vouchers_folder()
 
 SMODS.current_mod.optional_features = function()

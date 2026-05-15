@@ -90,8 +90,8 @@ SMODS.Joker{ -- Toilet
 		},
 
 		calc_function = function(card)
-		  local xm = (card.ability.extra and card.ability.extra.Xmult) or 1.0
-		  card.joker_display_values.x_mult = string.format("%.1f", xm)
+		  local xm = (card.ability.extra and card.ability.extra.Xmult) or 1
+		  card.joker_display_values.x_mult = xm
 		end
 	  }
 	end

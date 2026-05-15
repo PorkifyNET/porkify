@@ -67,7 +67,12 @@ SMODS.Consumable {
                     trigger = 'after',
                     delay = 0.1,
                     func = function()
-                        local seal_pool = {'Gold','Red','Blue','Purple'}
+                        local seal_pool = {
+                            'Gold', 'Red', 'Blue', 'Purple',
+                            'porkify_echo', 'porkify_forge',
+                            'porkify_ghost', 'porkify_pride', 'porkify_dice',
+                            'porkify_glitched', 'porkify_blank'
+                        }
                         local random_seal = pseudorandom_element(seal_pool, 'random_seal')
                         affected_cards[i]:set_seal(random_seal, nil, true)
                         return true

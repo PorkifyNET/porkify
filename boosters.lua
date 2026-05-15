@@ -30,6 +30,84 @@ local function porkify_apply_booster_counts(self, card)
     card.ability.extra = extra
 end
 
+local function porkify_fixed_deck_joker_pool()
+    local pool = {}
+
+    for _, center in pairs(G.P_CENTER_POOLS.Joker or {}) do
+        local rarity = center and center.rarity
+        local is_standard_joker_rarity = type(rarity) == "number" and rarity >= 1
+        local is_ruleset = rarity == "porkify_ruleset"
+
+        if center
+            and center.set == "Joker"
+            and center.key
+            and center.unlocked
+            and not center.no_collection
+            and is_standard_joker_rarity
+            and not is_ruleset
+        then
+            pool[#pool + 1] = center.key
+        end
+    end
+
+    return pool
+end
+
+local function porkify_create_fixed_deck_pack_joker(pack_card, index)
+    local full_pool = porkify_fixed_deck_joker_pool()
+    if #full_pool < 1 then
+        return nil
+    end
+
+    local seen_keys = pack_card.ability.porkify_fixed_deck_seen_keys or {}
+    pack_card.ability.porkify_fixed_deck_seen_keys = seen_keys
+
+    local available = {}
+    for i = 1, #full_pool do
+        local key = full_pool[i]
+        if not seen_keys[key] then
+            available[#available + 1] = key
+        end
+    end
+
+    if #available < 1 then
+        available = full_pool
+    end
+
+    local joker_key = pseudorandom_element(
+        available,
+        pseudoseed("porkify_fixed_deck_pack_" .. tostring(pack_card.sort_id or 0) .. "_" .. tostring(index or 0))
+    )
+
+    seen_keys[joker_key] = true
+
+    local joker = SMODS.create_card({
+        set = "Joker",
+        key = joker_key,
+        area = G.pack_cards,
+        skip_materialize = true,
+        soulable = true,
+        no_edition = true,
+        bypass_discovery_center = true
+    })
+
+    if joker then
+        if joker.remove_sticker and joker.ability and joker.ability.perishable then
+            joker:remove_sticker("perishable")
+        end
+        if joker.remove_sticker and joker.ability and (joker.ability.bulky or joker.ability.porkify_bulky) then
+            joker:remove_sticker("bulky")
+            joker:remove_sticker("porkify_bulky")
+        end
+
+        if joker.add_sticker and not (joker.ability and joker.ability.eternal) then
+            joker:add_sticker("eternal", true)
+        end
+    end
+
+    return joker
+end
+
 SMODS.Booster {
     key = 'tiny_porkify_pack',
     loc_txt = {
@@ -489,3 +567,54 @@ SMODS.Booster {
 		-- No particles for joker packs
 		end,
 	}
+
+SMODS.Booster {
+    key = "giga_buffoon_pack",
+    loc_txt = {
+        name = "Giga Buffoon Pack",
+        text = {
+            [1] = "Choose {C:attention}#1#{} of up to",
+            [2] = "{C:attention}#2#{} Joker cards,",
+            [3] = "all {C:purple}Eternal{}"
+        },
+        group_name = "porkify_boosters"
+    },
+    config = { extra = 10, choose = 5 },
+    cost = 0,
+    weight = 0,
+    atlas = "CustomBoosters",
+    pos = { x = 2, y = 0 },
+    kind = "Buffoon",
+    group_key = "porkify_boosters",
+    porkify_unskippable = true,
+    discovered = true,
+    unlocked = true,
+    no_collection = true,
+
+    credit_badges = {
+        { text = "Idea: PorkyLIVE", colour = "7A2D8C" }
+    },
+
+    in_pool = function(self, args)
+        return false
+    end,
+    loc_vars = function(self, info_queue, card)
+        return {
+            vars = { 5, 10 }
+        }
+    end,
+    set_ability = function(self, card, initial)
+        card.ability.choose = 5
+        card.ability.extra = 10
+        card.ability.porkify_fixed_deck_seen_keys = nil
+    end,
+    create_card = function(self, card, i)
+        return porkify_create_fixed_deck_pack_joker(card, i)
+    end,
+    ease_background_colour = function(self)
+        ease_colour(G.C.DYN_UI.MAIN, HEX("c96f00"))
+        ease_background_colour({ new_colour = HEX("c96f00"), special_colour = HEX("f2c14e"), contrast = 2 })
+    end,
+    particles = function(self)
+        end,
+}

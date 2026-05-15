@@ -61,9 +61,9 @@ SMODS.Joker{ --Hatsune Joku
                 {
                     border_nodes = {
                         { text = "X", colour = G.C.WHITE },
-                        { ref_table = "card.joker_display_values", ref_value = "x_chips_text", colour = G.C.WHITE, retrigger_type = "exp" }
+                        { ref_table = "card.joker_display_values", ref_value = "x_chips_text", colour = G.C.WHITE }
                     },
-                    colour = G.C.BLUE
+                    border_colour = G.C.CHIPS
                 }
             },
             reminder_text = {

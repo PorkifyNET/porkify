@@ -22,7 +22,7 @@ SMODS.Joker{ -- Lucky Number 7s
         w = 71,
         h = 95
     },
-    cost = 5,
+    cost = 7,
     rarity = 1,
     blueprint_compat = true,
     eternal_compat = true,

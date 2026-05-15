@@ -83,7 +83,12 @@ SMODS.Consumable {
 		end
 
 		local function pick_random_seal_name()
-			local seals = { 'Gold', 'Red', 'Blue', 'Purple' }
+			local seals = {
+                'Gold', 'Red', 'Blue', 'Purple',
+                'porkify_echo', 'porkify_forge',
+                'porkify_ghost', 'porkify_pride', 'porkify_dice',
+                'porkify_glitched', 'porkify_blank'
+            }
 			return pseudorandom_element(seals, "porkify_sacrifice_seal")
 		end
 

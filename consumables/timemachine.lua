@@ -73,9 +73,9 @@ SMODS.Consumable {
     end,
 
     can_use = function(self, card)
-        if not (G.GAME and G.GAME.round_resets and (G.GAME.round_resets.ante or 1) > 1) then
-            return false
-        end
+        -- if not (G.GAME and G.GAME.round_resets and (G.GAME.round_resets.ante or 1) > 1) then
+        --     return false
+        -- end
         if not (G.jokers and G.jokers.cards and #G.jokers.cards > 0) then
             return false
         end
