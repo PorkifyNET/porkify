@@ -1307,29 +1307,6 @@ local function porkify_is_glitched_seal(card)
     return seal == "porkify_glitched" or seal == "glitched"
 end
 
-if type(draw_card) == "function" and not Porkify_draw_card_glitched then
-    Porkify_draw_card_glitched = draw_card
-    function draw_card(from, to, percent, dir, sort, card, delay, mute, stay_flipped, vol)
-        local current_round = G and G.GAME and G.GAME.current_round
-        if from == G.play
-            and to == G.discard
-            and card
-            and current_round
-            and porkify_is_glitched_seal(card) then
-            local returned = current_round.porkify_glitched_returned_ids or {}
-            local card_key = card.unique_val or card.sort_id or tostring(card)
-            if not returned[card_key] then
-                current_round.porkify_glitched_returned_ids = returned
-                returned[card_key] = true
-                to = G.hand
-                sort = true
-            end
-        end
-
-        return Porkify_draw_card_glitched(from, to, percent, dir, sort, card, delay, mute, stay_flipped, vol)
-    end
-end
-
 local function porkify_is_pride_seal(card)
     if not card then
         return false
@@ -1357,17 +1334,48 @@ local function porkify_cards_share_rank_and_suit(a, b)
     return false
 end
 
-local function porkify_append_effect_node(bucket, node)
-    if not bucket then
-        return node
+local function porkify_pride_matches_scoring_hand(card)
+    if not (card and porkify_is_pride_seal(card) and not card.debuff and card.facing ~= "back") then
+        return false
     end
 
-    local tail = bucket
-    while tail.extra do
-        tail = tail.extra
+    local scoring_hand = SMODS and SMODS.last_hand and SMODS.last_hand.scoring_hand
+    if type(scoring_hand) ~= "table" then
+        return false
     end
-    tail.extra = node
-    return bucket
+
+    for _, played_card in ipairs(scoring_hand) do
+        if played_card
+            and not played_card.debuff
+            and porkify_cards_share_rank_and_suit(card, played_card) then
+            return true
+        end
+    end
+
+    return false
+end
+
+if type(draw_card) == "function" and not Porkify_draw_card_glitched then
+    Porkify_draw_card_glitched = draw_card
+    function draw_card(from, to, percent, dir, sort, card, delay, mute, stay_flipped, vol)
+        local current_round = G and G.GAME and G.GAME.current_round
+        if from == G.play
+            and to == G.discard
+            and card
+            and current_round
+            and porkify_is_glitched_seal(card) then
+            local returned = current_round.porkify_glitched_returned_ids or {}
+            local card_key = card.unique_val or card.sort_id or tostring(card)
+            if not returned[card_key] then
+                current_round.porkify_glitched_returned_ids = returned
+                returned[card_key] = true
+                to = G.hand
+                sort = true
+            end
+        end
+
+        return Porkify_draw_card_glitched(from, to, percent, dir, sort, card, delay, mute, stay_flipped, vol)
+    end
 end
 
 if type(eval_card) == "function" and not Porkify_eval_card_pride then
@@ -1387,37 +1395,24 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
             end
         end
 
-        if context
-            and context.individual
-            and context.cardarea == G.play
-            and not context.end_of_round
-            and card
-            and G
-            and G.hand
-            and G.hand.cards then
-            local matching_pride_seals = 0
+        return eff, post
+    end
+end
 
-            for _, held_card in ipairs(G.hand.cards) do
-                if held_card
-                    and not held_card.debuff
-                    and held_card.facing ~= "back"
-                    and porkify_is_pride_seal(held_card)
-                    and porkify_cards_share_rank_and_suit(held_card, card) then
-                    matching_pride_seals = matching_pride_seals + 1
-                end
-            end
+if Card and type(Card.get_chip_h_x_mult) == "function" and not Porkify_get_chip_h_x_mult_pride then
+    Porkify_get_chip_h_x_mult_pride = Card.get_chip_h_x_mult
+    function Card:get_chip_h_x_mult()
+        local base = Porkify_get_chip_h_x_mult_pride(self)
 
-            if matching_pride_seals > 0 then
-                eff = eff or {}
-                eff.seals = porkify_append_effect_node(eff.seals, {
-                    Xmult = math.pow(2, matching_pride_seals),
-                    message = "Pride!",
-                    colour = G.C.ORANGE
-                })
-            end
+        if not porkify_pride_matches_scoring_hand(self) then
+            return base
         end
 
-        return eff, post
+        if type(base) ~= "number" or base <= 0 then
+            return 2
+        end
+
+        return base * 2
     end
 end
 
