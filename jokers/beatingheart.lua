@@ -72,7 +72,7 @@ SMODS.Joker{ --Beating Heart
 		  end
 
 		  local total = per ^ count
-		  card.joker_display_values.x_total = string.format("%.2f", total)
+		  card.joker_display_values.x_total = total
 		end
 	  }
 	end

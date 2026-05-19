@@ -92,15 +92,20 @@ local function porkify_create_fixed_deck_pack_joker(pack_card, index)
     })
 
     if joker then
-        if joker.remove_sticker and joker.ability and joker.ability.perishable then
-            joker:remove_sticker("perishable")
-        end
+        local center = joker.config and joker.config.center
+        local eternal_compat = not center or center.eternal_compat ~= false
+        local perishable_compat = not center or center.perishable_compat ~= false
+
         if joker.remove_sticker and joker.ability and (joker.ability.bulky or joker.ability.porkify_bulky) then
             joker:remove_sticker("bulky")
             joker:remove_sticker("porkify_bulky")
         end
 
-        if joker.add_sticker and not (joker.ability and joker.ability.eternal) then
+        if joker.remove_sticker and joker.ability and joker.ability.perishable and (eternal_compat or not perishable_compat) then
+            joker:remove_sticker("perishable")
+        end
+
+        if eternal_compat and joker.add_sticker and not (joker.ability and joker.ability.eternal) then
             joker:add_sticker("eternal", true)
         end
     end
@@ -575,7 +580,7 @@ SMODS.Booster {
         text = {
             [1] = "Choose {C:attention}#1#{} of up to",
             [2] = "{C:attention}#2#{} Joker cards,",
-            [3] = "all {C:purple}Eternal{}"
+            [3] = "{C:purple}Eternal{} if compatible"
         },
         group_name = "porkify_boosters"
     },

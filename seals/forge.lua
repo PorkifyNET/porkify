@@ -2,11 +2,6 @@ SMODS.Seal {
     key = "forge",
     atlas = "CustomSeals",
     pos = { x = 5, y = 0 },
-    config = {
-        extra = {
-            chip_gain = 12
-        }
-    },
     badge_colour = HEX("C96B2C"),
     discovered = false,
     unlocked = true,
@@ -14,20 +9,30 @@ SMODS.Seal {
         name = "Forge Seal",
         label = "Forge Seal",
         text = {
-            [1] = "When scored, this card",
-            [2] = "permanently gains",
-            [3] = "{C:blue}+#1#{} Chips"
+            [1] = "Permanently adds {C:attention}1%{} of",
+            [2] = "this card's {C:attention}rank{} as {X:blue,C:white}XChips{}",
+            [3] = "when scored"
         }
     },
 
-    loc_vars = function(self, info_queue, card)
-        local extra = (card and card.ability and card.ability.seal and card.ability.seal.extra) or self.config.extra
-        return { vars = { extra.chip_gain or 0 } }
-    end,
-
     calculate = function(self, card, context)
         if context.main_scoring and context.cardarea == G.play then
-            card.ability.perma_bonus = (card.ability.perma_bonus or 0) + card.ability.seal.extra.chip_gain
+            local rank_id = card.get_id and card:get_id()
+            local x_chips_gain = 0
+
+            if rank_id and rank_id >= 2 and rank_id <= 10 then
+                x_chips_gain = rank_id * 0.01
+            elseif rank_id == 11 or rank_id == 12 or rank_id == 13 then
+                x_chips_gain = 0.10
+            elseif rank_id == 14 then
+                x_chips_gain = 0.11
+            end
+
+            if x_chips_gain <= 0 then
+                return
+            end
+
+            card.ability.perma_x_chips = (card.ability.perma_x_chips or 0) + x_chips_gain
             return {
                 message = localize("k_upgrade_ex"),
                 colour = G.C.CHIPS

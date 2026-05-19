@@ -35,7 +35,7 @@ SMODS.Blind{
     key = "crest",
     atlas = "CustomBlinds",
     pos = { x = 0, y = 2 },
-    boss = { min = 2 },
+    boss = { min = 4 },
     boss_colour = HEX("AA00AA"),
     mult = 2,
     dollars = 5,

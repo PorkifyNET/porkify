@@ -16,6 +16,10 @@ SMODS.Consumable {
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
 
+    credit_badges = {
+        { text = "Art: fiboscribbles", colour = "FF315A" }
+     },
+
     use = function(self, card, area, copier)
         local used_card = copier or card
         if not (G.jokers and G.jokers.cards and #G.jokers.cards > 0) then return end

@@ -9,8 +9,8 @@ SMODS.Seal {
         name = "Dice Seal",
         label = "Dice Seal",
         text = {
-            [1] = "When scored, all {C:green}probabilities{}",
-            [2] = "{C:attention}succeed{} for this {C:blue}hand{}"
+            [1] = "All {C:green}probabilities{} {C:attention}succeed{}",
+            [2] = "for this {C:blue}hand{} when scored"
         }
     },
 

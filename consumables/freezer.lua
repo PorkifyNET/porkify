@@ -6,8 +6,7 @@ SMODS.Consumable {
         name = 'Freezer',
         text = {
             [1] = 'Remove {C:spades}Perishable{} from',
-            [2] = '{C:attention}1{} selected {C:attention}Joker{}',
-            [3] = '{C:inactive}(Does not rebuff Joker){}'
+            [2] = '{C:attention}1{} selected {C:attention}Joker{}'
         }
     },
     cost = 3,

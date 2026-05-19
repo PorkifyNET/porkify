@@ -8,11 +8,10 @@ SMODS.Joker{ --The Headmaster
     loc_txt = {
         ['name'] = 'The Headmaster',
         ['text'] = {
-            [1] = 'If the first played hand',
-            [2] = 'of the round consists of',
-            [3] = 'only {C:attention}1{} {C:attention}Ace{}, create',
-            [4] = 'a {C:tarot}Hermit{} card',
-            [5] = '{C:inactive}(Must have room){}'
+            [1] = 'If {C:attention}first hand{} of round is',
+            [2] = 'a single {C:attention}Ace{}, create a',
+            [3] = '{C:tarot}Hermit{} card',
+            [4] = '{C:inactive}(Must have room){}'
         },
         ['unlock'] = {
             [1] = 'Play {C:attention}150{} {C:attention}face{} {C:attention}cards{}'

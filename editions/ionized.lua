@@ -22,7 +22,7 @@ SMODS.Edition {
         label = 'Ionized',
         text = {
             [1] = '{X:red,C:white}X5{} Mult, loses {X:red,C:white}X0.5{} Mult',
-            [2] = 'per played {C:attention}Ante{}',
+            [2] = 'per {C:attention}Ante{}',
             [3] = '{C:inactive}(Currently{} {X:red,C:white}X#1#{} {C:inactive}Mult){}'
         }
     },

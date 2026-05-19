@@ -3,11 +3,17 @@ SMODS.Consumable {
     key = 'emergencyexit',
     set = 'porkify',
     pos = { x = 9, y = 0 },
+    config = {
+        extra = {
+            dollars = 5
+        }
+    },
     loc_txt = {
         name = 'Emergency Exit',
         text = {
             [1] = 'Immediately {C:green}win{} current {C:attention}Blind{}',
-            [2] = '{C:inactive,s:0.75}(Cannot be used on Final Bosses){}'
+            [2] = 'Lose {C:money}$#1#{} when used',
+            [3] = '{C:inactive,s:0.75}(Cannot be used on Final Bosses){}'
         }
     },
     cost = 3,
@@ -16,6 +22,13 @@ SMODS.Consumable {
     hidden = false,
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
+    loc_vars = function(self, info_queue, card)
+        return {
+            vars = {
+                (self.config.extra and self.config.extra.dollars) or 5
+            }
+        }
+    end,
     use = function(self, card, area, copier)
         local used_card = copier or card
         if not (G and G.GAME and G.GAME.blind and G.GAME.blind.in_blind) then return end
@@ -29,10 +42,12 @@ SMODS.Consumable {
             blind_key == "bl_final_bell"
 
         if not is_final_boss then
+            local dollar_cost = (self.config.extra and self.config.extra.dollars) or 5
             G.E_MANAGER:add_event(Event({
                 blocking = false,
                 func = function()
                     if G.STATE == G.STATES.SELECTING_HAND then
+                        ease_dollars(-dollar_cost)
                         G.GAME.chips = G.GAME.blind.chips
                         G.STATE = G.STATES.HAND_PLAYED
                         G.STATE_COMPLETE = true

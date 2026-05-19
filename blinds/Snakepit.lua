@@ -9,8 +9,8 @@ SMODS.Blind{
     loc_txt = {
         name = "The Snakepit",
         text = {
-            [1] = "{C:attention}+2{} Hand Size,",
-            [2] = "{C:red}-1{} Hand Size per played hand"
+            -- [1] = "{C:attention}+2{} Hand Size,",
+            [1] = "{C:red}-1{} Hand Size per played hand"
         }
     },
 
@@ -23,9 +23,9 @@ SMODS.Blind{
             return
         end
 
-        G.GAME.current_round.porkify_snakepit_hand_delta = 2
+        G.GAME.current_round.porkify_snakepit_hand_delta = 0
         G.GAME.current_round.porkify_snakepit_last_hands_left = G.GAME.current_round.hands_left or 0
-        G.hand:change_size(2)
+        G.hand:change_size(0)
     end,
 
     disable = function(self, silent)

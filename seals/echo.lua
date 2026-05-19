@@ -5,7 +5,7 @@ SMODS.Seal {
     config = {
         extra = {
             base_odds = 2,
-            max_retriggers = 5
+            max_retriggers = 4
         }
     },
     badge_colour = HEX("4F7CAC"),
@@ -15,7 +15,7 @@ SMODS.Seal {
         name = "Echo Seal",
         label = "Echo Seal",
         text = {
-            [1] = "{C:green}1 in 2{} chance to retrigger,",
+            [1] = "{C:green}1 in 2{} chance to {C:attention}retrigger{},",
             [2] = "then keep rolling until",
             [3] = "it fails",
             [4] = "{C:inactive}(Up to #1# additional triggers){}"
@@ -24,7 +24,7 @@ SMODS.Seal {
 
     loc_vars = function(self, info_queue, card)
         local extra = (card and card.ability and card.ability.seal and card.ability.seal.extra) or self.config.extra
-        return { vars = { extra.max_retriggers or 5 } }
+        return { vars = { extra.max_retriggers or 4 } }
     end,
 
     calculate = function(self, card, context)
@@ -32,7 +32,7 @@ SMODS.Seal {
             local extra = (card.ability and card.ability.seal and card.ability.seal.extra) or self.config.extra
             local retriggers = 0
             local base_odds = extra.base_odds or 2
-            local max_retriggers = extra.max_retriggers or 5
+            local max_retriggers = extra.max_retriggers or 4
 
             for i = 1, max_retriggers do
                 if not SMODS.pseudorandom_probability(

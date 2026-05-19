@@ -367,6 +367,40 @@ function Blind:stay_flipped(to_area, card, from_area)
     return porkify_blind_stay_flipped_ref(self, to_area, card, from_area)
 end
 
+local porkify_blind_press_play_ref = Blind.press_play
+function Blind:press_play()
+    if not self.disabled and self.name == "The Hook" then
+        local obj = self.config and self.config.blind
+        if not (obj and obj.press_play and type(obj.press_play) == "function") then
+            G.E_MANAGER:add_event(Event({ func = function()
+                local any_selected = nil
+                local eligible_cards = {}
+                for _, hand_card in ipairs(G.hand.cards) do
+                    if not porkify_is_resolute_card(hand_card) then
+                        eligible_cards[#eligible_cards + 1] = hand_card
+                    end
+                end
+                for _ = 1, math.min(2, #eligible_cards) do
+                    local selected_card, card_key = pseudorandom_element(eligible_cards, pseudoseed("hook"))
+                    G.hand:add_to_highlighted(selected_card, true)
+                    table.remove(eligible_cards, card_key)
+                    any_selected = true
+                    play_sound("card1", 1)
+                end
+                if any_selected then
+                    G.FUNCS.discard_cards_from_highlighted(nil, true)
+                end
+                return true
+            end }))
+            self.triggered = true
+            delay(0.7)
+            return true
+        end
+    end
+
+    return porkify_blind_press_play_ref(self)
+end
+
 local porkify_cardarea_emplace_ref = CardArea.emplace
 function CardArea:emplace(card, location, stay_flipped)
     local result = porkify_cardarea_emplace_ref(self, card, location, stay_flipped)
@@ -541,6 +575,29 @@ function Porkify_attach_credit_badges(obj)
 
     return obj
 end
+
+local function Porkify_wrap_badge_constructor(name)
+    if not (SMODS and type(SMODS[name]) == "function") then
+        return
+    end
+
+    local wrapped_flag = "porkify_badge_constructor_wrapped_" .. name
+    if SMODS[wrapped_flag] then
+        return
+    end
+
+    local original_constructor = SMODS[name]
+    SMODS[name] = function(definition)
+        if type(definition) == "table" then
+            Porkify_attach_credit_badges(definition)
+        end
+        return original_constructor(definition)
+    end
+    SMODS[wrapped_flag] = true
+end
+
+Porkify_wrap_badge_constructor("Back")
+Porkify_wrap_badge_constructor("Seal")
 
 if generate_card_ui and not Porkify_generate_card_ui then
     Porkify_generate_card_ui = generate_card_ui
@@ -734,6 +791,9 @@ if love and love.update and not Porkify_love_update then
     Porkify_love_update = love.update
     love.update = function(dt)
         porkify_ensure_highlight_tables()
+        if porkify_install_draw_priority_patch then
+            porkify_install_draw_priority_patch()
+        end
         porkify_install_safe_can_use_consumeable_patch()
         porkify_install_safe_can_buy_and_use_patch()
         porkify_install_safe_can_skip_booster_patch()
@@ -1190,6 +1250,32 @@ local function porkify_safe_draw_from_deck_to_hand_impl(original, ...)
             cards_to_draw = compacted
         end
 
+        if hand_space > 0 and #cards_to_draw > 1 then
+            local gravitas_first = {}
+            local normal_draws = {}
+
+            for i = 1, #cards_to_draw do
+                local queued = cards_to_draw[i]
+                if queued and porkify_is_eligible_gravitas_draw(queued) then
+                    gravitas_first[#gravitas_first + 1] = queued
+                elseif queued then
+                    normal_draws[#normal_draws + 1] = queued
+                end
+            end
+
+            if #gravitas_first > 0 then
+                local reordered = {}
+                for i = 1, #gravitas_first do
+                    reordered[#reordered + 1] = gravitas_first[i]
+                end
+                for i = 1, #normal_draws do
+                    reordered[#reordered + 1] = normal_draws[i]
+                end
+                args[3] = reordered
+                cards_to_draw = reordered
+            end
+        end
+
         if hand_space > #cards_to_draw then
             args[2] = #cards_to_draw
         end
@@ -1299,12 +1385,228 @@ end
 porkify_remove_serpent_from_game()
 porkify_install_safe_draw_patch()
 
+local function porkify_is_gravitas_seal(card)
+    if not card then
+        return false
+    end
+    local seal = card.seal or (card.ability and card.ability.seal)
+    return seal == "porkify_gravitas" or seal == "gravitas"
+end
+
+local function porkify_is_card_debuffed_for_draw(card)
+    if not card then
+        return false
+    end
+    if card.debuff then
+        return true
+    end
+
+    local blind = G and G.GAME and G.GAME.blind
+    if not blind or blind.disabled or type(blind.recalc_debuff) ~= "function" then
+        return false
+    end
+
+    local ok, debuffed = pcall(blind.recalc_debuff, blind, card, true)
+    return ok and debuffed == true
+end
+
+function porkify_is_eligible_gravitas_draw(card)
+    return card
+        and porkify_is_gravitas_seal(card)
+        and not porkify_is_card_debuffed_for_draw(card)
+end
+
+local function porkify_prepare_cards_to_draw(cards_to_draw, hand_space)
+    if type(cards_to_draw) ~= "table" then
+        return cards_to_draw
+    end
+
+    local compacted = {}
+    local max_index = 0
+    for k, _ in pairs(cards_to_draw) do
+        if type(k) == "number" and k > max_index then
+            max_index = k
+        end
+    end
+    max_index = math.max(max_index, hand_space or 0)
+
+    for i = 1, max_index do
+        local queued = rawget(cards_to_draw, i)
+        if queued then
+            compacted[#compacted + 1] = queued
+        end
+    end
+
+    if #compacted > 1 then
+        local gravitas_first = {}
+        local normal_draws = {}
+
+        for i = 1, #compacted do
+            local queued = compacted[i]
+            if porkify_is_eligible_gravitas_draw(queued) then
+                gravitas_first[#gravitas_first + 1] = queued
+            else
+                normal_draws[#normal_draws + 1] = queued
+            end
+        end
+
+        if #gravitas_first > 0 then
+            local reordered = {}
+            for i = 1, #gravitas_first do
+                reordered[#reordered + 1] = gravitas_first[i]
+            end
+            for i = 1, #normal_draws do
+                reordered[#reordered + 1] = normal_draws[i]
+            end
+            return reordered
+        end
+    end
+
+    return compacted
+end
+
+local function porkify_get_prioritized_deck_sequence(deck_cards)
+    if type(deck_cards) ~= "table" then
+        return {}
+    end
+
+    local gravitas_first = {}
+    local normal_draws = {}
+
+    for i = #deck_cards, 1, -1 do
+        local queued = deck_cards[i]
+        if porkify_is_eligible_gravitas_draw(queued) then
+            gravitas_first[#gravitas_first + 1] = queued
+        else
+            normal_draws[#normal_draws + 1] = queued
+        end
+    end
+
+    local prioritized = {}
+    for i = 1, #gravitas_first do
+        prioritized[#prioritized + 1] = gravitas_first[i]
+    end
+    for i = 1, #normal_draws do
+        prioritized[#prioritized + 1] = normal_draws[i]
+    end
+    return prioritized
+end
+
+function porkify_install_draw_priority_patch()
+    if not (G and G.FUNCS) then
+        return
+    end
+
+    if G.FUNCS.draw_from_deck_to_hand == Porkify_draw_from_deck_to_hand_direct then
+        return
+    end
+
+    Porkify_draw_from_deck_to_hand_direct = function(e)
+        if not (G.STATE == G.STATES.TAROT_PACK or G.STATE == G.STATES.SPECTRAL_PACK or G.STATE == G.STATES.SMODS_BOOSTER_OPENED)
+            and G.hand.config.card_limit <= 0 and #G.hand.cards == 0 then
+            G.STATE = G.STATES.GAME_OVER
+            G.STATE_COMPLETE = false
+            return true
+        end
+
+        local hand_space = e
+        local cards_to_draw = {}
+        local limit = G.hand.config.card_limit - #G.hand.cards - (SMODS.cards_to_draw or 0)
+        local flags = SMODS.calculate_context({ drawing_cards = true, amount = limit })
+        limit = flags.cards_to_draw or flags.modify or limit
+        local unfixed = not G.hand.config.fixed_limit
+        local prioritized_deck = porkify_get_prioritized_deck_sequence(G.deck.cards)
+
+        for i = 1, #prioritized_deck do
+            if limit <= 0 then
+                break
+            end
+
+            local deck_card = prioritized_deck[i]
+            local mod = unfixed and (deck_card.ability.card_limit - deck_card.ability.extra_slots_used) or 0
+            if limit - 1 + mod >= 0 then
+                limit = limit - 1 + mod
+                cards_to_draw[#cards_to_draw + 1] = deck_card
+            end
+        end
+
+        cards_to_draw = porkify_prepare_cards_to_draw(cards_to_draw, hand_space)
+        hand_space = #cards_to_draw
+
+        if G.GAME.blind.name == "The Serpent"
+            and G.STATE == G.STATES.DRAW_TO_HAND
+            and not G.GAME.blind.disabled
+            and (G.GAME.current_round.hands_played > 0 or G.GAME.current_round.discards_used > 0) then
+            G.hand.config.card_limits.blind_restriction = hand_space - math.min(#G.deck.cards, 3)
+            hand_space = math.min(#G.deck.cards, 3)
+        end
+
+        delay(0.3)
+        SMODS.cards_to_draw = (SMODS.cards_to_draw or 0) + hand_space
+        SMODS.drawn_cards = {}
+
+        for i = 1, hand_space do
+            local queued = cards_to_draw[i]
+            if queued and queued.ability and queued.ability.extra_slots_used then
+                SMODS.cards_to_draw = SMODS.cards_to_draw + queued.ability.extra_slots_used
+                G.E_MANAGER:add_event(Event({
+                    trigger = "immediate",
+                    func = function()
+                        SMODS.cards_to_draw = SMODS.cards_to_draw - queued.ability.extra_slots_used
+                        return true
+                    end
+                }))
+            end
+
+            draw_card(G.deck, G.hand, i * 100 / hand_space, "up", true, queued)
+        end
+
+        G.E_MANAGER:add_event(Event({
+            trigger = "immediate",
+            func = function()
+                SMODS.cards_to_draw = SMODS.cards_to_draw - hand_space
+                return true
+            end
+        }))
+
+        G.E_MANAGER:add_event(Event({
+            trigger = "immediate",
+            func = function()
+                if #SMODS.drawn_cards > 0 then
+                    SMODS.calculate_context({
+                        first_hand_drawn = not G.GAME.current_round.any_hand_drawn and G.GAME.facing_blind,
+                        hand_drawn = G.GAME.facing_blind and SMODS.drawn_cards,
+                        other_drawn = not G.GAME.facing_blind and SMODS.drawn_cards
+                    })
+                    SMODS.drawn_cards = {}
+                    if G.GAME.facing_blind then
+                        G.GAME.current_round.any_hand_drawn = true
+                    end
+                end
+                return true
+            end
+        }))
+    end
+
+    G.FUNCS.draw_from_deck_to_hand = Porkify_draw_from_deck_to_hand_direct
+end
+
+porkify_install_draw_priority_patch()
+
 local function porkify_is_glitched_seal(card)
     if not card then
         return false
     end
     local seal = card.seal or (card.ability and card.ability.seal)
     return seal == "porkify_glitched" or seal == "glitched"
+end
+
+local function porkify_is_dice_seal(card)
+    if not card then
+        return false
+    end
+    local seal = card.seal or (card.ability and card.ability.seal)
+    return seal == "porkify_dice" or seal == "dice"
 end
 
 local function porkify_is_pride_seal(card)
@@ -1315,39 +1617,38 @@ local function porkify_is_pride_seal(card)
     return seal == "porkify_pride" or seal == "pride"
 end
 
-local function porkify_cards_share_rank_and_suit(a, b)
-    if not (a and b and a.base and b.base and a.base.value and b.base.value) then
-        return false
-    end
-    if a.base.value ~= b.base.value then
-        return false
+local function porkify_count_played_pride_seals()
+    local scoring_hand = SMODS and SMODS.last_hand and SMODS.last_hand.scoring_hand
+    if type(scoring_hand) ~= "table" then
+        return 0
     end
 
-    local suits = { "Spades", "Hearts", "Clubs", "Diamonds" }
-    for i = 1, #suits do
-        local suit = suits[i]
-        if a.is_suit and b.is_suit and a:is_suit(suit) and b:is_suit(suit) then
-            return true
+    local count = 0
+    for _, played_card in ipairs(scoring_hand) do
+        if played_card and not played_card.debuff and porkify_is_pride_seal(played_card) then
+            count = count + 1
         end
     end
 
-    return false
+    return count
 end
 
-local function porkify_pride_matches_scoring_hand(card)
+local function porkify_held_pride_multiplier_count(card)
     if not (card and porkify_is_pride_seal(card) and not card.debuff and card.facing ~= "back") then
-        return false
+        return 0
     end
 
-    local scoring_hand = SMODS and SMODS.last_hand and SMODS.last_hand.scoring_hand
+    return porkify_count_played_pride_seals()
+end
+
+local function porkify_scoring_hand_has_dice_seal(context)
+    local scoring_hand = context and (context.scoring_hand or context.full_hand)
     if type(scoring_hand) ~= "table" then
         return false
     end
 
     for _, played_card in ipairs(scoring_hand) do
-        if played_card
-            and not played_card.debuff
-            and porkify_cards_share_rank_and_suit(card, played_card) then
+        if played_card and not played_card.debuff and porkify_is_dice_seal(played_card) then
             return true
         end
     end
@@ -1363,6 +1664,7 @@ if type(draw_card) == "function" and not Porkify_draw_card_glitched then
             and to == G.discard
             and card
             and current_round
+            and not card.debuff
             and porkify_is_glitched_seal(card) then
             local returned = current_round.porkify_glitched_returned_ids or {}
             local card_key = card.unique_val or card.sort_id or tostring(card)
@@ -1381,10 +1683,23 @@ end
 if type(eval_card) == "function" and not Porkify_eval_card_pride then
     Porkify_eval_card_pride = eval_card
     function eval_card(card, context)
+        if G and G.GAME then
+            G.GAME.current_round = G.GAME.current_round or {}
+            if context
+                and context.before
+                and context.cardarea == G.jokers
+                and porkify_scoring_hand_has_dice_seal(context) then
+                G.GAME.current_round.porkify_dice_probability_active = true
+            end
+        end
+
         local eff, post = Porkify_eval_card_pride(card, context)
 
         if G and G.GAME then
             G.GAME.current_round = G.GAME.current_round or {}
+            if context and context.setting_blind then
+                G.GAME.current_round.porkify_glitched_returned_ids = {}
+            end
             if context and (
                 (context.after and context.cardarea == G.jokers)
                 or context.end_of_round
@@ -1403,16 +1718,19 @@ if Card and type(Card.get_chip_h_x_mult) == "function" and not Porkify_get_chip_
     Porkify_get_chip_h_x_mult_pride = Card.get_chip_h_x_mult
     function Card:get_chip_h_x_mult()
         local base = Porkify_get_chip_h_x_mult_pride(self)
+        local pride_count = porkify_held_pride_multiplier_count(self)
 
-        if not porkify_pride_matches_scoring_hand(self) then
+        if pride_count <= 0 then
             return base
         end
 
+        local pride_mult = 1 + 0.5 * pride_count
+
         if type(base) ~= "number" or base <= 0 then
-            return 2
+            return pride_mult
         end
 
-        return base * 2
+        return base * pride_mult
     end
 end
 

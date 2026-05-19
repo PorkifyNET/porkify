@@ -10,7 +10,8 @@ SMODS.Joker{ --Pride Banner
         ['text'] = {
             [1] = 'If {C:attention}5{} scoring face cards',
             [2] = 'are played, make the',
-            [3] = '{C:attention}first{} card {C:edition}Polychrome{}'
+            [3] = '{C:attention}first{} card {C:edition}Polychrome{}',
+            [4] = 'and add a {C:gold}Pride{} Seal'
         },
         ['unlock'] = {
             [1] = 'Play a scoring hand with {C:attention}5{} {C:attention}face{} {C:attention}cards{}'
@@ -45,6 +46,17 @@ SMODS.Joker{ --Pride Banner
         end
         return count >= 5
     end,	
+
+    loc_vars = function(self, info_queue, card)
+        local info_queue_0 = (G.P_SEALS and (G.P_SEALS["porkify_pride"] or G.P_SEALS["pride"]))
+        if info_queue_0 then
+            info_queue[#info_queue + 1] = info_queue_0
+        else
+            error("JOKERFORGE: Invalid key in infoQueues. \"porkify_pride\" isn't a valid Seal key, Did you misspell it or forgot a modprefix?")
+        end
+        return { vars = {} }
+    end,
+
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play and not context.blueprint then
             if (to_big(#context.scoring_hand) == to_big(5) and (function()
@@ -61,6 +73,7 @@ SMODS.Joker{ --Pride Banner
                     func = function()
                         
                         scored_card:set_edition("e_polychrome", true)
+                        scored_card:set_seal("porkify_pride", true, true)
                         card_eval_status_text(scored_card, 'extra', nil, nil, nil, {message = "Pride!", colour = G.C.ORANGE})
                         return true
                     end

@@ -22,7 +22,7 @@ SMODS.Joker{ --Leek
         w = 71,
         h = 95
     },
-    cost = 3,
+    cost = 9,
     rarity = 2,
     blueprint_compat = true,
     eternal_compat = true,
@@ -45,7 +45,7 @@ SMODS.Joker{ --Leek
                 card.ability.extra.x_chips = (card.ability.extra.x_chips or 1) + ((card.ability.extra.x_chips_gain) or 0.03)
                 return {
                     message = "Leek!",
-                    colour = G.C.BLUE
+                    colour = G.C.GREEN
                 }
             end
         end

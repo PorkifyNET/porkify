@@ -2,7 +2,7 @@ SMODS.Blind{
     key = "prideful",
     atlas = "CustomBlinds",
     pos = { x = 0, y = 5 },
-    boss = { min = 1 },
+    boss = { min = 2 },
     boss_colour = HEX("FF0095"),
     mult = 2,
     dollars = 5,

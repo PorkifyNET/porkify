@@ -12,11 +12,10 @@ SMODS.Seal {
             [1] = "Can be used",
             [2] = "as any {C:attention}rank{}"
         }
+    },
+    credit_badges = {
+        { text = "Art: doggfly", colour = "59A487" }
     }
-}
-
-credit_badges = {
-    { text = "Art: doggfly", colour = "59A487" }
 }
 
 local porkify_blank_card_get_id_ref = Card.get_id

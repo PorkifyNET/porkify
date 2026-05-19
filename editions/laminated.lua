@@ -20,8 +20,8 @@ SMODS.Edition {
         name = 'Laminated',
         label = 'Laminated',
         text = {
-            [1] = '{X:red,C:white}X1{} Mult, adds {X:red,C:white}X0.5{} Mult',
-            [2] = 'per {C:tarot}Consumable{} held',
+            [1] = '{X:red,C:white}X0.5{} Mult per',
+            [2] = '{C:tarot}Consumable{} held',
             [3] = '{C:inactive}(Currently{} {X:red,C:white}X#1#{} {C:inactive}Mult){}'
         }
     },
