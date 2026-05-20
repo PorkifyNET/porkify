@@ -78,5 +78,27 @@ SMODS.Joker{ -- Backlog
                 }
             end
         end
+    end,
+
+    joker_display_def = function(JokerDisplay)
+        return {
+            text = {
+                { ref_table = "card.joker_display_values", size = 0.3, ref_value = "stored_text", colour = G.C.RED }
+            },
+            -- reminder_text = {
+            --     { ref_table = "card.joker_display_values", ref_value = "cap_text", colour = G.C.GREY }
+            -- },
+
+            calc_function = function(card)
+                card.joker_display_values = card.joker_display_values or {}
+
+                local extra = (card and card.ability and card.ability.extra) or {}
+                local stored = extra.stored_discards or 0
+                local cap = extra.max_retain or 10
+
+                card.joker_display_values.stored_text = "(" .. tostring(stored) .. " Discards)"
+                card.joker_display_values.cap_text = "(" .. tostring(stored) .. "/" .. tostring(cap) .. " stored)"
+            end
+        }
     end
 }

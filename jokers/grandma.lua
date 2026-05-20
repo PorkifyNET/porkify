@@ -8,8 +8,8 @@ SMODS.Joker{ --Grandma
     loc_txt = {
         ['name'] = 'Grandma',
         ['text'] = {
-            [1] = 'Scored {C:attention}7{}, {C:attention}8{}, {C:attention}9{},',
-            [2] = '{C:attention}10{}, and {C:attention}Ace{} cards',
+            [1] = 'Scored {C:attention}8{}, {C:attention}9{}, {C:attention}10{},',
+            [2] = 'and {C:attention}Ace{} cards',
             [3] = 'give {C:money}$1{} when scored'
         },
         ['unlock'] = {
@@ -50,7 +50,7 @@ SMODS.Joker{ --Grandma
         if context.individual and context.cardarea == G.play then
             local played_card = context.other_card
             local id = played_card and played_card:get_id()
-            if id == 7 or id == 8 or id == 9 or id == 10 or id == 14 then
+            if id == 8 or id == 9 or id == 10 or id == 14 then
                 return {
                     dollars = (card.ability.extra and card.ability.extra.dollars) or 1
                 }
@@ -64,7 +64,7 @@ SMODS.Joker{ --Grandma
                 { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY, retrigger_type = "mult" }
             },
             reminder_text = {
-                { text = "(7, 8, 9, 10, A)", colour = G.C.GREY }
+                { text = "(8, 9, 10, A)", colour = G.C.GREY }
             },
 
             calc_function = function(card)
@@ -76,7 +76,7 @@ SMODS.Joker{ --Grandma
                     for _, c in pairs(scoring_hand) do
                         local id = c:get_id()
                         if not c.debuff and c.facing ~= "back"
-                            and (id == 7 or id == 8 or id == 9 or id == 10 or id == 14) then
+                            and (id == 8 or id == 9 or id == 10 or id == 14) then
                             hits = hits + JokerDisplay.calculate_card_triggers(c, scoring_hand)
                         end
                     end
