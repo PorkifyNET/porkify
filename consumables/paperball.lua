@@ -3,8 +3,8 @@ SMODS.Consumable {
     set = 'porkify',
     pos = { x = 2, y = 4 },
     display_size = {
-        w = 71 * 1, 
-        h = 95 * 1
+        w = 32 * 1, 
+        h = 46 * 1
     },
     loc_txt = {
         name = 'Paper Ball',

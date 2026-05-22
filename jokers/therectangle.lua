@@ -2,20 +2,20 @@ SMODS.Joker{ --The Rectangle
     key = "therectangle",
     config = {
         extra = {
-            DiamondCards = 13,
-            Xmult = 4
+            Xmult = 1,
+            Xmult_gain = 0.4
         }
     },
     loc_txt = {
         ['name'] = 'The Rectangle',
         ['text'] = {
-            [1] = '{X:red,C:white}X4{} Mult if there are',
-            [2] = '24 or more {C:diamonds}Diamond{} cards',
-            [3] = 'in your entire Deck',
-            [4] = '{C:inactive}(Currently {C:attention}#1#{}{C:inactive}){}'
+            [1] = 'This Joker gains {X:mult,C:white}X#2#{} Mult',
+            [2] = 'if played hand contains',
+            [3] = 'a {C:attention}Four of a Kind{}',
+            [4] = '{C:inactive}(Currently{} {X:mult,C:white}X#1#{} {C:inactive}Mult){}'
         },
         ['unlock'] = {
-            [1] = 'Have {C:attention}24{} {C:diamonds}Diamond{} cards in your deck'
+            [1] = 'Play a {C:attention}Four of a Kind{}'
         }
     },
     pos = {
@@ -35,67 +35,53 @@ SMODS.Joker{ --The Rectangle
     discovered = false,
     atlas = 'CustomJokers',
     pools = { ["porkify_porkify_jokers"] = true },
-    unlock_condition = { type = 'modify_deck', extra = { suit = 'Diamonds', count = 24 } },
+    unlock_condition = { type = 'hand', extra = 'Four of a Kind' },
 
     loc_vars = function(self, info_queue, card)
-        return { vars = { card.ability.extra.DiamondCards } }
+        local xm = (card and card.ability and card.ability.extra and card.ability.extra.Xmult) or 1
+        local gain = (card and card.ability and card.ability.extra and card.ability.extra.Xmult_gain) or 0.4
+        return { vars = { xm, string.format('%.1f', gain) } }
     end,
 
     calculate = function(self, card, context)
-        -- Recount Diamonds in the entire deck every time this Joker is evaluated
-        local count = 0
-        for _, playing_card in pairs(G.playing_cards or {}) do
-            if playing_card:is_suit("Diamonds") then
-                count = count + 1
-            end
-        end
-
-        -- Store it so loc_vars can show the live value
-        card.ability.extra.DiamondCards = count
-
-        local enough = to_big(count) >= to_big(24)
-
-        -- Main Joker scoring (during scoring phase)
         if context.cardarea == G.jokers and context.joker_main then
-            if enough then
-                return {
-                    Xmult = 4
-                }
+            local ph = context.poker_hands or {}
+            local has_four_kind = ph["Four of a Kind"] and next(ph["Four of a Kind"])
+
+            if has_four_kind and not context.blueprint then
+                card.ability.extra.Xmult = (card.ability.extra.Xmult or 1) + (card.ability.extra.Xmult_gain or 0.4)
+
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card_eval_status_text(
+                            card, 'extra', nil, nil, nil,
+                            { message = "Upgrade!", colour = G.C.MULT }
+                        )
+                        return true
+                    end
+                }))
             end
+
+            return {
+                Xmult = card.ability.extra.Xmult or 1
+            }
         end
     end,
 	
 	joker_display_def = function(JokerDisplay)
 	  return {
 		text = {
-		  -- X4 line (authentic look)
 		  {
 			border_nodes = {
 			  { text = "X" },
-			  { ref_table = "card.ability.extra", ref_value = "Xmult" }
+			  { ref_table = "card.joker_display_values", ref_value = "x_mult" }
 			}
 		  },
 		},
-		reminder_text = {
-			-- progress line
-		    { ref_table = "card.joker_display_values", ref_value = "prog_text", colour = G.C.GREY }
-		},
 
 		calc_function = function(card)
-		  local count = 0
-		  for _, c in pairs(G.playing_cards or {}) do
-			if c and c.is_suit and c:is_suit("Diamonds") then
-			  count = count + 1
-			end
-		  end
-
-		  -- keep your stored value in sync (nice for tooltip too)
-		  if card.ability and card.ability.extra then
-			card.ability.extra.DiamondCards = count
-		  end
-
-		  local ok = to_big(count) >= to_big(24)
-		  card.joker_display_values.prog_text = "(" .. tostring(count) .. "/24)"
+		  local xm = (card.ability and card.ability.extra and card.ability.extra.Xmult) or 1
+		  card.joker_display_values.x_mult = xm
 		end
 	  }
 	end

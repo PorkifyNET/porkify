@@ -20,13 +20,13 @@ SMODS.Joker{ -- Trans Joker
     },
     display_size = {
         w = 71,
-        h = 95
+        h = 64
     },
     cost = 5,
     rarity = 2,
     blueprint_compat = true,
     eternal_compat = true,
-    perishable_compat = true,
+    perishable_compat = false,
     unlocked = true,
     discovered = false,
     atlas = 'CustomJokers',
