@@ -1,3 +1,21 @@
+local function get_hormone_uses()
+    if not (G and G.GAME) then
+        return 0
+    end
+
+    return G.GAME.porkify_transjoker_hormone_uses or 0
+end
+
+local function sync_transjoker_xmult(card)
+    if not (card and card.ability and card.ability.extra) then
+        return 1
+    end
+
+    local xmult = 1 + get_hormone_uses()
+    card.ability.extra.Xmult = xmult
+    return xmult
+end
+
 SMODS.Joker{ -- Trans Joker
     key = "transjoker",
     config = {
@@ -52,7 +70,17 @@ SMODS.Joker{ -- Trans Joker
         return { vars = { xm } }
     end,
 
+    add_to_deck = function(self, card, from_debuff)
+        if from_debuff then
+            return
+        end
+
+        sync_transjoker_xmult(card)
+    end,
+
     calculate = function(self, card, context)
+        sync_transjoker_xmult(card)
+
         if context.using_consumeable and not context.blueprint then
             local consumeable = context.consumeable
             local center = consumeable and consumeable.config and consumeable.config.center
@@ -68,7 +96,7 @@ SMODS.Joker{ -- Trans Joker
             if is_hormone then
                 return {
                     func = function()
-                        card.ability.extra.Xmult = (card.ability.extra.Xmult or 1) + 1
+                        sync_transjoker_xmult(card)
                         return true
                     end,
                     message = "Upgrade!",
@@ -96,7 +124,7 @@ SMODS.Joker{ -- Trans Joker
             },
 
             calc_function = function(card)
-                local xm = (card.ability.extra and card.ability.extra.Xmult) or 1
+                local xm = sync_transjoker_xmult(card)
                 card.joker_display_values.x_mult = xm
             end
         }

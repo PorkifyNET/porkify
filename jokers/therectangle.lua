@@ -27,7 +27,7 @@ SMODS.Joker{ --The Rectangle
         h = 95
     },
     cost = 6,
-    rarity = 3,
+    rarity = 2,
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,

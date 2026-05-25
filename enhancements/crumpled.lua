@@ -20,7 +20,7 @@ SMODS.Enhancement {
     replace_base_card = false,
     no_rank = false,
     no_suit = false,
-    always_scores = true,
+    always_scores = false,
     unlocked = true,
     discovered = false,
     no_collection = false,

@@ -11,7 +11,7 @@ SMODS.Enhancement {
         name = 'Ancient',
         text = {
             [1] = '{C:red}+1{} Mult for',
-            [2] = 'each {C:money}$1{} you have',
+            [2] = 'each {C:money}$3{} you have',
             [3] = '{C:inactive}(Currently{} {C:red}+#1#{} {C:inactive}Mult){}'
         }
     },
@@ -31,12 +31,12 @@ SMODS.Enhancement {
      },
     
     loc_vars = function(self, info_queue, card)
-        return {vars = {(G.GAME.dollars or 0)}}
+        return {vars = {math.floor((G.GAME.dollars or 0) / 3)}}
     end,
     calculate = function(self, card, context)
         if context.main_scoring and context.cardarea == G.play then
             return {
-                mult = G.GAME.dollars
+                mult = math.floor((G.GAME.dollars or 0) / 3)
             }
         end
     end

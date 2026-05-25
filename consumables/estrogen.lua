@@ -1,3 +1,10 @@
+local function record_estrogen_or_testosterone_use()
+    if not (G and G.GAME) then
+        return
+    end
+
+    G.GAME.porkify_transjoker_hormone_uses = (G.GAME.porkify_transjoker_hormone_uses or 0) + 1
+end
 
 SMODS.Consumable {
     key = 'estrogen',
@@ -8,7 +15,7 @@ SMODS.Consumable {
         text = {
             [1] = 'Turn {C:attention}1{} selected card',
             [2] = 'into a {C:attention}Queen{} and add',
-            [3] = 'a {C:blue}Blue{} Seal'
+            [3] = 'a {C:attention}Pride{} Seal'
         }
     },
     cost = 3,
@@ -23,7 +30,7 @@ SMODS.Consumable {
      },
 
     loc_vars = function(self, info_queue, card)
-        local info_queue_0 = G.P_SEALS and G.P_SEALS["Blue"]
+        local info_queue_0 = G.P_SEALS and (G.P_SEALS["porkify_pride"] or G.P_SEALS["pride"])
         if info_queue_0 then
             info_queue[#info_queue + 1] = info_queue_0
         end
@@ -33,6 +40,7 @@ SMODS.Consumable {
     use = function(self, card, area, copier)
         local used_card = copier or card
         if (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) == to_big(1)) then
+            record_estrogen_or_testosterone_use()
             G.E_MANAGER:add_event(Event({
                 trigger = 'after',
                 delay = 0.4,
@@ -61,7 +69,7 @@ SMODS.Consumable {
                     trigger = 'after',
                     delay = 0.1,
                     func = function()
-                        G.hand.highlighted[i]:set_seal("Blue", nil, true)
+                        G.hand.highlighted[i]:set_seal("porkify_pride", nil, true)
                         return true
                     end
                 }))

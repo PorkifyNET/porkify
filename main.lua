@@ -298,33 +298,6 @@ SMODS.ObjectType({
     cards = PORKIFY_FOOD_JOKERS,
 })
 
-SMODS.ObjectType({
-    key = "porkify_porkify_jokers",
-    cards = {
-        ["j_porkify__9carats"] = true,
-        ["j_porkify_appletree"] = true,
-        ["j_porkify_bailout"] = true,
-        ["j_porkify_beatingheart"] = true,
-        ["j_porkify_cardception"] = true,
-        ["j_porkify_cupofcoffee"] = true,
-        ["j_porkify_dynamite"] = true,
-        ["j_porkify_grabfour"] = true,
-        ["j_porkify_loading"] = true,
-        ["j_porkify_luckynumber7s"] = true,
-        ["j_porkify_nu"] = true,
-        ["j_porkify_omnipotentjoker"] = true,
-        ["j_porkify_pencil"] = true,
-        ["j_porkify_perfectloop"] = true,
-        ["j_porkify_refridgerator"] = true,
-        ["j_porkify_thecenterpiece"] = true,
-        ["j_porkify_theheadmaster"] = true,
-        ["j_porkify_thehospital"] = true,
-        ["j_porkify_therectangle"] = true,
-        ["j_porkify_thewindow"] = true,
-        ["j_porkify_wormhole"] = true
-    },
-})
-
 SMODS.current_mod.optional_features = function()
     return {
         cardareas = {} 
