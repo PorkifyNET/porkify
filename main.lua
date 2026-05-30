@@ -1697,7 +1697,7 @@ if Card and type(Card.get_chip_h_x_mult) == "function" and not Porkify_get_chip_
             return base
         end
 
-        local pride_mult = 1 + 0.5 * pride_count
+        local pride_mult = 1 + pride_count
 
         if type(base) ~= "number" or base <= 0 then
             return pride_mult
@@ -1815,7 +1815,7 @@ local function load_editions_folder()
     end
 end
 
-local enhancementIndexList = {4,3,7,6,5,1,2}
+local enhancementIndexList = {7,3,10,9,8,1,2,5,6,4}
 
 local function load_enhancements_folder()
     local mod_path = SMODS.current_mod.path

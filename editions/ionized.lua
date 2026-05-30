@@ -11,7 +11,7 @@ SMODS.Edition {
         }
     },
     in_shop = true,
-    weight = 6,
+    weight = 3,
     extra_cost = 2,
     apply_to_float = false,
     sound = { sound = "negative", per = 1.2, vol = 0.4 },

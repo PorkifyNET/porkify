@@ -116,7 +116,7 @@ local emerald_stake = SMODS.Stake{
     loc_txt = {
         name = "Emerald Stake",
         text = {
-            "Jokers may have {C:attention}Bulky{} stickers",
+            "Jokers can have {C:attention}Bulky{} stickers",
             "{C:inactive,s:0.9}(Takes up{} {C:attention,s:0.9}2{} {C:inactive,s:0.9}Joker Slots){}"
         },
         sticker = {

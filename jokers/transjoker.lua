@@ -50,6 +50,10 @@ SMODS.Joker{ -- Trans Joker
     atlas = 'CustomJokers',
     pools = { ["porkify_porkify_jokers"] = true },
 
+    credit_badges = {
+        { text = "Art: Etharim", colour = "F1641E" }
+     },
+
     loc_vars = function(self, info_queue, card)
         local xm = (card and card.ability and card.ability.extra and card.ability.extra.Xmult) or 1
 

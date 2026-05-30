@@ -5,7 +5,7 @@ SMODS.Edition {
     key = 'monochrome',
     shader = 'monochrome',
     in_shop = true,
-    weight = 8,
+    weight = 4,
     extra_cost = 1,
     apply_to_float = false,
     sound = { sound = "cardFan2", per = 1.2, vol = 0.4 },

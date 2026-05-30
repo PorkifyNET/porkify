@@ -9,10 +9,14 @@ SMODS.Seal {
         name = "Pride Seal",
         label = "Pride Seal",
         text = {
-            [1] = "Gains {X:red,C:white}X0.5{} Mult for",
+            [1] = "Gains {X:red,C:white}X1{} Mult for",
             [2] = "each {C:attention}Pride Seal{} played",
             [3] = "this hand",
             [4] = "{C:inactive}(Must be held in hand){}"
         }
-    }
+    },
+
+    credit_badges = {
+        { text = "Art: Etharim", colour = "F1641E" }
+     },
 }

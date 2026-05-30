@@ -29,7 +29,7 @@ SMODS.Edition {
         }
     },
     in_shop = true,
-    weight = 4,
+    weight = 2,
     extra_cost = 5,
     apply_to_float = false,
     sound = { sound = "coin1", per = 1.2, vol = 0.4 },

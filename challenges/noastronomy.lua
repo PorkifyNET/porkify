@@ -30,7 +30,6 @@ SMODS.Challenge{
 			{ id = "c_black_hole" },
 			{ id = "c_trance" },
 			{ id = "c_porkify_asteroid" },
-			{ id = "c_porkify_estrogen" },
 			{ id = "c_porkify_finalfrontier" },
 			{ id = "j_porkify_discovery" },
 			{id = 'p_celestial_normal_1', ids = {

@@ -10,7 +10,7 @@ SMODS.Edition {
         }
     },
     in_shop = true,
-    weight = 12,
+    weight = 6,
     extra_cost = 2,
     apply_to_float = false,
     sound = { sound = "chips2", per = 1.2, vol = 0.4 },
