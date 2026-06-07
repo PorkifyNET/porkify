@@ -1,15 +1,15 @@
-
 SMODS.Consumable {
-    key = 'rainbow',
+    key = 'connectthedots',
     set = 'porkify',
-    pos = { x = 3, y = 2 },
+    pos = { x = 9, y = 4 },
     loc_txt = {
-        name = 'Rainbow',
+        name = 'Connect the Dots',
         text = {
-            [1] = 'Add a {C:attention}Pride Seal{} to',
-            [2] = 'selected {C:attention}face{} cards'
+            [1] = 'Enhance up to {C:attention}3{} selected',
+            [2] = 'cards to {C:enhanced}Dot{} cards'
         }
     },
+    config = { min_highlighted = 1, max_highlighted = 3 },
     cost = 3,
     unlocked = true,
     discovered = false,
@@ -18,7 +18,7 @@ SMODS.Consumable {
     atlas = 'CustomConsumables',
 
     loc_vars = function(self, info_queue, card)
-        local info_queue_0 = G.P_SEALS and (G.P_SEALS["porkify_pride"] or G.P_SEALS["pride"])
+        local info_queue_0 = G.P_CENTERS["m_porkify_dot"]
         if info_queue_0 then
             info_queue[#info_queue + 1] = info_queue_0
         end
@@ -27,7 +27,7 @@ SMODS.Consumable {
 
     use = function(self, card, area, copier)
         local used_card = copier or card
-        if not self:can_use(card) then return end
+        if not (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) >= to_big(1) and to_big(#G.hand.highlighted) <= to_big(3)) then return end
 
         local targets = {}
         for i = 1, #G.hand.highlighted do
@@ -65,7 +65,7 @@ SMODS.Consumable {
                 trigger = 'after',
                 delay = 0.1,
                 func = function()
-                    targets[i]:set_seal("porkify_pride", nil, true)
+                    targets[i]:set_ability(G.P_CENTERS.m_porkify_dot, nil, true)
                     return true
                 end
             }))
@@ -98,17 +98,6 @@ SMODS.Consumable {
     end,
 
     can_use = function(self, card)
-        if not (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) >= to_big(1)) then
-            return false
-        end
-
-        for i = 1, #G.hand.highlighted do
-            local highlighted = G.hand.highlighted[i]
-            if not (highlighted and highlighted.is_face and highlighted:is_face()) then
-                return false
-            end
-        end
-
-        return true
+        return (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) >= to_big(1) and to_big(#G.hand.highlighted) <= to_big(3)) == true
     end
 }

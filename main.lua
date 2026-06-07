@@ -146,7 +146,8 @@ if PORKIFY_MOD then
                                 "Toggles credit badges, such as Idea and Art.",
                                 "This can help with visual clutter if you have",
                                 "a lot of mods that add credit badges, or if you",
-                                "just prefer a cleaner look."
+                                "just prefer a cleaner look.",
+                                "(Food badges are not affected)"
                             },
                             active_colour = HEX("ff0095"),
                             callback = function()
@@ -291,6 +292,8 @@ PORKIFY_FOOD_JOKERS = {
     ["j_porkify_taco"] = true,
     ["j_porkify_pizza"] = true,
     ["j_porkify_leek"] = true,
+    ["j_porkify_fortunecookie"] = true,
+    ["j_porkify_juicebox"] = true,
 }
 
 SMODS.ObjectType({
@@ -330,6 +333,112 @@ local function porkify_is_resolute_card(card)
     local center = card and card.config and card.config.center
     local center_key = (center and center.key) or (card and card.config and card.config.center_key)
     return center_key == "m_porkify_revolving"
+end
+
+local function porkify_find_non_resolute_highlight_target(area)
+    if not (area and area.cards) then
+        return nil
+    end
+
+    local eligible = {}
+    for _, hand_card in ipairs(area.cards) do
+        if hand_card and not porkify_is_resolute_card(hand_card) and not hand_card.highlighted then
+            eligible[#eligible + 1] = hand_card
+        end
+    end
+
+    if #eligible == 0 then
+        return nil
+    end
+
+    return pseudorandom_element(eligible, pseudoseed("porkify_cerulean_bell"))
+end
+
+local function porkify_cerulean_bell_active()
+    local blind = G and G.GAME and G.GAME.blind
+    local blind_key = blind and (blind.original_key or blind.key)
+    return type(blind_key) == "string"
+        and (
+            blind_key == "cerulean_bell"
+            or blind_key == "bl_cerulean_bell"
+            or blind_key:find("cerulean", 1, true) ~= nil
+            or blind_key:find("bell", 1, true) ~= nil
+        )
+end
+
+local function porkify_card_has_bell_force_flag(card)
+    if not card then
+        return false
+    end
+
+    local suspects = {
+        "forced_selection",
+        "force_selected",
+        "must_select",
+        "forced_selected",
+        "selected_by_bell"
+    }
+
+    for _, key in ipairs(suspects) do
+        if card[key] or (card.ability and card.ability[key]) then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function porkify_clear_bell_force_flags(card)
+    if not card then
+        return
+    end
+
+    local suspects = {
+        "forced_selection",
+        "force_selected",
+        "must_select",
+        "forced_selected",
+        "selected_by_bell"
+    }
+
+    for _, key in ipairs(suspects) do
+        card[key] = nil
+        if card.ability then
+            card.ability[key] = nil
+        end
+    end
+end
+
+local function porkify_fix_cerulean_bell_resolute_pick()
+    if not (porkify_cerulean_bell_active() and G and G.hand and G.hand.highlighted) then
+        return
+    end
+
+    local removed_any = false
+    local highlighted_count = #G.hand.highlighted
+
+    for i = #G.hand.highlighted, 1, -1 do
+        local highlighted = G.hand.highlighted[i]
+        if highlighted
+            and porkify_is_resolute_card(highlighted)
+            and (highlighted_count == 1 or porkify_card_has_bell_force_flag(highlighted)) then
+            porkify_clear_bell_force_flags(highlighted)
+            highlighted.highlighted = false
+            table.remove(G.hand.highlighted, i)
+            removed_any = true
+        end
+    end
+
+    if removed_any and #G.hand.highlighted == 0 then
+        local replacement = porkify_find_non_resolute_highlight_target(G.hand)
+        if replacement then
+            if Porkify_cardarea_add_to_highlighted_resolute then
+                Porkify_cardarea_add_to_highlighted_resolute(G.hand, replacement, true)
+            else
+                G.hand:add_to_highlighted(replacement, true)
+            end
+        end
+    end
 end
 
 local porkify_blind_stay_flipped_ref = Blind.stay_flipped
@@ -382,6 +491,23 @@ function CardArea:emplace(card, location, stay_flipped)
         card.ability.wheel_flipped = nil
     end
     return result
+end
+
+if CardArea and type(CardArea.add_to_highlighted) == "function" and not Porkify_cardarea_add_to_highlighted_resolute then
+    Porkify_cardarea_add_to_highlighted_resolute = CardArea.add_to_highlighted
+    function CardArea:add_to_highlighted(card, silent)
+        if self == G.hand
+            and porkify_cerulean_bell_active()
+            and porkify_is_resolute_card(card) then
+            local replacement = porkify_find_non_resolute_highlight_target(self)
+            if replacement then
+                return Porkify_cardarea_add_to_highlighted_resolute(self, replacement, silent)
+            end
+            return
+        end
+
+        return Porkify_cardarea_add_to_highlighted_resolute(self, card, silent)
+    end
 end
 
 if JokerDisplay then
@@ -605,6 +731,274 @@ local function porkify_pack_is_unskippable(pack)
     return not not (pack and pack.porkify_unskippable)
 end
 
+local PORKIFY_FINAL_BOSS_KEYS = {
+    "bl_final_acorn",
+    "bl_final_leaf",
+    "bl_final_vessel",
+    "bl_final_heart",
+    "bl_final_bell"
+}
+
+local function porkify_is_final_boss_key(key)
+    if type(key) ~= "string" then
+        return false
+    end
+
+    for i = 1, #PORKIFY_FINAL_BOSS_KEYS do
+        if PORKIFY_FINAL_BOSS_KEYS[i] == key then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function porkify_choose_final_boss_key()
+    return pseudorandom_element(
+        PORKIFY_FINAL_BOSS_KEYS,
+        pseudoseed("porkify_final_boss_" .. tostring((G and G.GAME and G.GAME.round) or 0))
+    )
+end
+
+local function porkify_ensure_in_playing_cards(pc)
+    if not (G and G.playing_cards and pc) then
+        return
+    end
+
+    for i = 1, #G.playing_cards do
+        if G.playing_cards[i] == pc then
+            return
+        end
+    end
+
+    table.insert(G.playing_cards, pc)
+end
+
+function Porkify_add_plain_playing_cards(count)
+    if not (G and G.playing_cards and #G.playing_cards > 0 and count and count > 0) then
+        return 0
+    end
+
+    local added = 0
+
+    for i = 1, count do
+        local source = pseudorandom_element(
+            G.playing_cards,
+            pseudoseed("porkify_plain_playing_card_" .. tostring(i))
+        ) or G.playing_cards[1]
+
+        if source then
+            local copy = copy_card(source, nil, nil, nil, false)
+            if copy then
+                if copy.set_ability and G.P_CENTERS and G.P_CENTERS.c_base then
+                    copy:set_ability(G.P_CENTERS.c_base, nil, true)
+                end
+                if copy.set_seal then
+                    copy:set_seal(nil, nil, true)
+                end
+                if copy.set_edition then
+                    copy:set_edition(nil, true)
+                end
+
+                copy.ability = copy.ability or {}
+                copy.ability.perma_bonus = 0
+                copy.ability.perma_mult = 0
+                copy.ability.perma_x_mult = 0
+                copy.ability.perma_p_dollars = 0
+
+                if copy.start_materialize then
+                    copy:start_materialize()
+                end
+                if copy.add_to_deck then
+                    copy:add_to_deck()
+                end
+                porkify_ensure_in_playing_cards(copy)
+
+                if G.deck and G.deck.emplace then
+                    G.deck:emplace(copy)
+                elseif G.hand and G.hand.emplace then
+                    G.hand:emplace(copy)
+                end
+
+                added = added + 1
+            end
+        end
+    end
+
+    return added
+end
+
+function Porkify_zero_money()
+    if not (G and G.GAME) then
+        return
+    end
+
+    local current = tonumber(G.GAME.dollars) or 0
+    if current > 0 then
+        ease_dollars(-current, true)
+    end
+end
+
+function Porkify_scale_current_blind(mult)
+    if not (G and G.GAME and G.GAME.blind and type(mult) == "number" and mult > 0) then
+        return
+    end
+
+    G.GAME.blind.chips = math.max(1, math.floor((G.GAME.blind.chips or 1) * mult))
+    G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
+    if G.HUD_blind then
+        G.HUD_blind:recalculate()
+    end
+end
+
+function Porkify_add_no_reward_blinds(count)
+    if not (G and G.GAME and type(count) == "number" and count > 0) then
+        return
+    end
+
+    G.GAME.modifiers = G.GAME.modifiers or {}
+    if G.GAME.porkify_base_no_reward == nil then
+        G.GAME.porkify_base_no_reward = not not G.GAME.modifiers.no_reward
+    end
+    G.GAME.porkify_no_reward_blinds_remaining = (G.GAME.porkify_no_reward_blinds_remaining or 0) + count
+    G.GAME.modifiers.no_reward = true
+end
+
+local function porkify_consume_no_reward_blind()
+    if not (G and G.GAME and (G.GAME.porkify_no_reward_blinds_remaining or 0) > 0) then
+        return
+    end
+
+    G.GAME.porkify_no_reward_blinds_remaining = G.GAME.porkify_no_reward_blinds_remaining - 1
+    if G.GAME.porkify_no_reward_blinds_remaining <= 0 then
+        G.GAME.porkify_no_reward_blinds_remaining = 0
+        G.GAME.modifiers = G.GAME.modifiers or {}
+        G.GAME.modifiers.no_reward = not not G.GAME.porkify_base_no_reward
+    end
+end
+
+local function porkify_apply_final_boss_choice(choice, key)
+    if type(choice) == "string" then
+        return key
+    end
+
+    if type(choice) ~= "table" then
+        return choice
+    end
+
+    local blind_def = G and G.P_BLINDS and G.P_BLINDS[key]
+    choice.key = key
+    choice.original_key = key
+    choice.boss = true
+    choice.config = choice.config or {}
+    if blind_def then
+        choice.config.blind = blind_def
+        choice.name = blind_def.name or choice.name
+    elseif choice.config.blind then
+        choice.config.blind.key = key
+    end
+    return choice
+end
+
+function Porkify_force_next_boss_final()
+    if not (G and G.GAME) then
+        return
+    end
+
+    G.GAME.porkify_force_final_boss_pending = true
+    if G.GAME.blind_choices and G.GAME.blind_choices.Boss then
+        local key = porkify_choose_final_boss_key()
+        G.GAME.blind_choices.Boss = porkify_apply_final_boss_choice(G.GAME.blind_choices.Boss, key)
+    end
+end
+
+local function porkify_apply_pending_final_boss_to_active_blind()
+    if not (G and G.GAME and G.GAME.porkify_force_final_boss_pending and G.GAME.blind) then
+        return
+    end
+
+    local blind = G.GAME.blind
+    local active_key = blind.original_key or blind.key or (blind.config and blind.config.blind and blind.config.blind.key)
+    if not blind.boss or porkify_is_final_boss_key(active_key) then
+        return
+    end
+
+    local key = porkify_choose_final_boss_key()
+    local blind_def = G.P_BLINDS and G.P_BLINDS[key]
+    blind.key = key
+    blind.original_key = key
+    blind.boss = true
+    blind.disabled = false
+    blind.config = blind.config or {}
+    if blind_def then
+        blind.config.blind = blind_def
+        blind.name = blind_def.name or blind.name
+    elseif blind.config.blind then
+        blind.config.blind.key = key
+    end
+    if G.HUD_blind then
+        G.HUD_blind:recalculate()
+    end
+    G.GAME.porkify_force_final_boss_pending = nil
+end
+
+function Porkify_create_negative_mr_bones()
+    if not (SMODS and SMODS.create_card and G and G.jokers) then
+        return nil
+    end
+
+    local new_joker = SMODS.create_card({
+        set = 'Joker',
+        key = 'j_mr_bones',
+        area = G.jokers,
+        skip_materialize = true,
+        soulable = true,
+        no_edition = true,
+        bypass_discovery_center = true
+    })
+
+    if not new_joker then
+        return nil
+    end
+
+    if new_joker.set_edition then
+        new_joker:set_edition('e_negative', true)
+    end
+    if new_joker.start_materialize then
+        new_joker:start_materialize()
+    end
+    if new_joker.add_to_deck then
+        new_joker:add_to_deck()
+    end
+    if G.jokers.emplace then
+        G.jokers:emplace(new_joker)
+    end
+
+    return new_joker
+end
+
+function Porkify_pick_random_enhancement_key()
+    local pool = {}
+    if G and G.P_CENTER_POOLS and (G.P_CENTER_POOLS.Enhanced or G.P_CENTER_POOLS.Enhancement) then
+        local p = G.P_CENTER_POOLS.Enhanced or G.P_CENTER_POOLS.Enhancement
+        for _, v in pairs(p) do
+            if v and v.key and v.key ~= 'c_base' then
+                pool[#pool + 1] = v.key
+            end
+        end
+    elseif G and G.P_CENTERS then
+        for k, v in pairs(G.P_CENTERS) do
+            if v and (v.set == 'Enhanced' or v.set == 'Enhancement') and k ~= 'c_base' then
+                pool[#pool + 1] = k
+            end
+        end
+    end
+    if #pool == 0 then
+        return nil
+    end
+    return pseudorandom_element(pool, pseudoseed("porkify_random_enhancement"))
+end
+
 local function porkify_try_open_fixed_deck_pack()
     if not (G and G.GAME and G.STATES) then
         return
@@ -764,6 +1158,7 @@ if love and love.update and not Porkify_love_update then
     Porkify_love_update = love.update
     love.update = function(dt)
         porkify_ensure_highlight_tables()
+        porkify_fix_cerulean_bell_resolute_pick()
         if porkify_install_draw_priority_patch then
             porkify_install_draw_priority_patch()
         end
@@ -1155,7 +1550,7 @@ if SMODS and SMODS.get_probability_vars and not Porkify_get_probability_vars the
             return guaranteed, guaranteed
         end
         local n, d = Porkify_get_probability_vars(card, numerator, denominator, identifier)
-        if porkify_active_blind_is("toll") then
+        if porkify_active_blind_is("toll") and not porkify_is_resolute_card(card) then
             return 0, d
         end
         return n, d
@@ -1170,7 +1565,7 @@ if SMODS and SMODS.pseudorandom_probability and not Porkify_pseudorandom_probabi
             and current_round.porkify_dice_probability_active then
             return true
         end
-        if porkify_active_blind_is("toll") then
+        if porkify_active_blind_is("toll") and not porkify_is_resolute_card(card) then
             return false
         end
         return Porkify_pseudorandom_probability(card, seed, numerator, denominator, identifier, trigger)
@@ -1664,6 +2059,18 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
                 and porkify_scoring_hand_has_dice_seal(context) then
                 G.GAME.current_round.porkify_dice_probability_active = true
             end
+            if context
+                and context.before
+                and context.cardarea == G.jokers then
+                local resolute_count = 0
+                for _, played_card in ipairs(context.full_hand or {}) do
+                    if porkify_is_resolute_card(played_card) then
+                        resolute_count = resolute_count + 1
+                    end
+                end
+                G.GAME.current_round.porkify_tooth_resolute_refund = resolute_count
+                G.GAME.current_round.porkify_tooth_resolute_hand_active = resolute_count > 0
+            end
         end
 
         local eff, post = Porkify_eval_card_pride(card, context)
@@ -1671,6 +2078,12 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
         if G and G.GAME then
             G.GAME.current_round = G.GAME.current_round or {}
             if context and context.setting_blind then
+                porkify_consume_no_reward_blind()
+                if G.GAME.porkify_force_final_boss_pending and G.GAME.blind_choices and G.GAME.blind_choices.Boss then
+                    local key = porkify_choose_final_boss_key()
+                    G.GAME.blind_choices.Boss = porkify_apply_final_boss_choice(G.GAME.blind_choices.Boss, key)
+                end
+                porkify_apply_pending_final_boss_to_active_blind()
                 G.GAME.current_round.porkify_glitched_returned_ids = {}
             end
             if context and (
@@ -1679,11 +2092,49 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
                 or context.setting_blind
                 or context.hand_drawn
             ) then
+                if context.after
+                    and context.cardarea == G.jokers
+                    and porkify_active_blind_is("tooth")
+                    and (G.GAME.current_round.porkify_tooth_resolute_refund or 0) > 0 then
+                    local refund = G.GAME.current_round.porkify_tooth_resolute_refund
+                    G.GAME.current_round.porkify_tooth_resolute_refund = 0
+                    G.E_MANAGER:add_event(Event({
+                        trigger = 'after',
+                        delay = 0,
+                        func = function()
+                            ease_dollars(refund, true)
+                            return true
+                        end
+                    }))
+                end
                 G.GAME.current_round.porkify_dice_probability_active = nil
+                if not (context.setting_blind or context.hand_drawn) then
+                    G.GAME.current_round.porkify_tooth_resolute_refund = nil
+                    G.GAME.current_round.porkify_tooth_resolute_hand_active = nil
+                end
             end
         end
 
         return eff, post
+    end
+end
+
+if type(ease_dollars) == "function" and not Porkify_ease_dollars_resolute then
+    Porkify_ease_dollars_resolute = ease_dollars
+    function ease_dollars(mod, instant)
+        local adjusted = mod
+        local current_round = G and G.GAME and G.GAME.current_round
+        if type(adjusted) == "number"
+            and adjusted < 0
+            and porkify_active_blind_is("tooth")
+            and current_round
+            and current_round.porkify_tooth_resolute_hand_active
+            and (current_round.porkify_tooth_resolute_refund or 0) > 0 then
+            local refund = math.min(-adjusted, current_round.porkify_tooth_resolute_refund)
+            adjusted = adjusted + refund
+            current_round.porkify_tooth_resolute_refund = current_round.porkify_tooth_resolute_refund - refund
+        end
+        return Porkify_ease_dollars_resolute(adjusted, instant)
     end
 end
 

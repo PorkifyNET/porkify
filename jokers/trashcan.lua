@@ -69,6 +69,9 @@ SMODS.Joker{ --Trash Can
             text = {
                 { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY }
             },
+            reminder_text = {
+                { text = "(Round)", colour = G.C.GREY }
+            },
 
             calc_function = function(card)
                 local current_round = G and G.GAME and G.GAME.current_round

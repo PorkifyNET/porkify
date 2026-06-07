@@ -12,7 +12,8 @@ SMODS.Consumable {
     loc_txt = {
         name = 'Arachnid',
         text = {
-            [1] = '{C:attention}+1{} Play Size'
+            [1] = '{C:blue}+1{} Play Size,',
+            [2] = '{C:red}+1{} Discard Size'
         }
     },
     cost = 3,
@@ -30,6 +31,17 @@ SMODS.Consumable {
                 card_eval_status_text(used_card, 'extra', nil, nil, nil, {message = "+"..tostring(1).." Play Size", colour = G.C.BLUE})
                 
                 SMODS.change_play_limit(1)
+                return true
+            end
+        }))
+        delay(0.6)
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.4,
+            func = function()
+                card_eval_status_text(used_card, 'extra', nil, nil, nil, {message = "+"..tostring(1).." Discard Size", colour = G.C.RED})
+                
+                SMODS.change_discard_limit(1)
                 return true
             end
         }))

@@ -24,7 +24,7 @@ SMODS.Joker{ -- The Dumbell
     },
     cost = 4,
     rarity = 1,
-    blueprint_compat = true,  -- set to false if you DON'T want Blueprint to copy the effect
+    blueprint_compat = false,  -- set to false if you DON'T want Blueprint to copy the effect
     eternal_compat = true,
     perishable_compat = true,
     unlocked = false,

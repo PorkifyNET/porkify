@@ -28,7 +28,11 @@ SMODS.Blind{
 
         local doomed = {}
         for _, card in ipairs((G.hand and G.hand.highlighted) or {}) do
-            doomed[#doomed + 1] = card
+            local center = card and card.config and card.config.center
+            local center_key = (center and center.key) or (card and card.config and card.config.center_key)
+            if center_key ~= "m_porkify_revolving" then
+                doomed[#doomed + 1] = card
+            end
         end
         if #doomed == 0 then
             return

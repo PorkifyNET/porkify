@@ -18,6 +18,11 @@ SMODS.Blind{
         if not card then
             return false
         end
+        local center = card.config and card.config.center
+        local center_key = (center and center.key) or (card.config and card.config.center_key)
+        if center_key == "m_porkify_revolving" then
+            return false
+        end
         if SMODS and SMODS.get_enhancements then
             local enhancements = SMODS.get_enhancements(card) or {}
             return next(enhancements) ~= nil

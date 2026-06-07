@@ -6,9 +6,9 @@ SMODS.Consumable {
     loc_txt = {
         name = 'Steroids',
         text = {
-            [1] = 'Increases rank of',
-            [2] = '{C:attention}1{} selected',
-            [3] = 'card by {C:attention}2{}'
+            [1] = 'Increases rank of up',
+            [2] = 'to {C:attention}3{} selected',
+            [3] = 'cards by {C:attention}2{}'
         }
     },
     cost = 3,
@@ -24,7 +24,7 @@ SMODS.Consumable {
     
     use = function(self, card, area, copier)
         local used_card = copier or card
-        if (to_big(#G.hand.highlighted) == to_big(1) and G.hand and #G.hand.cards > 0) then
+        if (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) >= to_big(1) and to_big(#G.hand.highlighted) <= to_big(3)) then
             G.E_MANAGER:add_event(Event({
                 trigger = 'after',
                 delay = 0.4,
@@ -83,6 +83,6 @@ SMODS.Consumable {
         end
     end,
     can_use = function(self, card)
-        return ((to_big(#G.hand.highlighted) == to_big(1) and G.hand and #G.hand.cards > 0))
+        return (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) >= to_big(1) and to_big(#G.hand.highlighted) <= to_big(3)) == true
     end
 }

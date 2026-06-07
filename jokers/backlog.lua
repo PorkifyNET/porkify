@@ -96,7 +96,7 @@ SMODS.Joker{ -- Backlog
                 local stored = extra.stored_discards or 0
                 local cap = extra.max_retain or 10
 
-                card.joker_display_values.stored_text = "(" .. tostring(stored) .. " Discards)"
+                card.joker_display_values.stored_text = tostring(stored) .. " Discards"
                 card.joker_display_values.cap_text = "(" .. tostring(stored) .. "/" .. tostring(cap) .. " stored)"
             end
         }

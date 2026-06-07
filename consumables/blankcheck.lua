@@ -1,12 +1,12 @@
 SMODS.Consumable {
-    key = 'lhc',
+    key = 'blankcheck',
     set = 'porkify',
-    pos = { x = 1, y = 4 },
+    pos = { x = 8, y = 4 },
     loc_txt = {
-        name = 'LHC',
+        name = 'Blank Check',
         text = {
-            [1] = 'Enhance {C:attention}1{} selected',
-            [2] = 'card to an {C:enhanced}Antimatter{} card'
+            [1] = 'Add a {C:attention}Blank Seal{} to',
+            [2] = '{C:attention}1{} selected card'
         }
     },
     config = { min_highlighted = 1, max_highlighted = 1 },
@@ -18,7 +18,7 @@ SMODS.Consumable {
     atlas = 'CustomConsumables',
 
     loc_vars = function(self, info_queue, card)
-        local info_queue_0 = G.P_CENTERS["m_porkify_antimatter"]
+        local info_queue_0 = G.P_SEALS and (G.P_SEALS["porkify_blank"] or G.P_SEALS["blank"])
         if info_queue_0 then
             info_queue[#info_queue + 1] = info_queue_0
         end
@@ -30,6 +30,7 @@ SMODS.Consumable {
         if not (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) == to_big(1)) then return end
 
         local target = G.hand.highlighted[1]
+
         G.E_MANAGER:add_event(Event({
             trigger = 'after',
             delay = 0.4,
@@ -55,7 +56,7 @@ SMODS.Consumable {
             trigger = 'after',
             delay = 0.35,
             func = function()
-                target:set_ability(G.P_CENTERS.m_porkify_antimatter, nil, true)
+                target:set_seal("porkify_blank", nil, true)
                 return true
             end
         }))

@@ -27,8 +27,8 @@ SMODS.Joker{ -- Trans Joker
         ['name'] = 'Trans Joker',
         ['text'] = {
             [1] = 'This Joker gains {X:mult,C:white}X1{} Mult',
-            [2] = 'whenever {C:tarot}Estrogen{} or',
-            [3] = '{C:tarot}Testosterone{} is used',
+            [2] = 'for every {C:tarot}Estrogen{} and',
+            [3] = '{C:tarot}Testosterone{} used this run',
             [4] = '{C:inactive}(Currently{} {X:mult,C:white}X#1#{} {C:inactive}Mult){}'
         }
     },

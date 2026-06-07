@@ -1,6 +1,6 @@
 
 SMODS.Enhancement {
-    key = 'antimatter',
+    key = 'galaxy',
     pos = { x = 6, y = 0 },
     config = {
         extra = {
@@ -8,7 +8,7 @@ SMODS.Enhancement {
         }
     },
     loc_txt = {
-        name = 'Antimatter',
+        name = 'Galaxy',
         text = {
             [1] = '{C:red}+1{} Mult for every',
             [2] = '{C:planet}Planet{} card used',

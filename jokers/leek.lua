@@ -3,15 +3,16 @@ SMODS.Joker{ --Leek
     config = {
         extra = {
             x_chips = 1,
-            x_chips_gain = 0.03
+            x_chips_gain = 0.01
         }
     },
     loc_txt = {
         ['name'] = 'Leek',
         ['text'] = {
-            [1] = 'This Joker gains {X:blue,C:white}X0.03{} Chips',
-            [2] = 'for every scored {C:clubs}Club{} card',
-            [3] = '{C:inactive}(Currently {X:blue,C:white}X#1#{} {C:inactive}Chips){}'
+            [1] = 'This Joker gains {X:blue,C:white}X0.01{} Chips',
+            [2] = 'for every scored {C:clubs}Club{}',
+            [3] = 'or {C:diamonds}Diamond{} card',
+            [4] = '{C:inactive}(Currently {X:blue,C:white}X#1#{} {C:inactive}Chips){}'
         }
     },
     pos = {
@@ -41,8 +42,8 @@ SMODS.Joker{ --Leek
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play and not context.blueprint then
             local played_card = context.other_card
-            if played_card and played_card.is_suit and played_card:is_suit("Clubs") then
-                card.ability.extra.x_chips = (card.ability.extra.x_chips or 1) + ((card.ability.extra.x_chips_gain) or 0.03)
+            if played_card and played_card.is_suit and (played_card:is_suit("Clubs") or played_card:is_suit("Diamonds")) then
+                card.ability.extra.x_chips = (card.ability.extra.x_chips or 1) + ((card.ability.extra.x_chips_gain) or 0.01)
                 return {
                     message = "Leek!",
                     colour = G.C.GREEN
@@ -71,21 +72,27 @@ SMODS.Joker{ --Leek
             reminder_text = {
                 { text = "(", colour = G.C.GREY },
                 { text = "Clubs", colour = G.C.SUITS["Clubs"] },
+                { text = ",", colour = G.C.GREY },
+                { text = "Diamonds", colour = G.C.SUITS["Diamonds"] },
                 { text = ")", colour = G.C.GREY }
             },
 
             calc_function = function(card)
                 local runtime_extra = card and card.ability and card.ability.extra
-                local extra = type(runtime_extra) == "table" and runtime_extra or { x_chips = 1, x_chips_gain = 0.03 }
+                local extra = type(runtime_extra) == "table" and runtime_extra or { x_chips = 1, x_chips_gain = 0.01 }
                 local x_chips = extra.x_chips or 1
-                local gain = extra.x_chips_gain or 0.03
+                local gain = extra.x_chips_gain or 0.01
                 local clubs = 0
+                local diamonds = 0
                 local text, _, scoring_hand = JokerDisplay.evaluate_hand()
 
                 if text ~= "Unknown" and scoring_hand then
                     for _, c in pairs(scoring_hand) do
                         if c:is_suit("Clubs") and not c.debuff and c.facing ~= 'back' then
                             clubs = clubs + JokerDisplay.calculate_card_triggers(c, scoring_hand)
+                        end
+                        if c:is_suit("Diamonds") and not c.debuff and c.facing ~= 'back' then
+                            diamonds = diamonds + JokerDisplay.calculate_card_triggers(c, scoring_hand)
                         end
                     end
                 end

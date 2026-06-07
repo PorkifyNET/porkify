@@ -19,49 +19,6 @@ local function porkify_stake_process_loc_text(self)
 end
 
 -- =========================================================
---  Platinum Stake (Earn no Interest)
--- =========================================================
-local platinum_stake = SMODS.Stake{
-    key = "stake_platinum",
-    atlas = "CustomChips",
-    sticker_atlas = "CustomStickers",
-    pos = { x = 1, y = 0 },
-    loc_txt = {
-        name = "Platinum Stake",
-        text = {
-            "Earn no {C:attention}Interest{}"
-        },
-        sticker = {
-            name = "Platinum Stake",
-            text = {
-                "Used this Joker",
-                "to win on {C:attention}Platinum{}",
-                "{C:attention}Stake{} difficulty"
-            }
-        }
-    },
-    sticker_pos = { x = 2, y = 0 },
-
-    above_stake = "stake_diamond",
-    applied_stakes = {"stake_diamond"},
-
-    prefix_config = {
-        key = true,
-        applied_stakes = true,
-        above_stake = true,
-    },
-
-    colour = G.C.GREY,
-    process_loc_text = porkify_stake_process_loc_text
-}
-
-function platinum_stake:modifiers()
-    if G and G.GAME and G.GAME.modifiers then
-		G.GAME.modifiers.no_interest = true
-	end
-end
-
--- =========================================================
 --  Diamond Stake (start with $0)
 -- =========================================================
 local diamond_stake = SMODS.Stake{
@@ -105,6 +62,92 @@ function diamond_stake:modifiers()
 end
 
 -- =========================================================
+--  Platinum Stake (Earn no Interest)
+-- =========================================================
+local platinum_stake = SMODS.Stake{
+    key = "stake_platinum",
+    atlas = "CustomChips",
+    sticker_atlas = "CustomStickers",
+    pos = { x = 1, y = 0 },
+    loc_txt = {
+        name = "Platinum Stake",
+        text = {
+            "Earn no {C:attention}Interest{}"
+        },
+        sticker = {
+            name = "Platinum Stake",
+            text = {
+                "Used this Joker",
+                "to win on {C:attention}Platinum{}",
+                "{C:attention}Stake{} difficulty"
+            }
+        }
+    },
+    sticker_pos = { x = 2, y = 0 },
+
+    above_stake = "stake_diamond",
+    applied_stakes = {"stake_diamond"},
+
+    prefix_config = {
+        key = true,
+        applied_stakes = true,
+        above_stake = true,
+    },
+
+    colour = G.C.GREY,
+    process_loc_text = porkify_stake_process_loc_text
+}
+
+function platinum_stake:modifiers()
+    if G and G.GAME and G.GAME.modifiers then
+		G.GAME.modifiers.no_interest = true
+	end
+end
+
+-- =========================================================
+--  Sapphire Stake (+$2 Reroll Cost)
+-- =========================================================
+local sapphire_stake = SMODS.Stake{
+    key = "stake_sapphire",
+    atlas = "CustomChips",
+    sticker_atlas = "CustomStickers",
+    pos = { x = 4, y = 1 },
+    loc_txt = {
+        name = "Sapphire Stake",
+        text = {
+            "Rerolls cost {C:money}$2{} extra"
+        },
+        sticker = {
+            name = "Sapphire Stake",
+            text = {
+                "Used this Joker",
+                "to win on {C:attention}Sapphire{}",
+                "{C:attention}Stake{} difficulty"
+            }
+        }
+    },
+    sticker_pos = { x = 4, y = 1 },
+
+    above_stake = "stake_platinum",
+    applied_stakes = {"stake_platinum"},
+
+    prefix_config = {
+        key = true,
+        applied_stakes = true,
+        above_stake = true,
+    },
+
+    colour = HEX("2F6BFF"),
+    process_loc_text = porkify_stake_process_loc_text
+}
+
+function sapphire_stake:modifiers()
+    if G and G.GAME and G.GAME.starting_params then
+        G.GAME.starting_params.reroll_cost = (G.GAME.starting_params.reroll_cost or 5) + 2
+    end
+end
+
+-- =========================================================
 --  Emerald Stake (-1 Hand Size)
 -- =========================================================
 local emerald_stake = SMODS.Stake{
@@ -116,7 +159,7 @@ local emerald_stake = SMODS.Stake{
     loc_txt = {
         name = "Emerald Stake",
         text = {
-            "Jokers can have {C:attention}Bulky{} stickers",
+            "Shop can have {C:attention}Bulky{} Jokers",
             "{C:inactive,s:0.9}(Takes up{} {C:attention,s:0.9}2{} {C:inactive,s:0.9}Joker Slots){}"
         },
         sticker = {
@@ -130,8 +173,8 @@ local emerald_stake = SMODS.Stake{
     },
     sticker_pos = { x = 3, y = 0 },
 
-    above_stake = "stake_platinum",
-    applied_stakes = {"stake_platinum"},
+    above_stake = "stake_sapphire",
+    applied_stakes = {"stake_sapphire"},
 
     prefix_config = {
         key = true,
@@ -148,49 +191,6 @@ function emerald_stake:modifiers()
     if G and G.GAME and G.GAME.modifiers then
         G.GAME.modifiers.enable_bulky = true
         G.GAME.modifiers.enable_porkify_bulky = true
-	end
-end
-
--- =========================================================
---  Topaz Stake (-1 Joker Slot)
--- =========================================================
-local topaz_stake = SMODS.Stake{
-    key = "stake_topaz",
-    atlas = "CustomChips",
-    sticker_atlas = "CustomStickers",
-    pos = { x = 3, y = 1 },
-    loc_txt = {
-        name = "Topaz Stake",
-        text = {
-            "{C:red}-1{} Joker Slot"
-        },
-        sticker = {
-            name = "Topaz Stake",
-            text = {
-                "Used this Joker",
-                "to win on {C:attention}Topaz{}",
-                "{C:attention}Stake{} difficulty"
-            }
-        }
-    },
-    sticker_pos = { x = 1, y = 1 },
-
-    above_stake = "stake_ruby",
-    applied_stakes = {"stake_ruby"},
-
-    prefix_config = {
-        key = true,
-        applied_stakes = true,
-        above_stake = true,
-    },
-
-    colour = G.C.RENTAL,
-    process_loc_text = porkify_stake_process_loc_text
-}
-
-function topaz_stake:modifiers()
-    if G and G.GAME and G.GAME.starting_params then
-		G.GAME.starting_params.joker_slots = (G.GAME.starting_params.joker_slots or 5) - 1
 	end
 end
 
@@ -240,7 +240,53 @@ function pink_stake:modifiers()
 end
 
 -- =========================================================
---  Ruby Stake (-1 Hand)
+--  Onyx Stake (No Shop Jokers)
+-- =========================================================
+local onyx_stake = SMODS.Stake{
+    key = "stake_onyx",
+    atlas = "CustomChips",
+    sticker_atlas = "CustomStickers",
+    pos = { x = 2, y = 1 },
+    loc_txt = {
+        name = "Onyx Stake",
+        text = {
+            "Jokers no longer",
+            "appear in the {C:green}Shop{}"
+        },
+        sticker = {
+            name = "Onyx Stake",
+            text = {
+                "Used this Joker",
+                "to win on {C:attention}Onyx{}",
+                "{C:attention}Stake{} difficulty"
+            }
+        }
+    },
+    sticker_pos = { x = 4, y = 2 },
+
+    above_stake = "stake_pink",
+    applied_stakes = {"stake_pink"},
+
+    prefix_config = {
+        key = true,
+        applied_stakes = true,
+        above_stake = true,
+    },
+
+    colour = HEX("1A1A1A"),
+    process_loc_text = porkify_stake_process_loc_text
+}
+
+function onyx_stake:modifiers()
+    if G and G.GAME then
+        G.GAME.modifiers = G.GAME.modifiers or {}
+        G.GAME.modifiers.no_shop_jokers = true
+        G.GAME.joker_rate = 0
+    end
+end
+
+-- =========================================================
+--  Ruby Stake (Big Blind Gives No Reward Money)
 -- =========================================================
 local ruby_stake = SMODS.Stake{
     key = "stake_ruby",
@@ -250,7 +296,8 @@ local ruby_stake = SMODS.Stake{
     loc_txt = {
         name = "Ruby Stake",
         text = {
-            "{C:red}-1{} Hand"
+            "{C:attention}Big Blind{} gives",
+            "no reward money"
         },
         sticker = {
             name = "Ruby Stake",
@@ -263,8 +310,8 @@ local ruby_stake = SMODS.Stake{
     },
     sticker_pos = { x = 0, y = 1 },
 
-    above_stake = "stake_pink",
-    applied_stakes = {"stake_pink"},
+    above_stake = "stake_onyx",
+    applied_stakes = {"stake_onyx"},
 
     prefix_config = {
         key = true,
@@ -277,7 +324,52 @@ local ruby_stake = SMODS.Stake{
 }
 
 function ruby_stake:modifiers()
-    if G and G.GAME and G.GAME.starting_params then
-        G.GAME.starting_params.hands = math.max(1, (G.GAME.starting_params.hands or 4) - 1)
+    if G and G.GAME then
+        G.GAME.modifiers = G.GAME.modifiers or {}
+        G.GAME.modifiers.no_blind_reward = G.GAME.modifiers.no_blind_reward or {}
+        G.GAME.modifiers.no_blind_reward.Big = true
     end
+end
+
+-- =========================================================
+--  Topaz Stake (-1 Hand Size)
+-- =========================================================
+local topaz_stake = SMODS.Stake{
+    key = "stake_topaz",
+    atlas = "CustomChips",
+    sticker_atlas = "CustomStickers",
+    pos = { x = 3, y = 1 },
+    loc_txt = {
+        name = "Topaz Stake",
+        text = {
+            "{C:red}-1{} Hand Size"
+        },
+        sticker = {
+            name = "Topaz Stake",
+            text = {
+                "Used this Joker",
+                "to win on {C:attention}Topaz{}",
+                "{C:attention}Stake{} difficulty"
+            }
+        }
+    },
+    sticker_pos = { x = 1, y = 1 },
+
+    above_stake = "stake_ruby",
+    applied_stakes = {"stake_ruby"},
+
+    prefix_config = {
+        key = true,
+        applied_stakes = true,
+        above_stake = true,
+    },
+
+    colour = G.C.RENTAL,
+    process_loc_text = porkify_stake_process_loc_text
+}
+
+function topaz_stake:modifiers()
+    if G and G.GAME and G.GAME.starting_params then
+		G.GAME.starting_params.hand_size = math.max(1, (G.GAME.starting_params.hand_size or 8) - 1)
+	end
 end

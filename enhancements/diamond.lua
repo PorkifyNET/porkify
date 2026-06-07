@@ -1,12 +1,55 @@
+local function porkify_has_red_seal(card)
+    if not card then
+        return false
+    end
+
+    local seal = card.seal or (card.ability and card.ability.seal)
+    return seal == "Red" or seal == "red"
+end
+
+local function porkify_count_mime_jokers()
+    local jokers = G and G.jokers and G.jokers.cards
+    if not jokers then
+        return 0
+    end
+
+    local mime_count = 0
+    for i = 1, #jokers do
+        local joker = jokers[i]
+        local center = joker and joker.config and joker.config.center
+        local center_key = (center and center.key) or (joker and joker.config and joker.config.center_key)
+        if center_key == "j_mime" then
+            mime_count = mime_count + 1
+        end
+    end
+
+    return mime_count
+end
+
+local function porkify_get_diamond_trigger_count(card)
+    local triggers = 1
+
+    if porkify_has_red_seal(card) then
+        triggers = triggers + 1
+    end
+
+    triggers = triggers + porkify_count_mime_jokers()
+
+    return triggers
+end
+
+local function porkify_get_diamond_scaling_amount(card, extra)
+    local per_trigger = (extra and extra.chips_per_hand) or 5
+    return per_trigger * porkify_get_diamond_trigger_count(card)
+end
+
 SMODS.Enhancement {
     key = 'diamond',
     pos = { x = 9, y = 0 },
     config = {
         extra = {
             chips_per_hand = 5,
-            stored_chips = 0,
-            last_hands_played = 0,
-            last_end_of_round_key = nil
+            stored_chips = 0
         }
     },
     loc_txt = {
@@ -53,7 +96,7 @@ SMODS.Enhancement {
             extra.last_hands_played = hands_played
 
             if hands_played > prior_hands_played then
-                extra.stored_chips = (extra.stored_chips or 0) + (extra.chips_per_hand or 5)
+                extra.stored_chips = (extra.stored_chips or 0) + porkify_get_diamond_scaling_amount(card, extra)
                 card.ability.extra = extra
                 return {
                     message = localize('k_upgrade_ex'),
@@ -84,7 +127,7 @@ SMODS.Enhancement {
             end
 
             extra.last_end_of_round_key = round_key
-            extra.stored_chips = (extra.stored_chips or 0) + (extra.chips_per_hand or 5)
+            extra.stored_chips = (extra.stored_chips or 0) + porkify_get_diamond_scaling_amount(card, extra)
             card.ability.extra = extra
             return {
                 message = localize('k_upgrade_ex'),

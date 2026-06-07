@@ -30,7 +30,9 @@ SMODS.Edition {
     calculate = function(self, card, context)
         if context.pre_joker or (context.main_scoring and context.cardarea == G.play) then
             return {
-                swap = true
+                swap = true,
+                message = 'Swap!',
+                colour = G.C.PURPLE
             }
         end
     end

@@ -7,7 +7,9 @@ SMODS.Joker{ --Cerberus
         ['name'] = 'Cerberus',
         ['text'] = {
             [1] = '{C:attention}Kings{}, {C:attention}Queens{}, and {C:attention}Jacks{}',
-            [2] = 'can be used {C:attention}interchangeably{}'
+            [2] = 'can be used {C:attention}interchangeably{}',
+            [3] = '{C:inactive}(e.g. A Q Q Q 10 counts{}',
+            [4] = '{C:inactive}as a Straight){}'
         }
     },
     pos = {

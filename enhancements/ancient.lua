@@ -11,7 +11,7 @@ SMODS.Enhancement {
         name = 'Ancient',
         text = {
             [1] = '{C:red}+1{} Mult for',
-            [2] = 'each {C:money}$3{} you have',
+            [2] = 'every {C:money}$3{} you have',
             [3] = '{C:inactive}(Currently{} {C:red}+#1#{} {C:inactive}Mult){}'
         }
     },
