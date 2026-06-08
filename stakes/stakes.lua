@@ -51,7 +51,7 @@ local diamond_stake = SMODS.Stake{
         above_stake = false,
     },
 
-    colour = G.C.PERISHABLE,
+    colour = HEX("00FFFF"),
     process_loc_text = porkify_stake_process_loc_text
 }
 
@@ -94,7 +94,7 @@ local platinum_stake = SMODS.Stake{
         above_stake = true,
     },
 
-    colour = G.C.GREY,
+    colour = HEX("555555"),
     process_loc_text = porkify_stake_process_loc_text
 }
 
@@ -137,7 +137,7 @@ local sapphire_stake = SMODS.Stake{
         above_stake = true,
     },
 
-    colour = HEX("2F6BFF"),
+    colour = HEX("0055AA"),
     process_loc_text = porkify_stake_process_loc_text
 }
 
@@ -182,7 +182,7 @@ local emerald_stake = SMODS.Stake{
         above_stake = true,
     },
 
-    colour = G.C.PALE_GREEN,
+    colour = HEX("55AA00"),
     sticker_pos = { x = 2, y = 2 },
     process_loc_text = porkify_stake_process_loc_text
 }
@@ -228,7 +228,7 @@ local pink_stake = SMODS.Stake{
         above_stake = true,
     },
 
-    colour = G.C.ETERNAL,
+    colour = HEX("FF55AA"),
     process_loc_text = porkify_stake_process_loc_text
 }
 
@@ -273,7 +273,7 @@ local onyx_stake = SMODS.Stake{
         above_stake = true,
     },
 
-    colour = HEX("1A1A1A"),
+    colour = HEX("000000"),
     process_loc_text = porkify_stake_process_loc_text
 }
 
@@ -319,7 +319,7 @@ local ruby_stake = SMODS.Stake{
         above_stake = true,
     },
 
-    colour = HEX("D13B54"),
+    colour = HEX("FF5555"),
     process_loc_text = porkify_stake_process_loc_text
 }
 
@@ -364,7 +364,7 @@ local topaz_stake = SMODS.Stake{
         above_stake = true,
     },
 
-    colour = G.C.RENTAL,
+    colour = HEX("FDA200"),
     process_loc_text = porkify_stake_process_loc_text
 }
 

@@ -335,112 +335,6 @@ local function porkify_is_resolute_card(card)
     return center_key == "m_porkify_revolving"
 end
 
-local function porkify_find_non_resolute_highlight_target(area)
-    if not (area and area.cards) then
-        return nil
-    end
-
-    local eligible = {}
-    for _, hand_card in ipairs(area.cards) do
-        if hand_card and not porkify_is_resolute_card(hand_card) and not hand_card.highlighted then
-            eligible[#eligible + 1] = hand_card
-        end
-    end
-
-    if #eligible == 0 then
-        return nil
-    end
-
-    return pseudorandom_element(eligible, pseudoseed("porkify_cerulean_bell"))
-end
-
-local function porkify_cerulean_bell_active()
-    local blind = G and G.GAME and G.GAME.blind
-    local blind_key = blind and (blind.original_key or blind.key)
-    return type(blind_key) == "string"
-        and (
-            blind_key == "cerulean_bell"
-            or blind_key == "bl_cerulean_bell"
-            or blind_key:find("cerulean", 1, true) ~= nil
-            or blind_key:find("bell", 1, true) ~= nil
-        )
-end
-
-local function porkify_card_has_bell_force_flag(card)
-    if not card then
-        return false
-    end
-
-    local suspects = {
-        "forced_selection",
-        "force_selected",
-        "must_select",
-        "forced_selected",
-        "selected_by_bell"
-    }
-
-    for _, key in ipairs(suspects) do
-        if card[key] or (card.ability and card.ability[key]) then
-            return true
-        end
-    end
-
-    return false
-end
-
-local function porkify_clear_bell_force_flags(card)
-    if not card then
-        return
-    end
-
-    local suspects = {
-        "forced_selection",
-        "force_selected",
-        "must_select",
-        "forced_selected",
-        "selected_by_bell"
-    }
-
-    for _, key in ipairs(suspects) do
-        card[key] = nil
-        if card.ability then
-            card.ability[key] = nil
-        end
-    end
-end
-
-local function porkify_fix_cerulean_bell_resolute_pick()
-    if not (porkify_cerulean_bell_active() and G and G.hand and G.hand.highlighted) then
-        return
-    end
-
-    local removed_any = false
-    local highlighted_count = #G.hand.highlighted
-
-    for i = #G.hand.highlighted, 1, -1 do
-        local highlighted = G.hand.highlighted[i]
-        if highlighted
-            and porkify_is_resolute_card(highlighted)
-            and (highlighted_count == 1 or porkify_card_has_bell_force_flag(highlighted)) then
-            porkify_clear_bell_force_flags(highlighted)
-            highlighted.highlighted = false
-            table.remove(G.hand.highlighted, i)
-            removed_any = true
-        end
-    end
-
-    if removed_any and #G.hand.highlighted == 0 then
-        local replacement = porkify_find_non_resolute_highlight_target(G.hand)
-        if replacement then
-            if Porkify_cardarea_add_to_highlighted_resolute then
-                Porkify_cardarea_add_to_highlighted_resolute(G.hand, replacement, true)
-            else
-                G.hand:add_to_highlighted(replacement, true)
-            end
-        end
-    end
-end
-
 local porkify_blind_stay_flipped_ref = Blind.stay_flipped
 function Blind:stay_flipped(to_area, card, from_area)
     if porkify_is_resolute_card(card) then
@@ -491,23 +385,6 @@ function CardArea:emplace(card, location, stay_flipped)
         card.ability.wheel_flipped = nil
     end
     return result
-end
-
-if CardArea and type(CardArea.add_to_highlighted) == "function" and not Porkify_cardarea_add_to_highlighted_resolute then
-    Porkify_cardarea_add_to_highlighted_resolute = CardArea.add_to_highlighted
-    function CardArea:add_to_highlighted(card, silent)
-        if self == G.hand
-            and porkify_cerulean_bell_active()
-            and porkify_is_resolute_card(card) then
-            local replacement = porkify_find_non_resolute_highlight_target(self)
-            if replacement then
-                return Porkify_cardarea_add_to_highlighted_resolute(self, replacement, silent)
-            end
-            return
-        end
-
-        return Porkify_cardarea_add_to_highlighted_resolute(self, card, silent)
-    end
 end
 
 if JokerDisplay then
@@ -1158,7 +1035,6 @@ if love and love.update and not Porkify_love_update then
     Porkify_love_update = love.update
     love.update = function(dt)
         porkify_ensure_highlight_tables()
-        porkify_fix_cerulean_bell_resolute_pick()
         if porkify_install_draw_priority_patch then
             porkify_install_draw_priority_patch()
         end
@@ -2059,18 +1935,6 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
                 and porkify_scoring_hand_has_dice_seal(context) then
                 G.GAME.current_round.porkify_dice_probability_active = true
             end
-            if context
-                and context.before
-                and context.cardarea == G.jokers then
-                local resolute_count = 0
-                for _, played_card in ipairs(context.full_hand or {}) do
-                    if porkify_is_resolute_card(played_card) then
-                        resolute_count = resolute_count + 1
-                    end
-                end
-                G.GAME.current_round.porkify_tooth_resolute_refund = resolute_count
-                G.GAME.current_round.porkify_tooth_resolute_hand_active = resolute_count > 0
-            end
         end
 
         local eff, post = Porkify_eval_card_pride(card, context)
@@ -2092,49 +1956,11 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
                 or context.setting_blind
                 or context.hand_drawn
             ) then
-                if context.after
-                    and context.cardarea == G.jokers
-                    and porkify_active_blind_is("tooth")
-                    and (G.GAME.current_round.porkify_tooth_resolute_refund or 0) > 0 then
-                    local refund = G.GAME.current_round.porkify_tooth_resolute_refund
-                    G.GAME.current_round.porkify_tooth_resolute_refund = 0
-                    G.E_MANAGER:add_event(Event({
-                        trigger = 'after',
-                        delay = 0,
-                        func = function()
-                            ease_dollars(refund, true)
-                            return true
-                        end
-                    }))
-                end
                 G.GAME.current_round.porkify_dice_probability_active = nil
-                if not (context.setting_blind or context.hand_drawn) then
-                    G.GAME.current_round.porkify_tooth_resolute_refund = nil
-                    G.GAME.current_round.porkify_tooth_resolute_hand_active = nil
-                end
             end
         end
 
         return eff, post
-    end
-end
-
-if type(ease_dollars) == "function" and not Porkify_ease_dollars_resolute then
-    Porkify_ease_dollars_resolute = ease_dollars
-    function ease_dollars(mod, instant)
-        local adjusted = mod
-        local current_round = G and G.GAME and G.GAME.current_round
-        if type(adjusted) == "number"
-            and adjusted < 0
-            and porkify_active_blind_is("tooth")
-            and current_round
-            and current_round.porkify_tooth_resolute_hand_active
-            and (current_round.porkify_tooth_resolute_refund or 0) > 0 then
-            local refund = math.min(-adjusted, current_round.porkify_tooth_resolute_refund)
-            adjusted = adjusted + refund
-            current_round.porkify_tooth_resolute_refund = current_round.porkify_tooth_resolute_refund - refund
-        end
-        return Porkify_ease_dollars_resolute(adjusted, instant)
     end
 end
 
