@@ -126,7 +126,7 @@ local sapphire_stake = SMODS.Stake{
             }
         }
     },
-    sticker_pos = { x = 4, y = 1 },
+    sticker_pos = { x = 2, y = 1 },
 
     above_stake = "stake_platinum",
     applied_stakes = {"stake_platinum"},
@@ -217,7 +217,7 @@ local pink_stake = SMODS.Stake{
             }
         }
     },
-    sticker_pos = { x = 3, y = 2 },
+    sticker_pos = { x = 4, y = 0 },
 
     above_stake = "stake_emerald",
     applied_stakes = {"stake_emerald"},
@@ -262,7 +262,7 @@ local onyx_stake = SMODS.Stake{
             }
         }
     },
-    sticker_pos = { x = 4, y = 2 },
+    sticker_pos = { x = 3, y = 1 },
 
     above_stake = "stake_pink",
     applied_stakes = {"stake_pink"},
