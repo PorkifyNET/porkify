@@ -17,7 +17,7 @@ Porkify is a large content mod for Balatro focused on adding more run-defining d
 
 - 82 Jokers
 - 54 Consumables
-- 10 Decks
+- 12 Decks
 - 2 Vouchers
 - 10 Enhancements
 - 5 Editions

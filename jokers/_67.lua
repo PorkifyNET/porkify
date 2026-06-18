@@ -9,8 +9,10 @@ SMODS.Joker{ --67
     loc_txt = {
         ['name'] = '67',
         ['text'] = {
-            [1] = 'Every played {C:attention}6{} or {C:attention}7{}',
-            [2] = 'grants {C:blue}+6{} Chips and {C:red}+7{} Mult'
+            [1] = 'Every played {C:attention}6{}',
+            [2] = ' or {C:attention}7{} grants',
+            [3] = '{C:blue}+6{} Chips and',
+            [4] = '{C:red}+7{} Mult'
         },
         ['unlock'] = {
             [1] = 'Play a {C:attention}6{} and a {C:attention}7{} in the same hand'

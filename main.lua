@@ -294,6 +294,7 @@ PORKIFY_FOOD_JOKERS = {
     ["j_porkify_leek"] = true,
     ["j_porkify_fortunecookie"] = true,
     ["j_porkify_juicebox"] = true,
+    ["j_porkify_potion"] = true,
 }
 
 SMODS.ObjectType({

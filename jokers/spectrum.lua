@@ -6,8 +6,9 @@ SMODS.Joker{ --Spectrum
     loc_txt = {
         ['name'] = 'Spectrum',
         ['text'] = {
-            [1] = '{X:red,C:white}X1{} Mult for each {C:attention}suit{} after',
-            [2] = 'the {C:attention}second{} in the played {C:blue}hand{}'
+            [1] = '{X:red,C:white}X1{} Mult for each ',
+            [2] = '{C:attention}suit{} after the {C:attention}second{}',
+            [3] = 'in the played {C:blue}hand{}'
         },
     },
     pos = {

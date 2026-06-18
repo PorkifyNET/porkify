@@ -1,10 +1,6 @@
 Jokers:
 - This Joker gains +5 Chips when any card is sold or destroyed
 - Don't lose a Hand if first hand of round only has 1 card
-- This Joker gains +2 Mult every time a <random rank> is scored. Rank changes every round
-- This Joker gains +50 Chips every time a hand is played. Resets at end of round
-- X3 Mult if played hand contains 3 or more different Enhancements
 - Give a Glitched Seal to the lowest ranking card in played hand when scored
 - Played 2s always score and get retriggered once
-- Every Enhanced card held in hand gives X0.25 Mult
-- Give random Enhancements to every card in your first discard of the round
+- Every Enhanced card held in hand gives X1.25 Mult
