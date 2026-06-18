@@ -27,7 +27,3 @@ Porkify is a large content mod for Balatro focused on adding more run-defining d
 - 1 Sticker set
 - 8 Stakes
 - 20 Challenges
-
-## Version
-
-Current mod version: `1.3.0`
