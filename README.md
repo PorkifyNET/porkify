@@ -1,17 +1,8 @@
-# Balatro-Porkify
+# Porkify
 
 Porkify is a large content mod for Balatro focused on adding more run-defining decisions without slowing the game down. It expands the game with a broad mix of custom Jokers, Consumables, decks, blinds, enhancements, editions, seals, stickers, vouchers, challenges, and custom stakes, alongside light balance changes and extra mechanics to make runs feel less predictable.
 
-## Requirements
-
-- Balatro
-- [Steamodded](https://github.com/Steamodded/smods) `>= 1.0.0~BETA-1620a`
-
-## Installation
-
-1. Install Steamodded.
-2. Place this mod in your Balatro `Mods` folder as `porkify`.
-3. Launch the game with mods enabled.
+This mod requires [Steamodded](https://github.com/Steamodded/smods) `>= 1.0.0~BETA-1620a` to function properly.
 
 ## Included Content
 
