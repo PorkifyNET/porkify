@@ -30,45 +30,60 @@ SMODS.Consumable {
         local buffs = {
             {
                 apply = function(c)
-                    c.ability.perma_bonus = (c.ability.perma_bonus or 0) + 25
+                    c.ability.perma_bonus = (c.ability.perma_bonus or 0) + 30
                 end,
-                message = "+25 Chips",
+                message = "+30 Chips",
                 colour = G.C.CHIPS
             },
             {
                 apply = function(c)
-                    c.ability.perma_mult = (c.ability.perma_mult or 0) + 3
+                    c.ability.perma_mult = (c.ability.perma_mult or 0) + 4
                 end,
-                message = "+3 Mult",
+                message = "+4 Mult",
                 colour = G.C.MULT
             },
             {
                 apply = function(c)
-                    c.ability.perma_x_chips = (c.ability.perma_x_chips or 0) + 0.05
+                    c.ability.perma_x_mult = (c.ability.perma_x_mult or 0) + 0.5
                 end,
-                message = "X1.05 Chips",
+                message = "X1.5 Mult",
+                colour = G.C.MULT
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_h_x_mult = (c.ability.perma_h_x_mult or 0) + 0.25
+                end,
+                message = "X1.25 Mult Held",
+                colour = G.C.MULT
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_bonus = (c.ability.perma_bonus or 0) + 50
+                end,
+                message = "+50 Chips",
                 colour = G.C.CHIPS
             },
             {
                 apply = function(c)
-                    c.ability.perma_x_mult = (c.ability.perma_x_mult or 0) + 0.1
+                    c.ability.perma_h_dollars = (c.ability.perma_h_dollars or 0) + 3
                 end,
-                message = "X1.1 Mult",
-                colour = G.C.MULT
-            },
-            {
-                apply = function(c)
-                    c.ability.perma_p_dollars = (c.ability.perma_p_dollars or 0) + 1
-                end,
-                message = "$1 Scored",
+                message = "$3 Held",
                 colour = G.C.MONEY
             },
             {
                 apply = function(c)
-                    c.ability.perma_h_dollars = (c.ability.perma_h_dollars or 0) + 2
+                    c.ability.perma_mult = (c.ability.perma_mult or 0) + 2
+                    c.ability.perma_p_dollars = (c.ability.perma_p_dollars or 0) + 2
                 end,
-                message = "$2 Held",
+                message = "+2 Mult, +$2",
                 colour = G.C.MONEY
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_x_chips = (c.ability.perma_x_chips or 0) + 0.5
+                end,
+                message = "X1.5 Chips",
+                colour = G.C.CHIPS
             }
         }
 

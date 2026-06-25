@@ -12,17 +12,12 @@ SMODS.Consumable {
     key = 'jackpot',
     set = 'porkify',
     pos = { x = 6, y = 1 },
-    config = {
-        extra = {
-            odds = 2
-        }
-    },
     loc_txt = {
         name = 'Jackpot',
         text = {
-            [1] = '{C:green}#1# in #2#{} chance to add',
-            [2] = 'a random {C:dark_edition}Edition{} to a',
-            [3] = 'random owned {C:attention}Consumable{}',
+            [1] = 'Add a random {C:dark_edition}Edition{}',
+            [2] = 'to a random owned',
+            [3] = '{C:attention}Consumable{}',
             [4] = '{C:inactive}(Must have another consumable){}'
         }
     },
@@ -33,34 +28,10 @@ SMODS.Consumable {
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
 
-    loc_vars = function(self, info_queue, card)
-        local numerator, denominator = SMODS.get_probability_vars(card, 1, card.ability.extra.odds, 'c_porkify_jackpot')
-        return { vars = { numerator, denominator } }
-    end,
-
     use = function(self, card, area, copier)
         local used_card = copier or card
         local targets = get_jackpot_targets(used_card)
         if #targets == 0 then
-            return
-        end
-
-        local hit = SMODS.pseudorandom_probability(
-            card,
-            'group_porkify_jackpot',
-            1,
-            card.ability.extra.odds,
-            'c_porkify_jackpot',
-            false
-        )
-
-        if not hit then
-            card_eval_status_text(
-                used_card,
-                'extra',
-                nil, nil, nil,
-                { message = "No luck", colour = G.C.RED }
-            )
             return
         end
 

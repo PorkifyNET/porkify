@@ -2,7 +2,7 @@ SMODS.Joker{ -- Yard Sale
     key = "yardsale",
     config = {
         extra = {
-            sold_needed = 4,
+            sold_needed = 3,
             tag_key = "tag_juggle"
         }
     },
@@ -55,7 +55,7 @@ SMODS.Joker{ -- Yard Sale
                 (G.GAME.current_round.porkify_yardsale_sold_cards or 0) + 1
 
             local sold_cards = G.GAME.current_round.porkify_yardsale_sold_cards or 0
-            local sold_needed = card.ability.extra.sold_needed or 4
+            local sold_needed = card.ability.extra.sold_needed or 3
             if sold_cards >= sold_needed then
                 G.GAME.current_round.porkify_yardsale_sold_cards = sold_cards - sold_needed
                 return {
@@ -91,7 +91,7 @@ SMODS.Joker{ -- Yard Sale
 
             calc_function = function(card)
                 local extra = (card.ability and card.ability.extra) or {}
-                local sold_needed = extra.sold_needed or 4
+                local sold_needed = extra.sold_needed or 3
                 local sold_cards = (G and G.GAME and G.GAME.current_round and G.GAME.current_round.porkify_yardsale_sold_cards) or 0
 
                 card.joker_display_values.tag_text = "Juggle Tag"

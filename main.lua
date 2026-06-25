@@ -682,7 +682,10 @@ function Porkify_add_plain_playing_cards(count)
                 copy.ability.perma_bonus = 0
                 copy.ability.perma_mult = 0
                 copy.ability.perma_x_mult = 0
+                copy.ability.perma_x_chips = 0
                 copy.ability.perma_p_dollars = 0
+                copy.ability.perma_h_dollars = 0
+                copy.ability.perma_h_x_mult = 0
 
                 if copy.start_materialize then
                     copy:start_materialize()
@@ -1969,19 +1972,24 @@ if Card and type(Card.get_chip_h_x_mult) == "function" and not Porkify_get_chip_
     Porkify_get_chip_h_x_mult_pride = Card.get_chip_h_x_mult
     function Card:get_chip_h_x_mult()
         local base = Porkify_get_chip_h_x_mult_pride(self)
+        local held_extra = (self and self.ability and tonumber(self.ability.perma_h_x_mult)) or 0
         local pride_count = porkify_held_pride_multiplier_count(self)
+        local total_mult = 1
 
-        if pride_count <= 0 then
+        if held_extra > 0 then
+            total_mult = total_mult * (1 + held_extra)
+        end
+        if pride_count > 0 then
+            total_mult = total_mult * (1 + pride_count)
+        end
+        if total_mult == 1 then
             return base
         end
-
-        local pride_mult = 1 + pride_count
-
         if type(base) ~= "number" or base <= 0 then
-            return pride_mult
+            return total_mult
         end
 
-        return base * pride_mult
+        return base * total_mult
     end
 end
 
