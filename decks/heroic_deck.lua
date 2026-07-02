@@ -3,7 +3,7 @@ SMODS.Back {
     pos = { x = 7, y = 0 },
     config = {
         extra = {
-            win_ante = 10
+            win_ante = 12
         }
     },
     loc_txt = {
@@ -11,7 +11,7 @@ SMODS.Back {
         text = {
             [1] = 'Start with a random',
             [2] = '{C:legendary}Legendary{} Joker',
-            [3] = '{C:green}Win{} at Ante {C:attention}10{}'
+            [3] = '{C:green}Win{} at Ante {C:attention}12{}'
         },
     },
     unlocked = true,
@@ -61,7 +61,7 @@ SMODS.Back {
                     return true
                 end
 
-                local target_ante = (self.config.extra and self.config.extra.win_ante) or 10
+                local target_ante = (self.config.extra and self.config.extra.win_ante) or 12
 
                 G.GAME.win_ante = target_ante
 
