@@ -7,7 +7,7 @@
   "description": "A complete modpack with Jokers, Consumables, card enhancements, decks and more!",
   "prefix": "porkify",
   "main_file": "main.lua",
-  "version": "1.4.0",
+  "version": "1.4.3",
   "priority": 8,
   "badge_colour": "ff0095",
   "badge_text_colour": "ffffff",
