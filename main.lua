@@ -74,6 +74,9 @@ local NFS = require("nativefs")
 local PORKIFY_MOD = SMODS.current_mod
 to_big = to_big or function(a) return a end
 lenient_bignum = lenient_bignum or function(a) return a end
+PORKIFY_MAX_SELECTED_BLANK_SEALS = 2
+PORKIFY_TOO_MANY_BLANKS_HAND = "Too Many Blanks!"
+PORKIFY_TOO_MANY_BLANKS_HAND_KEY = "porkify_too_many_blanks"
 
 local PORKIFY_CONFIG_DEFAULTS = {
     show_credit_badges = true
@@ -161,6 +164,62 @@ if PORKIFY_MOD then
     end
 end
 
+SMODS.PokerHand({
+    key = PORKIFY_TOO_MANY_BLANKS_HAND_KEY,
+    mult = 0,
+    chips = 0,
+    l_mult = 0,
+    l_chips = 0,
+    visible = false,
+    no_collection = true,
+    order_offset = 1000000,
+    example = {
+        { "H_A", true, seal = "porkify_blank" },
+        { "D_3", true, seal = "porkify_blank" },
+        { "S_9", true, seal = "porkify_blank" },
+        { "C_A", true },
+        { "H_K", false }
+    },
+    loc_txt = {
+        name = PORKIFY_TOO_MANY_BLANKS_HAND,
+        description = {
+            "{C:blue}Hands{} with more than",
+            "{C:attention}2{} Blank Seals {C:red}cannot be played{}"
+        }
+    },
+    evaluate = function(parts, hand)
+        if booster_obj then
+            return {}
+        end
+
+        if G and G.STATES and G.STATE then
+            if G.STATE == G.STATES.TAROT_PACK
+                or G.STATE == G.STATES.SPECTRAL_PACK
+                or G.STATE == G.STATES.SMODS_BOOSTER_OPENED then
+                return {}
+            end
+        end
+
+        local blank_count = 0
+        for i = 1, #(hand or {}) do
+            local card = hand[i]
+            local seal = card and (card.seal or (card.ability and card.ability.seal))
+            if seal == "porkify_blank" or seal == "blank" then
+                blank_count = blank_count + 1
+            end
+        end
+
+        if blank_count > PORKIFY_MAX_SELECTED_BLANK_SEALS then
+            return { hand }
+        end
+
+        return {}
+    end,
+    modify_display_text = function(self, cards, scoring_hand)
+        return self.key
+    end
+})
+
 local porkify_game_start_run_ref = Game.start_run
 function Game:start_run(args)
     Porkify_fixed_deck_pending = false
@@ -192,6 +251,8 @@ function Game:start_run(args)
             G.GAME.joker_rate = 0
         end
     end
+
+    porkify_register_too_many_blanks_hand()
 
     return result
 end
@@ -336,6 +397,90 @@ local function porkify_is_resolute_card(card)
     return center_key == "m_porkify_revolving"
 end
 
+local function porkify_is_blank_seal_card(card)
+    if not card then
+        return false
+    end
+    local seal = card.seal or (card.ability and card.ability.seal)
+    return seal == "porkify_blank" or seal == "blank"
+end
+
+local function porkify_count_highlighted_blank_seals(area)
+    local count = 0
+
+    if not (area and area.highlighted) then
+        return count
+    end
+
+    for i = 1, #area.highlighted do
+        if porkify_is_blank_seal_card(area.highlighted[i]) then
+            count = count + 1
+        end
+    end
+
+    return count
+end
+
+local function porkify_blank_limit_disabled()
+    if not G then
+        return false
+    end
+
+    if booster_obj then
+        return true
+    end
+
+    if G.STATES and G.STATE then
+        if G.STATE == G.STATES.TAROT_PACK
+            or G.STATE == G.STATES.SPECTRAL_PACK
+            or G.STATE == G.STATES.SMODS_BOOSTER_OPENED then
+            return true
+        end
+    end
+
+    return false
+end
+_G.porkify_blank_limit_disabled = porkify_blank_limit_disabled
+
+function porkify_register_too_many_blanks_hand()
+    if not (G and G.GAME and G.GAME.hands) then
+        return
+    end
+
+    if not G.GAME.hands[PORKIFY_TOO_MANY_BLANKS_HAND_KEY] then
+        G.GAME.hands[PORKIFY_TOO_MANY_BLANKS_HAND_KEY] = {
+            visible = false,
+            played = 0,
+            level = to_big(1),
+            mult = 0,
+            chips = 0,
+            l_mult = 1,
+            l_chips = 0,
+            order = 9999
+        }
+    end
+
+    if G.localization then
+        G.localization.misc = G.localization.misc or {}
+        G.localization.misc.poker_hands = G.localization.misc.poker_hands or {}
+        G.localization.misc.poker_hands[PORKIFY_TOO_MANY_BLANKS_HAND_KEY] = PORKIFY_TOO_MANY_BLANKS_HAND
+        G.localization.misc.poker_hand_descriptions = G.localization.misc.poker_hand_descriptions or {}
+        G.localization.misc.poker_hand_descriptions[PORKIFY_TOO_MANY_BLANKS_HAND_KEY] = {
+            "{C:blue}Hands{} with more than",
+            "{C:attention}2{} Blank Seals",
+            "{C:red}cannot be played{}"
+        }
+    end
+end
+
+local function porkify_has_too_many_blank_seals(area)
+    if porkify_blank_limit_disabled() then
+        return false
+    end
+
+    return porkify_count_highlighted_blank_seals(area) > PORKIFY_MAX_SELECTED_BLANK_SEALS
+end
+
 local porkify_blind_stay_flipped_ref = Blind.stay_flipped
 function Blind:stay_flipped(to_area, card, from_area)
     if porkify_is_resolute_card(card) then
@@ -387,6 +532,117 @@ function CardArea:emplace(card, location, stay_flipped)
     end
     return result
 end
+
+if CardArea.add_to_highlighted and not Porkify_cardarea_add_to_highlighted then
+    Porkify_cardarea_add_to_highlighted = CardArea.add_to_highlighted
+    function CardArea:add_to_highlighted(card, silent)
+        return Porkify_cardarea_add_to_highlighted(self, card, silent)
+    end
+end
+
+function porkify_install_blank_play_lock_patch()
+    if not (G and G.FUNCS and G.hand) then
+        return
+    end
+
+    porkify_register_too_many_blanks_hand()
+
+    if G.FUNCS.can_play and Porkify_blank_can_play == nil then
+        Porkify_blank_can_play = function(e)
+            if porkify_has_too_many_blank_seals(G.hand) then
+                if e and e.config then
+                    e.config.colour = G.C.UI.BACKGROUND_INACTIVE
+                    e.config.button = nil
+                end
+                return
+            end
+
+            return Porkify_can_play(e)
+        end
+    end
+
+    if G.FUNCS.can_play and G.FUNCS.can_play ~= Porkify_blank_can_play then
+        Porkify_can_play = G.FUNCS.can_play
+        G.FUNCS.can_play = Porkify_blank_can_play
+    end
+
+    if G.FUNCS.play_cards_from_highlighted and Porkify_blank_play_cards_from_highlighted == nil then
+        Porkify_blank_play_cards_from_highlighted = function(e)
+            if porkify_has_too_many_blank_seals(G.hand) then
+                play_sound("cancel")
+                if G.hand and G.hand.highlighted and G.hand.highlighted[1] and card_eval_status_text then
+                    card_eval_status_text(G.hand.highlighted[1], "extra", nil, nil, nil, {
+                        message = PORKIFY_TOO_MANY_BLANKS_HAND,
+                        colour = G.C.RED
+                    })
+                end
+                return
+            end
+
+            return Porkify_play_cards_from_highlighted(e)
+        end
+    end
+
+    if G.FUNCS.play_cards_from_highlighted and G.FUNCS.play_cards_from_highlighted ~= Porkify_blank_play_cards_from_highlighted then
+        Porkify_play_cards_from_highlighted = G.FUNCS.play_cards_from_highlighted
+        G.FUNCS.play_cards_from_highlighted = Porkify_blank_play_cards_from_highlighted
+    end
+end
+
+porkify_install_blank_play_lock_patch()
+
+local function porkify_apply_blank_handname_colour()
+    if not (G and G.hand_text_area and G.hand_text_area.handname and G.GAME and G.GAME.current_round and G.GAME.current_round.current_hand) then
+        return
+    end
+
+    local handname = G.GAME.current_round.current_hand.handname
+    local colour = G.C.UI.TEXT_LIGHT
+
+    if handname == PORKIFY_TOO_MANY_BLANKS_HAND then
+        colour = G.C.RED
+    end
+
+    G.hand_text_area.handname.config.colour = colour
+    if G.hand_text_area.handname.config.object then
+        G.hand_text_area.handname.config.object.colours = { colour }
+        G.hand_text_area.handname.config.object:update_text()
+    end
+end
+
+function porkify_install_blank_handname_colour_patch()
+    if not update_hand_text then
+        return
+    end
+
+    if Porkify_update_hand_text_with_blank_colour == nil then
+        Porkify_update_hand_text_with_blank_colour = function(config, vals)
+            local result = Porkify_update_hand_text_ref(config, vals)
+            porkify_apply_blank_handname_colour()
+            return result
+        end
+    end
+
+    if update_hand_text ~= Porkify_update_hand_text_with_blank_colour then
+        Porkify_update_hand_text_ref = update_hand_text
+        update_hand_text = Porkify_update_hand_text_with_blank_colour
+    end
+
+    if G and G.FUNCS and G.FUNCS.hand_text_UI_set and Porkify_hand_text_UI_set_with_blank_colour == nil then
+        Porkify_hand_text_UI_set_with_blank_colour = function(e)
+            local result = Porkify_hand_text_UI_set_ref(e)
+            porkify_apply_blank_handname_colour()
+            return result
+        end
+    end
+
+    if G and G.FUNCS and G.FUNCS.hand_text_UI_set and G.FUNCS.hand_text_UI_set ~= Porkify_hand_text_UI_set_with_blank_colour then
+        Porkify_hand_text_UI_set_ref = G.FUNCS.hand_text_UI_set
+        G.FUNCS.hand_text_UI_set = Porkify_hand_text_UI_set_with_blank_colour
+    end
+end
+
+porkify_install_blank_handname_colour_patch()
 
 if JokerDisplay then
     SMODS.load_file("joker_display_definitions.lua")()
@@ -1039,12 +1295,15 @@ if love and love.update and not Porkify_love_update then
     Porkify_love_update = love.update
     love.update = function(dt)
         porkify_ensure_highlight_tables()
+        porkify_register_too_many_blanks_hand()
         if porkify_install_draw_priority_patch then
             porkify_install_draw_priority_patch()
         end
         porkify_install_safe_can_use_consumeable_patch()
         porkify_install_safe_can_buy_and_use_patch()
         porkify_install_safe_can_skip_booster_patch()
+        porkify_install_blank_play_lock_patch()
+        porkify_install_blank_handname_colour_patch()
         porkify_try_open_fixed_deck_pack()
         return Porkify_love_update(dt)
     end

@@ -62,7 +62,9 @@ SMODS.Consumable {
         delay(1.3)            
         local hand_pool = {}
         for hand_key, _ in pairs(G.GAME.hands) do
-            table.insert(hand_pool, hand_key)
+            if hand_key ~= PORKIFY_TOO_MANY_BLANKS_HAND_KEY then
+                table.insert(hand_pool, hand_key)
+            end
         end
         local random_hand = pseudorandom_element(hand_pool, 'random_hand_levelup')
         level_up_hand(card, random_hand, true, 3)
