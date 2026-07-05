@@ -93,25 +93,6 @@ local function porkify_get_config_path()
     return mod_path and (mod_path .. "/config.lua") or "config.lua"
 end
 
-local function porkify_get_debug_log_path()
-    local mod_path = PORKIFY_MOD and PORKIFY_MOD.path
-    return mod_path and (mod_path .. "/blank_debug.log") or "blank_debug.log"
-end
-
-local function porkify_debug_log(message)
-    local line = tostring(message or "")
-    local ok, err = pcall(function()
-        local path = porkify_get_debug_log_path()
-        local existing = NFS.read(path) or ""
-        NFS.write(path, existing .. line .. "\n")
-    end)
-    if not ok and sendWarnMessage then
-        sendWarnMessage("Blank debug log failed: " .. tostring(err), "Porkify")
-    end
-end
-
-porkify_debug_log("Porkify blank debug logger initialized")
-
 local function porkify_normalize_config(config)
     local normalized = porkify_copy_defaults()
     if type(config) == "table" then

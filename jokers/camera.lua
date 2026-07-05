@@ -73,7 +73,7 @@ SMODS.Joker{ --Camera
 		  if text ~= "Unknown" and scoring_hand then
 			for _, c in ipairs(scoring_hand) do
 			  if porkify_card_is_face_or_blank(c) and not c.debuff and c.facing ~= "back" then
-				chips = base
+				chips = base * JokerDisplay.calculate_card_triggers(c, scoring_hand)
 				break
 			  end
 			end

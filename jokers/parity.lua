@@ -21,8 +21,8 @@ SMODS.Joker{ --Parity
         w = 71,
         h = 95
     },
-    cost = 5,
-    rarity = 2,
+    cost = 7,
+    rarity = 3,
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
