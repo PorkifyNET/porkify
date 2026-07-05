@@ -43,7 +43,7 @@ SMODS.Joker{ --9-Carats
         end
         local count = 0
         for _, c in ipairs(args.cards) do
-            if c and c.get_id and c:get_id() == 9 then
+            if porkify_card_matches_rank(c, 9) then
                 count = count + 1
             end
         end
@@ -57,7 +57,7 @@ SMODS.Joker{ --9-Carats
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play then
             local id = context.other_card:get_id()
-            if id == 7 or id == 9 or id == 14 then
+            if porkify_card_matches_rank(context.other_card, { 7, 9, 14 }) then
                 return {
                     mult = (id == 14) and 22 or (id * 2)
                 }
@@ -84,11 +84,11 @@ SMODS.Joker{ --9-Carats
 			for _, c in pairs(scoring_hand) do
 			  if not c.debuff and c.facing ~= 'back' then
 				local id = c:get_id()
-				if id == 7 or id == 9 or id == 14 then
+				if porkify_card_matches_rank(c, { 7, 9, 14 }) then
 				  local base_mult = (id == 14) and 22 or (id * 2)
 				  total_mult = total_mult + (base_mult * JokerDisplay.calculate_card_triggers(c, scoring_hand))
 				end
-			  end
+		      end
 			end
 		  end
 

@@ -98,9 +98,8 @@ SMODS.Joker{ -- Shooting Star
 
         if context.individual and context.cardarea == G.play and context.other_card then
             local target_rank = porkify_shooting_star_target_rank(card)
-            local scored_rank = context.other_card.base and context.other_card.base.value
 
-            if scored_rank == target_rank and not context.blueprint then
+            if porkify_card_matches_rank(context.other_card, target_rank) and not context.blueprint then
                 return {
                     func = function()
                         local extra = card.ability.extra or {}

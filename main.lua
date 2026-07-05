@@ -93,6 +93,25 @@ local function porkify_get_config_path()
     return mod_path and (mod_path .. "/config.lua") or "config.lua"
 end
 
+local function porkify_get_debug_log_path()
+    local mod_path = PORKIFY_MOD and PORKIFY_MOD.path
+    return mod_path and (mod_path .. "/blank_debug.log") or "blank_debug.log"
+end
+
+local function porkify_debug_log(message)
+    local line = tostring(message or "")
+    local ok, err = pcall(function()
+        local path = porkify_get_debug_log_path()
+        local existing = NFS.read(path) or ""
+        NFS.write(path, existing .. line .. "\n")
+    end)
+    if not ok and sendWarnMessage then
+        sendWarnMessage("Blank debug log failed: " .. tostring(err), "Porkify")
+    end
+end
+
+porkify_debug_log("Porkify blank debug logger initialized")
+
 local function porkify_normalize_config(config)
     local normalized = porkify_copy_defaults()
     if type(config) == "table" then
@@ -401,9 +420,462 @@ local function porkify_is_blank_seal_card(card)
     if not card then
         return false
     end
+    if card.debuff then
+        return false
+    end
     local seal = card.seal or (card.ability and card.ability.seal)
     return seal == "porkify_blank" or seal == "blank"
 end
+_G.porkify_is_blank_seal_card = porkify_is_blank_seal_card
+
+local function porkify_card_matches_rank(card, expected)
+    if not card then
+        return false
+    end
+
+    if porkify_is_blank_seal_card(card) then
+        return true
+    end
+
+    if type(expected) == "table" then
+        for i = 1, #expected do
+            if porkify_card_matches_rank(card, expected[i]) then
+                return true
+            end
+        end
+        return false
+    end
+
+    if type(expected) == "number" then
+        return card.get_id and card:get_id() == expected
+    end
+
+    if type(expected) == "string" then
+        local value = card.base and card.base.value
+        return value == expected
+    end
+
+    return false
+end
+_G.porkify_card_matches_rank = porkify_card_matches_rank
+
+local function porkify_card_is_face_or_blank(card)
+    if not card then
+        return false
+    end
+
+    if porkify_is_blank_seal_card(card) then
+        return true
+    end
+
+    return card.is_face and card:is_face() or false
+end
+_G.porkify_card_is_face_or_blank = porkify_card_is_face_or_blank
+
+local function porkify_get_active_eval_context()
+    return nil
+end
+
+local function porkify_blank_runtime_rank_override(card)
+    return nil
+end
+_G.porkify_blank_runtime_rank_override = porkify_blank_runtime_rank_override
+
+local function porkify_blank_joker_target_card(self, context)
+    if not (self and self.ability and context) then
+        return nil
+    end
+
+    if context.other_card and porkify_is_blank_seal_card(context.other_card) then
+        return context.other_card
+    end
+
+    if context.destroying_card and context.full_hand and #context.full_hand == 1 and porkify_is_blank_seal_card(context.full_hand[1]) then
+        return context.full_hand[1]
+    end
+
+    return nil
+end
+
+local function porkify_blank_joker_forced_rank(self, context, target_card)
+    if not (self and self.ability and target_card and porkify_is_blank_seal_card(target_card)) then
+        return nil
+    end
+
+    local joker_name = self.ability.name
+
+    if joker_name == "Walkie Talkie" then return 10 end
+    if joker_name == "Even Steven" then return 2 end
+    if joker_name == "Odd Todd" then return 3 end
+    if joker_name == "Fibonacci" then return 8 end
+    if joker_name == "Scholar" then return 14 end
+    if joker_name == "Triboulet" then return 12 end
+    if joker_name == "8 Ball" then return 8 end
+    if joker_name == "Wee Joker" then return 2 end
+    if joker_name == "Hack" then return 2 end
+    if joker_name == "Shoot the Moon" then return 12 end
+    if joker_name == "Baron" then return 13 end
+    if joker_name == "Hit the Road" then return 11 end
+    if joker_name == "Sixth Sense" then return 6 end
+    if joker_name == "Superposition" then return 14 end
+    if joker_name == "The Idol" then
+        return G and G.GAME and G.GAME.current_round and G.GAME.current_round.idol_card and G.GAME.current_round.idol_card.id or nil
+    end
+    if joker_name == "Mail-In Rebate" then
+        return G and G.GAME and G.GAME.current_round and G.GAME.current_round.mail_card and G.GAME.current_round.mail_card.id or nil
+    end
+
+    return nil
+end
+
+local function porkify_with_blank_card_rank_override(self, context, fn)
+    local target_card = porkify_blank_joker_target_card(self, context)
+    local forced_rank = porkify_blank_joker_forced_rank(self, context, target_card)
+
+    if not (target_card and forced_rank and type(fn) == "function") then
+        return fn()
+    end
+
+    local original_get_id = target_card.get_id
+    target_card.get_id = function(_)
+        return forced_rank
+    end
+
+    local ok, r1, r2, r3, r4 = pcall(fn)
+    target_card.get_id = original_get_id
+
+    if not ok then
+        error(r1)
+    end
+
+    return r1, r2, r3, r4
+end
+
+function porkify_install_blank_runtime_get_id_patch()
+    return
+end
+
+local function porkify_scoring_hand_has_rank(cards, expected)
+    for i = 1, #(cards or {}) do
+        if porkify_card_matches_rank(cards[i], expected) then
+            return true
+        end
+    end
+    return false
+end
+
+local function porkify_blank_create_tarot(key)
+    G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+    G.E_MANAGER:add_event(Event({
+        trigger = "before",
+        delay = 0.0,
+        func = function()
+            local card = create_card("Tarot", G.consumeables, nil, nil, nil, nil, nil, key)
+            card:add_to_deck()
+            G.consumeables:emplace(card)
+            G.GAME.consumeable_buffer = 0
+            return true
+        end
+    }))
+end
+
+local function porkify_blank_match_vanilla_joker(self, context)
+    if not (self and self.ability and context) then
+        return
+    end
+
+    if context.destroying_card and not context.blueprint then
+        if self.ability.name == "Sixth Sense"
+            and #context.full_hand == 1
+            and porkify_is_blank_seal_card(context.full_hand[1])
+            and not context.full_hand[1].sixth_sense
+            and G.GAME.current_round.hands_played == 0 then
+            context.full_hand[1].sixth_sense = true
+            if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                G.E_MANAGER:add_event(Event({
+                    trigger = "before",
+                    delay = 0.0,
+                    func = function()
+                        local card = create_card("Spectral", G.consumeables, nil, nil, nil, nil, nil, "sixth")
+                        card:add_to_deck()
+                        G.consumeables:emplace(card)
+                        G.GAME.consumeable_buffer = 0
+                        return true
+                    end
+                }))
+                card_eval_status_text(context.blueprint_card or self, "extra", nil, nil, nil, {
+                    message = localize("k_plus_spectral"),
+                    colour = G.C.SECONDARY_SET.Spectral
+                })
+            end
+            return true
+        end
+        return
+    end
+
+    if context.discard and context.other_card and porkify_is_blank_seal_card(context.other_card) then
+        if self.ability.name == "Mail-In Rebate" and not context.other_card.debuff then
+            ease_dollars(self.ability.extra)
+            return {
+                message = localize("$") .. self.ability.extra,
+                colour = G.C.MONEY,
+                card = self
+            }
+        end
+        if self.ability.name == "Hit the Road" and not context.other_card.debuff and not context.blueprint then
+            SMODS.scale_card(self, {
+                ref_table = self.ability,
+                ref_value = "x_mult",
+                scalar_value = "extra",
+                message_key = "a_xmult",
+                message_colour = G.C.RED,
+                message_delay = 0.45,
+            })
+            return nil, true
+        end
+        return
+    end
+
+    if context.individual and context.other_card and porkify_is_blank_seal_card(context.other_card) then
+        if context.cardarea == G.play then
+            if self.ability.name == "Wee Joker" and not context.blueprint then
+                SMODS.scale_card(self, {
+                    ref_table = self.ability.extra,
+                    ref_value = "chips",
+                    scalar_value = "chip_mod",
+                    no_message = true
+                })
+                return {
+                    extra = { focus = self, message = localize("k_upgrade_ex") },
+                    card = self
+                }
+            end
+            if self.ability.name == "8 Ball" and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+                if SMODS.pseudorandom_probability(self, "8ball", 1, self.ability.extra) then
+                    G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+                    return {
+                        extra = {
+                            focus = self,
+                            message = localize("k_plus_tarot"),
+                            func = function()
+                                G.E_MANAGER:add_event(Event({
+                                    trigger = "before",
+                                    delay = 0.0,
+                                    func = function()
+                                        local card = create_card("Tarot", G.consumeables, nil, nil, nil, nil, nil, "8ba")
+                                        card:add_to_deck()
+                                        G.consumeables:emplace(card)
+                                        G.GAME.consumeable_buffer = 0
+                                        return true
+                                    end
+                                }))
+                            end
+                        },
+                        colour = G.C.SECONDARY_SET.Tarot,
+                        card = self
+                    }
+                end
+            end
+            if self.ability.name == "The Idol" and context.other_card:is_suit(G.GAME.current_round.idol_card.suit) then
+                return {
+                    x_mult = self.ability.extra,
+                    colour = G.C.RED,
+                    card = self
+                }
+            end
+            if self.ability.name == "Scholar" then
+                return {
+                    chips = self.ability.extra.chips,
+                    mult = self.ability.extra.mult,
+                    card = self
+                }
+            end
+            if self.ability.name == "Walkie Talkie" then
+                return {
+                    chips = self.ability.extra.chips,
+                    mult = self.ability.extra.mult,
+                    card = self
+                }
+            end
+            if self.ability.name == "Fibonacci" then
+                return {
+                    mult = self.ability.extra,
+                    card = self
+                }
+            end
+            if self.ability.name == "Even Steven" then
+                return {
+                    mult = self.ability.extra,
+                    card = self
+                }
+            end
+            if self.ability.name == "Odd Todd" then
+                return {
+                    chips = self.ability.extra,
+                    card = self
+                }
+            end
+            if self.ability.name == "Triboulet" then
+                return {
+                    x_mult = self.ability.extra,
+                    colour = G.C.RED,
+                    card = self
+                }
+            end
+        end
+
+        if context.cardarea == G.hand then
+            if self.ability.name == "Shoot the Moon" then
+                if context.other_card.debuff then
+                    return {
+                        message = localize("k_debuffed"),
+                        colour = G.C.RED,
+                        card = self,
+                    }
+                end
+                return {
+                    h_mult = 13,
+                    card = self
+                }
+            end
+            if self.ability.name == "Baron" then
+                if context.other_card.debuff then
+                    return {
+                        message = localize("k_debuffed"),
+                        colour = G.C.RED,
+                        card = self,
+                    }
+                end
+                return {
+                    x_mult = self.ability.extra,
+                    card = self
+                }
+            end
+        end
+        return
+    end
+
+    if context.repetition and context.other_card and context.cardarea == G.play and porkify_is_blank_seal_card(context.other_card) then
+        if self.ability.name == "Hack" then
+            return {
+                message = localize("k_again_ex"),
+                repetitions = self.ability.extra,
+                card = self
+            }
+        end
+        return
+    end
+
+    if context.joker_main then
+        if self.ability.name == "Superposition"
+            and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit
+            and porkify_scoring_hand_has_rank(context.scoring_hand, 14)
+            and context.poker_hands
+            and next(context.poker_hands["Straight"]) then
+            porkify_blank_create_tarot("sup")
+            return {
+                message = localize("k_plus_tarot"),
+                colour = G.C.SECONDARY_SET.Tarot,
+                card = self
+            }
+        end
+    end
+end
+
+function porkify_install_blank_vanilla_joker_patch()
+    if Card and Card.is_face then
+        if Porkify_blank_is_face == nil then
+            Porkify_blank_is_face = function(self, from_boss)
+                if self and self.debuff and not from_boss then
+                    return
+                end
+                if porkify_is_blank_seal_card(self) then
+                    return true
+                end
+                return Porkify_blank_is_face_ref(self, from_boss)
+            end
+        end
+
+        if Card.is_face ~= Porkify_blank_is_face then
+            Porkify_blank_is_face_ref = Card.is_face
+            Card.is_face = Porkify_blank_is_face
+        end
+    end
+
+    if Card and Card.calculate_joker then
+        if Porkify_blank_calculate_joker == nil then
+            Porkify_blank_calculate_joker = function(self, context)
+                local eff, post = porkify_with_blank_card_rank_override(self, context, function()
+                    return Porkify_blank_calculate_joker_ref(self, context)
+                end)
+
+                if eff ~= nil and (type(eff) ~= "table" or next(eff) ~= nil) then
+                    return eff, post
+                end
+
+                local a, b, c, d = porkify_blank_match_vanilla_joker(self, context)
+                if a ~= nil or b ~= nil or c ~= nil or d ~= nil then
+                    return a, b, c, d
+                end
+
+                return eff, post
+            end
+        end
+
+        if Card.calculate_joker ~= Porkify_blank_calculate_joker then
+            Porkify_blank_calculate_joker_ref = Card.calculate_joker
+            Card.calculate_joker = Porkify_blank_calculate_joker
+        end
+    end
+
+    if Card and Card.update then
+        if Porkify_blank_card_update == nil then
+            Porkify_blank_card_update = function(self, dt)
+                local result = Porkify_blank_card_update_ref(self, dt)
+                if self and self.ability and self.ability.name == "Cloud 9" and G and G.playing_cards then
+                    local extra_blanks = 0
+                    for _, playing_card in pairs(G.playing_cards) do
+                        local real_rank = playing_card and playing_card.get_id and playing_card:get_id()
+                        if porkify_is_blank_seal_card(playing_card) and real_rank ~= 9 then
+                            extra_blanks = extra_blanks + 1
+                        end
+                    end
+                    self.ability.nine_tally = (self.ability.nine_tally or 0) + extra_blanks
+                end
+                return result
+            end
+        end
+
+        if Card.update ~= Porkify_blank_card_update then
+            Porkify_blank_card_update_ref = Card.update
+            Card.update = Porkify_blank_card_update
+        end
+    end
+end
+
+porkify_install_blank_vanilla_joker_patch()
+
+function porkify_install_blank_eval_card_patch()
+    return
+end
+
+function porkify_install_blank_calculate_card_areas_patch()
+    return
+end
+
+function porkify_install_blank_score_card_patch()
+    return
+end
+
+function porkify_install_blank_vanilla_center_patches()
+    return
+end
+
+function Porkify_blank_center_calculate(self, card, context)
+    return
+end
+
 
 local function porkify_count_highlighted_blank_seals(area)
     local count = 0
@@ -1304,6 +1776,7 @@ if love and love.update and not Porkify_love_update then
         porkify_install_safe_can_skip_booster_patch()
         porkify_install_blank_play_lock_patch()
         porkify_install_blank_handname_colour_patch()
+        porkify_install_blank_vanilla_joker_patch()
         porkify_try_open_fixed_deck_pack()
         return Porkify_love_update(dt)
     end

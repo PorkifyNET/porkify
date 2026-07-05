@@ -57,7 +57,7 @@ SMODS.Joker{ --Arcana Minor
     
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play  then
-            if context.other_card:is_face() and context.other_card:is_suit(G.GAME.current_round.ArcanaMinorSuit_card.suit) then
+            if porkify_card_is_face_or_blank(context.other_card) and context.other_card:is_suit(G.GAME.current_round.ArcanaMinorSuit_card.suit) then
 			  G.E_MANAGER:add_event(Event({
 				trigger = 'after',
 				delay = 0.4,

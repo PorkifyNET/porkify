@@ -46,7 +46,7 @@ SMODS.Joker{ -- Farmland
         ----------------------------------------------------------------
         if context.individual and context.cardarea == G.play and not context.blueprint then
             local c = context.other_card
-            if c and c.get_id and c:get_id() == 11 then -- 11 = Jack
+            if porkify_card_matches_rank(c, 11) then -- 11 = Jack
                 card.ability.extra.FarmerChips = (card.ability.extra.FarmerChips or 0) + 4
 
                 card_eval_status_text(

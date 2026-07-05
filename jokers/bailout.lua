@@ -38,7 +38,7 @@ SMODS.Joker{ --Bailout
     
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.hand and context.end_of_round  then
-            if context.other_card:get_id() == 14 then
+            if porkify_card_matches_rank(context.other_card, 14) then
                 return {
                     
                     func = function()
@@ -72,7 +72,7 @@ SMODS.Joker{ --Bailout
 
 		  if G and G.hand and G.hand.cards then
 			for _, c in ipairs(G.hand.cards) do
-			  if c and c.get_id and c:get_id() == 14 and not c.debuff and c.facing ~= 'back' then
+			  if porkify_card_matches_rank(c, 14) and not c.debuff and c.facing ~= 'back' then
 				aces = aces + 1
 			  end
 			end

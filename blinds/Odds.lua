@@ -15,6 +15,9 @@ SMODS.Blind{
     },
 
     recalc_debuff = function(self, card, from_blind)
+        if porkify_is_blank_seal_card(card) then
+            return true
+        end
         local id = card and card.get_id and card:get_id()
         return id == 14 or id == 3 or id == 5 or id == 7 or id == 9
     end,

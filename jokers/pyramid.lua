@@ -50,7 +50,7 @@ SMODS.Joker{ --Pyramid
             local scored_card = context.other_card
             local id = scored_card:get_id()
             local current_key = scored_card.config and scored_card.config.center and scored_card.config.center.key
-            if (id == 3 or id == 4 or id == 5) and current_key ~= "m_wild" then
+            if porkify_card_matches_rank(scored_card, { 3, 4, 5 }) and current_key ~= "m_wild" then
                 scored_card:set_ability(G.P_CENTERS.m_wild)
                 return {
                     message = "Card Modified!"

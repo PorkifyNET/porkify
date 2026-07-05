@@ -47,7 +47,7 @@ SMODS.Joker{ --Hatsune Joku
 
             if played_card
                 and played_card.get_id
-                and (played_card:get_id() == 3 or played_card:get_id() == 9) then
+                and porkify_card_matches_rank(played_card, { 3, 9 }) then
                 return {
                     x_chips = x_chips
                 }
@@ -78,7 +78,7 @@ SMODS.Joker{ --Hatsune Joku
 
                 if text ~= "Unknown" and scoring_hand then
                     for _, c in pairs(scoring_hand) do
-                        if (c:get_id() == 3 or c:get_id() == 9) and not c.debuff and c.facing ~= 'back' then
+                        if porkify_card_matches_rank(c, { 3, 9 }) and not c.debuff and c.facing ~= 'back' then
                             matches = matches + JokerDisplay.calculate_card_triggers(c, scoring_hand)
                         end
                     end

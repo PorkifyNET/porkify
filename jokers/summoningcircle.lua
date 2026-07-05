@@ -50,7 +50,7 @@ SMODS.Joker{ --Summoning Circle
             local odds = (card.ability and card.ability.extra and card.ability.extra.odds) or (self.config.extra and self.config.extra.odds) or 2
             if played_card
                 and played_card.get_id
-                and played_card:get_id() == 6
+                and porkify_card_matches_rank(played_card, 6)
                 and SMODS.pseudorandom_probability(
                     card,
                     'group_summoningcircle_porkify',
@@ -107,7 +107,7 @@ SMODS.Joker{ --Summoning Circle
 
 		  if text ~= "Unknown" and scoring_hand then
 			for _, c in pairs(scoring_hand) do
-			  if c:get_id() == 6 and not c.debuff and c.facing ~= 'back' then
+			  if porkify_card_matches_rank(c, 6) and not c.debuff and c.facing ~= 'back' then
 				sixes = sixes + 1
 			  end
 			end

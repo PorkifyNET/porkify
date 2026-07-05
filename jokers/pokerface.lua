@@ -41,7 +41,7 @@ SMODS.Joker{ --Poker Face
             local has_face_card = false
 
             for _, scoring_card in ipairs(scoring_hand) do
-                if scoring_card and scoring_card.is_face and scoring_card:is_face() then
+                if porkify_card_is_face_or_blank(scoring_card) then
                     has_face_card = true
                     break
                 end
@@ -74,7 +74,7 @@ SMODS.Joker{ --Poker Face
                     local has_face_card = false
 
                     for _, scoring_card in ipairs(scoring_hand) do
-                        if scoring_card:is_face() and not scoring_card.debuff and scoring_card.facing ~= "back" then
+                        if porkify_card_is_face_or_blank(scoring_card) and not scoring_card.debuff and scoring_card.facing ~= "back" then
                             has_face_card = true
                             break
                         end

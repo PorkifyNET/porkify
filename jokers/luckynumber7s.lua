@@ -45,7 +45,7 @@ SMODS.Joker{ -- Lucky Number 7s
 
         local sevens = 0
         for _, c in ipairs(args.cards) do
-            if c and c.get_id and c:get_id() == 7 then
+            if porkify_card_matches_rank(c, 7) then
                 sevens = sevens + 1
             end
         end
@@ -62,7 +62,7 @@ SMODS.Joker{ -- Lucky Number 7s
         -- Individual card scoring context for played cards
         if context.individual and context.cardarea == G.play then
             local c = context.other_card
-            if c and c:get_id() == 7 then
+            if porkify_card_matches_rank(c, 7) then
                 return {
                     mult = 7,
                     dollars = 3
@@ -88,7 +88,7 @@ SMODS.Joker{ -- Lucky Number 7s
 		  local text, _, scoring_hand = JokerDisplay.evaluate_hand()
 		  if text ~= "Unknown" and scoring_hand then
 			for _, c in pairs(scoring_hand) do
-			  if c:get_id() == 7 and not c.debuff and c.facing ~= 'back' then
+			  if porkify_card_matches_rank(c, 7) and not c.debuff and c.facing ~= 'back' then
 				sevens = sevens + JokerDisplay.calculate_card_triggers(c, scoring_hand)
 			  end
 			end

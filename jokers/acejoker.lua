@@ -29,7 +29,7 @@ SMODS.Joker{ -- Ace Joker
             return false
         end
         for _, c in ipairs(args.cards) do
-            if c and c.get_id and c:get_id() == 14 and c.is_suit and c:is_suit("Spades") then
+            if porkify_card_matches_rank(c, 14) and c.is_suit and c:is_suit("Spades") then
                 return true
             end
         end
@@ -42,7 +42,7 @@ SMODS.Joker{ -- Ace Joker
 
             for _, c in ipairs(scoring_hand) do
                 -- In Balatro, Ace is rank 14, Jack 11, Queen 12, King 13
-                if c:get_id() == 14 and c:is_suit("Spades") then
+                if porkify_card_matches_rank(c, 14) and c:is_suit("Spades") then
                     has_ace_spades = true
                     break
                 end
@@ -80,7 +80,7 @@ SMODS.Joker{ -- Ace Joker
 		  local text, _, scoring_hand = JokerDisplay.evaluate_hand()
 		  if text ~= 'Unknown' and scoring_hand then
 			for _, c in pairs(scoring_hand) do
-			  if c:get_id() == 14 and c:is_suit("Spades") and not c.debuff and c.facing ~= 'back' then
+			  if porkify_card_matches_rank(c, 14) and c:is_suit("Spades") and not c.debuff and c.facing ~= 'back' then
 				x = 3
 				break
 			  end

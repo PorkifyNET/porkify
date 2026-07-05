@@ -48,13 +48,11 @@ SMODS.Joker{ --67
         local has_seven = false
 
         for _, c in ipairs(args.cards) do
-            if c and c.get_id then
-                local id = c:get_id()
-                if id == 6 then
-                    has_six = true
-                elseif id == 7 then
-                    has_seven = true
-                end
+            if porkify_card_matches_rank(c, 6) then
+                has_six = true
+            end
+            if porkify_card_matches_rank(c, 7) then
+                has_seven = true
             end
 
             if has_six and has_seven then
@@ -67,8 +65,7 @@ SMODS.Joker{ --67
 
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play and context.other_card and context.other_card.get_id then
-            local id = context.other_card:get_id()
-            if id == 6 or id == 7 then
+            if porkify_card_matches_rank(context.other_card, { 6, 7 }) then
                 local extra = card.ability.extra or {}
                 return {
                     chips = extra.chips or 6,
@@ -104,8 +101,7 @@ SMODS.Joker{ --67
                 and playing_card.get_id
                 and not playing_card.debuff
                 and playing_card.facing ~= 'back' then
-                local id = playing_card:get_id()
-                if id == 6 or id == 7 then
+                if porkify_card_matches_rank(playing_card, { 6, 7 }) then
                   hits = hits + JokerDisplay.calculate_card_triggers(playing_card, scoring_hand)
                 end
               end

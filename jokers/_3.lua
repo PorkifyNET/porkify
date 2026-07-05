@@ -43,7 +43,7 @@ SMODS.Joker{ --:3
         end
         local count = 0
         for _, c in ipairs(args.cards) do
-            if c and c.get_id and c:get_id() == 3 then
+            if porkify_card_matches_rank(c, 3) then
                 count = count + 1
             end
         end
@@ -63,7 +63,7 @@ SMODS.Joker{ --:3
     
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play  then
-            if context.other_card:get_id() == 3 then
+            if porkify_card_matches_rank(context.other_card, 3) then
                 return {
                     Xmult = 3
                 }
@@ -93,7 +93,7 @@ SMODS.Joker{ --:3
 
 		  if text ~= 'Unknown' and scoring_hand then
 			for _, playing_card in pairs(scoring_hand) do
-			  if playing_card:get_id() == 3 and not playing_card.debuff and playing_card.facing ~= 'back' then
+			  if porkify_card_matches_rank(playing_card, 3) and not playing_card.debuff and playing_card.facing ~= 'back' then
 				-- Count retriggers the way JokerDisplay expects
 				count = count + JokerDisplay.calculate_card_triggers(playing_card, scoring_hand)
 			  end

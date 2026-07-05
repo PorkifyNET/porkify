@@ -67,7 +67,7 @@ SMODS.Joker{ --The Headmaster
             end
 
             local played_card = full_hand[1]
-            if not played_card or played_card:get_id() ~= 14 then
+            if not porkify_card_matches_rank(played_card, 14) then
                 return
             end
 

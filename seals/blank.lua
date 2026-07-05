@@ -45,6 +45,9 @@ local function porkify_is_blank_seal(card)
     if not card then
         return false
     end
+    if card.debuff then
+        return false
+    end
     local seal = card.seal or (card.ability and card.ability.seal)
     return seal == "porkify_blank" or seal == "blank"
 end
@@ -177,6 +180,13 @@ end
 function Card:get_id()
     if porkify_blank_eval_depth > 0 and porkify_blank_eval_map and porkify_blank_eval_map[self] then
         return porkify_blank_eval_map[self]
+    end
+    local runtime_override = rawget(_G, "porkify_blank_runtime_rank_override")
+    if type(runtime_override) == "function" then
+        local overridden_id = runtime_override(self)
+        if overridden_id ~= nil then
+            return overridden_id
+        end
     end
     return porkify_blank_card_get_id_ref(self)
 end

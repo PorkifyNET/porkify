@@ -41,7 +41,7 @@ SMODS.Joker{ --Camera
             if (function()
                 for i = 1, #context.scoring_hand do
                     local scoring_card = context.scoring_hand[i]
-                    if scoring_card:is_face() then
+                    if porkify_card_is_face_or_blank(scoring_card) then
                         return scoring_card == context.other_card
                     end
                 end
@@ -72,7 +72,7 @@ SMODS.Joker{ --Camera
 		  local text, _, scoring_hand = JokerDisplay.evaluate_hand()
 		  if text ~= "Unknown" and scoring_hand then
 			for _, c in ipairs(scoring_hand) do
-			  if c:is_face() and not c.debuff and c.facing ~= "back" then
+			  if porkify_card_is_face_or_blank(c) and not c.debuff and c.facing ~= "back" then
 				chips = base
 				break
 			  end

@@ -40,7 +40,7 @@ SMODS.Joker{ --Pride Banner
         end
         local count = 0
         for _, c in ipairs(args.cards) do
-            if c and c.is_face and c:is_face() then
+            if porkify_card_is_face_or_blank(c) then
                 count = count + 1
             end
         end
@@ -62,7 +62,7 @@ SMODS.Joker{ --Pride Banner
             if (to_big(#context.scoring_hand) == to_big(5) and (function()
                 local count = 0
                 for _, playing_card in pairs(context.scoring_hand or {}) do
-                    if playing_card:is_face() then
+                    if porkify_card_is_face_or_blank(playing_card) then
                         count = count + 1
                     end
                 end

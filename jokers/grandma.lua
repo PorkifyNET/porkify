@@ -39,7 +39,7 @@ SMODS.Joker{ --Grandma
         end
         local tens = 0
         for _, c in ipairs(args.cards) do
-            if c and c.get_id and c:get_id() == 10 then
+            if porkify_card_matches_rank(c, 10) then
                 tens = tens + 1
             end
         end
@@ -49,8 +49,7 @@ SMODS.Joker{ --Grandma
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play then
             local played_card = context.other_card
-            local id = played_card and played_card:get_id()
-            if id == 8 or id == 9 or id == 10 or id == 14 then
+            if porkify_card_matches_rank(played_card, { 8, 9, 10, 14 }) then
                 return {
                     dollars = (card.ability.extra and card.ability.extra.dollars) or 1
                 }
@@ -74,9 +73,8 @@ SMODS.Joker{ --Grandma
 
                 if text ~= "Unknown" and scoring_hand then
                     for _, c in pairs(scoring_hand) do
-                        local id = c:get_id()
                         if not c.debuff and c.facing ~= "back"
-                            and (id == 8 or id == 9 or id == 10 or id == 14) then
+                            and porkify_card_matches_rank(c, { 8, 9, 10, 14 }) then
                             hits = hits + JokerDisplay.calculate_card_triggers(c, scoring_hand)
                         end
                     end

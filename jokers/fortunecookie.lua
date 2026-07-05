@@ -36,7 +36,7 @@ SMODS.Joker{ --Fortune Cookie
             local has_face_card = false
 
             for _, played_card in ipairs(full_hand) do
-                if played_card and played_card.is_face and played_card:is_face() then
+                if porkify_card_is_face_or_blank(played_card) then
                     has_face_card = true
                     break
                 end
@@ -84,7 +84,7 @@ SMODS.Joker{ --Fortune Cookie
                 if text ~= "Unknown" and scoring_hand then
                     active = true
                     for _, scoring_card in ipairs(scoring_hand) do
-                        if scoring_card:is_face() and not scoring_card.debuff and scoring_card.facing ~= "back" then
+                        if porkify_card_is_face_or_blank(scoring_card) and not scoring_card.debuff and scoring_card.facing ~= "back" then
                             active = false
                             break
                         end

@@ -76,7 +76,7 @@ SMODS.Joker{ -- Target
 
         if context.repetition and context.cardarea == G.play then
             local target_rank = get_target_rank(card)
-            if context.other_card and context.other_card.base and context.other_card.base.value == target_rank then
+            if porkify_card_matches_rank(context.other_card, target_rank) then
                 return {
                     repetitions = 2,
                     message = "Again!"
