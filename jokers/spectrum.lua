@@ -1,14 +1,15 @@
 SMODS.Joker{ --Spectrum
     key = "spectrum",
     config = {
-        extra = {}
+        extra = {
+            chips_per_suit = 80
+        }
     },
     loc_txt = {
         ['name'] = 'Spectrum',
         ['text'] = {
-            [1] = '{X:red,C:white}X1{} Mult for each ',
-            [2] = '{C:attention}suit{} after the {C:attention}second{}',
-            [3] = 'in the played {C:blue}hand{}'
+            [1] = '{C:blue}+#1#{} Chips for every scored',
+            [2] = '{C:attention}Suit{} in played hand'
         },
     },
     pos = {
@@ -29,6 +30,10 @@ SMODS.Joker{ --Spectrum
     atlas = 'CustomJokers',
     pools = { ["porkify_porkify_jokers"] = true },
 
+    loc_vars = function(self, info_queue, card)
+        return { vars = { (card.ability.extra and card.ability.extra.chips_per_suit) or 80 } }
+    end,
+
     calculate = function(self, card, context)
         if context.cardarea == G.jokers and context.joker_main then
             local scoring_hand = context.scoring_hand or context.full_hand or {}
@@ -45,13 +50,12 @@ SMODS.Joker{ --Spectrum
                 suit_count = suit_count + 1
             end
 
-            if suit_count == 3 then
+            local chips_per_suit = (card.ability.extra and card.ability.extra.chips_per_suit) or 80
+            local chips = suit_count * chips_per_suit
+
+            if chips > 0 then
                 return {
-                    Xmult = 2
-                }
-            elseif suit_count >= 4 then
-                return {
-                    Xmult = 3
+                    chips = chips
                 }
             end
         end
@@ -60,18 +64,13 @@ SMODS.Joker{ --Spectrum
 	joker_display_def = function(JokerDisplay)
 	  return {
 		text = {
-		  {
-			border_nodes = {
-			  { text = "X" },
-			  { ref_table = "card.joker_display_values", ref_value = "x_mult", retrigger_type = "exp" }
-			}
-		  }
+		  { ref_table = "card.joker_display_values", ref_value = "chips_text", colour = G.C.BLUE }
 		},
 
 		calc_function = function(card)
-		  local x = 1
 		  local suit_count = 0
 		  local suits = {}
+		  local chips_per_suit = ((card.ability or {}).extra or {}).chips_per_suit or 80
 		  local text, _, scoring_hand = JokerDisplay.evaluate_hand()
 
 		  if text ~= "Unknown" and scoring_hand then
@@ -86,13 +85,7 @@ SMODS.Joker{ --Spectrum
 			suit_count = suit_count + 1
 		  end
 
-		  if suit_count == 3 then
-			x = 2
-		  elseif suit_count >= 4 then
-			x = 3
-		  end
-
-		  card.joker_display_values.x_mult = x
+		  card.joker_display_values.chips_text = "+" .. tostring(suit_count * chips_per_suit)
 		  card.joker_display_values.suits_text = "(" .. tostring(suit_count) .. " suits)"
 		end
 	  }

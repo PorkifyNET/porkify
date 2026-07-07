@@ -1,4 +1,23 @@
 
+local function porkify_9carats_effective_rank(scored_card)
+    if not scored_card then
+        return nil
+    end
+
+    local id = scored_card.get_id and scored_card:get_id() or nil
+    if type(id) == "number" and id >= 2 and id <= 14 then
+        return id
+    end
+
+    -- Blank Seals can satisfy rank checks even on no-rank cards like Stone/Meteor.
+    -- Use Ace as the deterministic fallback so the joker can still score safely.
+    if porkify_is_blank_seal_card and porkify_is_blank_seal_card(scored_card) then
+        return 14
+    end
+
+    return nil
+end
+
 SMODS.Joker{ --9-Carats
     key = "_9carats",
     config = {
@@ -56,8 +75,8 @@ SMODS.Joker{ --9-Carats
     
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play then
-            local id = context.other_card:get_id()
-            if porkify_card_matches_rank(context.other_card, { 7, 9, 14 }) then
+            local id = porkify_9carats_effective_rank(context.other_card)
+            if id and porkify_card_matches_rank(context.other_card, { 7, 9, 14 }) then
                 return {
                     mult = (id == 14) and 22 or (id * 2)
                 }
@@ -83,8 +102,8 @@ SMODS.Joker{ --9-Carats
 		  if text ~= "Unknown" and scoring_hand then
 			for _, c in pairs(scoring_hand) do
 			  if not c.debuff and c.facing ~= 'back' then
-				local id = c:get_id()
-				if porkify_card_matches_rank(c, { 7, 9, 14 }) then
+				local id = porkify_9carats_effective_rank(c)
+				if id and porkify_card_matches_rank(c, { 7, 9, 14 }) then
 				  local base_mult = (id == 14) and 22 or (id * 2)
 				  total_mult = total_mult + (base_mult * JokerDisplay.calculate_card_triggers(c, scoring_hand))
 				end
