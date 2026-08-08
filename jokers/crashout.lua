@@ -3,17 +3,17 @@ SMODS.Joker{ --Crashout
     key = "crashout",
     config = {
         extra = {
-            ShredderMult = 1,
-            consumablesheld = 0
+            x_chips = 1,
+            x_chips_gain = 0.4
         }
     },
     loc_txt = {
         ['name'] = 'Crashout',
         ['text'] = {
-            [1] = 'This Joker gains {X:red,C:white}X0.25{} Mult',
-            [2] = 'per owned {C:attention}consumable{} when',
-            [3] = '{C:attention}Blind{} is selected',
-            [4] = '{C:inactive}(Currently{} {X:red,C:white}X#1#{} {C:inactive}Mult){}'
+            [1] = 'This Joker gains {X:blue,C:white}X#2#{} Chips',
+            [2] = 'every time a {C:spectral}Spectral{}',
+            [3] = 'card is used',
+            [4] = '{C:inactive}(Currently{} {X:blue,C:white}X#1#{} {C:inactive}Chips){}'
         },
         ['unlock'] = {
             [1] = '{C:red}Discard{} {C:attention}250{} cards'
@@ -43,22 +43,27 @@ SMODS.Joker{ --Crashout
      },
     
     loc_vars = function(self, info_queue, card)
-        
-        return {vars = {card.ability.extra.ShredderMult, ((#(G.consumeables and G.consumeables.cards or {}) or 0)) * 0.25}}
+        local extra = (card and card.ability and card.ability.extra) or self.config.extra
+        return { vars = { extra.x_chips or 1, extra.x_chips_gain or 0.4 } }
     end,
     
     calculate = function(self, card, context)
-        if context.setting_blind  then
-            return {
-                func = function()
-                    card.ability.extra.ShredderMult = (card.ability.extra.ShredderMult) + (#(G.consumeables and G.consumeables.cards or {})) * 0.25
-                    return true
-                end
-            }
+        if context.using_consumeable and not context.blueprint then
+            local consumeable = context.consumeable
+            local set = consumeable and consumeable.ability and consumeable.ability.set
+
+            if set == 'Spectral' then
+                card.ability.extra.x_chips = (card.ability.extra.x_chips or 1) + (card.ability.extra.x_chips_gain or 0.4)
+                return {
+                    message = "Crashout!",
+                    colour = G.C.CHIPS
+                }
+            end
         end
-        if context.cardarea == G.jokers and context.joker_main  then
+
+        if context.cardarea == G.jokers and context.joker_main then
             return {
-                Xmult = card.ability.extra.ShredderMult
+                x_chips = (card.ability.extra and card.ability.extra.x_chips) or 1
             }
         end
     end,
@@ -68,18 +73,26 @@ SMODS.Joker{ --Crashout
 		text = {
 		  {
 			border_nodes = {
-			  { text = "X" },
-			  { ref_table = "card.ability.extra", ref_value = "ShredderMult" }
+			  { text = "X", colour = G.C.WHITE },
+			  { ref_table = "card.joker_display_values", ref_value = "x_chips_text", colour = G.C.WHITE }
 			}
-		  },
-		  reminder_text = {
-			{ ref_table = "card.joker_display_values", ref_value = "gain_text" }
 		  }
 		},
+		reminder_text = {
+			{ text = "(", colour = G.C.GREY },
+			{ text = "Spectral", colour = G.C.SECONDARY_SET.Spectral },
+			{ text = ")", colour = G.C.GREY }
+		},
+		style_function = function(card, text, reminder_text, extra)
+		  if text and text.children and text.children[1] then
+			text.children[1].config.colour = G.C.CHIPS
+		  end
+		  return false
+		  end,
 
 		calc_function = function(card)
-		  local n = #(G.consumeables and G.consumeables.cards or {})
-		  card.joker_display_values.gain_text = "+X" .. tostring(n * 0.25) .. " on blind"
+		  local extra = (card.ability and card.ability.extra) or {}
+		  card.joker_display_values.x_chips_text = extra.x_chips or 1
 		end
 	  }
 	end

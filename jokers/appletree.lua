@@ -1,13 +1,19 @@
 SMODS.Joker{ --Apple Tree
     key = "appletree",
     config = {
-        extra = { currentante = 0 }
+        extra = {
+            hearts_destroyed = 0,
+            hand_size = 0,
+            hearts_needed = 3
+        }
     },
     loc_txt = {
         ['name'] = 'Apple Tree',
         ['text'] = {
-            [1] = '{C:attention}+1{} Hand Size per {C:purple}Ante{}',
-            [2] = '{C:inactive}(Currently{} {C:attention}+#1#{} {C:inactive}Hand Size){}'
+            [1] = 'Gain {C:attention}+1{} Hand Size',
+            [2] = 'for every {C:attention}#3#{} {C:inactive}[#2#/#3#]{}',
+            [3] = 'destroyed {C:hearts}Heart{} cards',
+            [4] = '{C:inactive}(Currently{} {C:attention}+#1#{} {C:inactive}Hand Size){}'
         },
         ['unlock'] = { [1] = 'Reach {C:attention}Ante 8{}' }
     },
@@ -25,25 +31,54 @@ SMODS.Joker{ --Apple Tree
     unlock_condition = { type = 'ante_up', ante = 8 },
 
     loc_vars = function(self, info_queue, card)
-        return { vars = { card.ability.extra.currentante or 0 } }
+        local extra = card.ability.extra or self.config.extra
+        return {
+            vars = {
+                extra.hand_size or 0,
+                extra.hearts_destroyed or 0,
+                extra.hearts_needed or 3
+            }
+        }
     end,
 
     calculate = function(self, card, context)
-        -- Passive sync: if ante changed, apply only the difference
-        local new_ante = (G.GAME and G.GAME.round_resets and G.GAME.round_resets.ante) or 0
-        local old_ante = card.ability.extra.currentante or 0
+        if context.remove_playing_cards then
+            local removed = {}
 
-        if new_ante ~= old_ante then
-            local delta = new_ante - old_ante
-            card.ability.extra.currentante = new_ante
+            if type(context.removed) == "table" then
+                removed = context.removed
+            elseif type(context.remove_playing_cards) == "table" then
+                removed = context.remove_playing_cards
+            end
 
-            -- apply via event to avoid doing it mid-eval in a weird phase
-            return {
-                func = function()
-                    if delta ~= 0 then G.hand:change_size(delta) end
-                    return true
+            local hearts_destroyed = 0
+            for _, removed_card in ipairs(removed) do
+                if removed_card and removed_card.is_suit and removed_card:is_suit("Hearts") then
+                    hearts_destroyed = hearts_destroyed + 1
                 end
-            }
+            end
+
+            if hearts_destroyed > 0 then
+                local extra = card.ability.extra
+                local needed = extra.hearts_needed or 3
+                local total_hearts = (extra.hearts_destroyed or 0) + hearts_destroyed
+                local hand_size_gain = math.floor(total_hearts / needed)
+
+                extra.hearts_destroyed = total_hearts % needed
+
+                if hand_size_gain > 0 then
+                    extra.hand_size = (extra.hand_size or 0) + hand_size_gain
+
+                    return {
+                        func = function()
+                            G.hand:change_size(hand_size_gain)
+                            card_eval_status_text(card, 'extra', nil, nil, nil,
+                                { message = "Grow!", colour = G.C.HEARTS })
+                            return true
+                        end
+                    }
+                end
+            end
         end
     end,
 
@@ -51,17 +86,39 @@ SMODS.Joker{ --Apple Tree
         if from_debuff then
             return
         end
-        local ante = (G.GAME and G.GAME.round_resets and G.GAME.round_resets.ante) or 0
-        card.ability.extra.currentante = ante
-        if ante ~= 0 then G.hand:change_size(ante) end
+        local applied = card.ability.extra.hand_size or 0
+        if applied ~= 0 then G.hand:change_size(applied) end
     end,
 
     remove_from_deck = function(self, card, from_debuff)
         if from_debuff then
             return
         end
-        local applied = card.ability.extra.currentante or 0
+        local applied = card.ability.extra.hand_size or 0
         if applied ~= 0 then G.hand:change_size(-applied) end
-        card.ability.extra.currentante = 0
-    end
+        card.ability.extra.hand_size = 0
+    end,
+
+	joker_display_def = function(JokerDisplay)
+	  return {
+		text = {
+		  { ref_table = "card.joker_display_values", ref_value = "hand_size_text", colour = G.C.IMPORTANT }
+		},
+		reminder_text = {
+			{ text = "(", colour = G.C.GREY },
+			{ ref_table = "card.joker_display_values", ref_value = "progress_text", colour = G.C.SUITS["Hearts"] },
+			{ text = ")", colour = G.C.GREY }
+		},
+
+		calc_function = function(card)
+		  local extra = card.ability.extra or {}
+		  local hand_size = extra.hand_size or 0
+		  local hearts_destroyed = extra.hearts_destroyed or 0
+		  local hearts_needed = extra.hearts_needed or 3
+
+		  card.joker_display_values.hand_size_text = "+" .. tostring(hand_size)
+		  card.joker_display_values.progress_text = tostring(hearts_destroyed) .. "/" .. tostring(hearts_needed) .. " Hearts"
+		end
+	  }
+	end
 }

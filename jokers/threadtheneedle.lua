@@ -26,7 +26,7 @@ SMODS.Joker{ -- Thread (The Needle)
         h = 95
     },
     cost = 6,
-    rarity = 2,              -- Uncommon/rare, tweak as you like
+    rarity = 2,
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -52,7 +52,7 @@ SMODS.Joker{ -- Thread (The Needle)
         end
 
         local xm = 1 + 0.1 * diff
-        local shown = string.format('%.1f', xm)
+        local shown = xm
 
         return { vars = { shown } }
     end,

@@ -2,13 +2,13 @@ SMODS.Joker{ --Coupon
     key = "coupon",
     config = {
         extra = {
-            dollars_per_voucher = 2
+            dollars_per_voucher = 1
         }
     },
     loc_txt = {
         ['name'] = 'Coupon',
         ['text'] = {
-            [1] = 'Earn {C:money}$2{} per redeemed',
+            [1] = 'Earn {C:money}$1{} per redeemed',
             [2] = '{C:attention}Voucher{} at end of round',
             [3] = '{C:inactive}(Currently {C:money}$#1#{}{C:inactive}){}'
         },
@@ -28,7 +28,7 @@ SMODS.Joker{ --Coupon
     rarity = 2,
     blueprint_compat = false,
     eternal_compat = true,
-    perishable_compat = false,
+    perishable_compat = true,
     unlocked = false,
     discovered = false,
     atlas = 'CustomJokers',
@@ -48,7 +48,7 @@ SMODS.Joker{ --Coupon
     end,
 
     calc_dollar_bonus = function(self, card)
-        local per = ((card and card.ability and card.ability.extra) or self.config.extra).dollars_per_voucher or 2
+        local per = ((card and card.ability and card.ability.extra) or self.config.extra).dollars_per_voucher or 1
         local used_vouchers = (G and G.GAME and G.GAME.used_vouchers) or {}
         local count = 0
         for _, redeemed in pairs(used_vouchers) do
@@ -76,7 +76,7 @@ SMODS.Joker{ --Coupon
         },
 
 		calc_function = function(card)
-		  local per = ((card.ability and card.ability.extra) or {}).dollars_per_voucher or 2
+		  local per = ((card.ability and card.ability.extra) or {}).dollars_per_voucher or 1
 		  local used_vouchers = (G and G.GAME and G.GAME.used_vouchers) or {}
 		  local count = 0
 		  for _, redeemed in pairs(used_vouchers) do

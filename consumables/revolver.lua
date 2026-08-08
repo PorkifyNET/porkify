@@ -73,8 +73,9 @@ SMODS.Consumable {
                 delay = 0.1,
                 func = function()
                     local entry = selected_cards[i]
-                    if entry and entry.card then
-                        entry.card:set_ability(G.P_CENTERS.m_porkify_revolving, nil, true)
+                    local resolute_center = G.P_CENTERS and G.P_CENTERS.m_porkify_revolving
+                    if entry and entry.card and resolute_center then
+                        entry.card:set_ability(resolute_center, nil, true)
                         entry.card.ability.wheel_flipped = nil
                     end
                     return true

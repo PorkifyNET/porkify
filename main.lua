@@ -457,6 +457,158 @@ local function porkify_get_active_eval_context()
     return nil
 end
 
+local function porkify_get_card_runtime_key(card)
+    if not card then
+        return nil
+    end
+
+    return card.unique_val or card.sort_id or tostring(card)
+end
+
+local function porkify_get_mimic_replay_table()
+    if not (G and G.GAME) then
+        return nil
+    end
+
+    G.GAME.current_round = G.GAME.current_round or {}
+    G.GAME.current_round.porkify_mimic_replays = G.GAME.current_round.porkify_mimic_replays or {}
+    return G.GAME.current_round.porkify_mimic_replays
+end
+
+local function porkify_get_mimic_popup_proxy()
+    if not (G and G.GAME and G.GAME.current_round) then
+        return nil
+    end
+
+    return G.GAME.current_round.porkify_mimic_popup_proxy
+end
+
+local function porkify_set_mimic_popup_proxy(source_card, proxy_card)
+    if not (G and G.GAME) then
+        return
+    end
+
+    G.GAME.current_round = G.GAME.current_round or {}
+    if source_card and proxy_card then
+        G.GAME.current_round.porkify_mimic_popup_proxy = {
+            source_card = source_card,
+            proxy_card = proxy_card
+        }
+    else
+        G.GAME.current_round.porkify_mimic_popup_proxy = nil
+    end
+end
+
+local function porkify_apply_mimic_popup_proxy(effect, scored_card)
+    local popup_proxy = porkify_get_mimic_popup_proxy()
+    if not (popup_proxy and effect and scored_card == popup_proxy.source_card) then
+        return effect
+    end
+
+    if effect.message_card == popup_proxy.proxy_card then
+        return effect
+    end
+
+    local copied = {}
+    for k, v in pairs(effect) do
+        copied[k] = v
+    end
+    copied.message_card = popup_proxy.proxy_card
+    return copied
+end
+
+local function porkify_get_mimic_replay_source(proxy_card)
+    local replay_table = porkify_get_mimic_replay_table()
+    local proxy_key = porkify_get_card_runtime_key(proxy_card)
+    if not (replay_table and proxy_key) then
+        return nil
+    end
+
+    local replay_state = replay_table[proxy_key]
+    return replay_state and replay_state.source_card or nil
+end
+
+local function porkify_arm_mimic_replay(proxy_card, source_card)
+    local replay_table = porkify_get_mimic_replay_table()
+    local proxy_key = porkify_get_card_runtime_key(proxy_card)
+    if not (replay_table and proxy_key and source_card) then
+        return
+    end
+
+    replay_table[proxy_key] = {
+        proxy_card = proxy_card,
+        source_card = source_card
+    }
+end
+_G.porkify_arm_mimic_replay = porkify_arm_mimic_replay
+
+local function porkify_clear_mimic_replays()
+    local replay_table = porkify_get_mimic_replay_table()
+    if replay_table then
+        for key in pairs(replay_table) do
+            replay_table[key] = nil
+        end
+    end
+end
+
+local function porkify_build_mimic_replay_context(context, proxy_card, source_card)
+    if not (context and proxy_card and source_card) then
+        return nil
+    end
+
+    local replay_context = {}
+    for k, v in pairs(context) do
+        replay_context[k] = v
+    end
+
+    if replay_context.other_card == proxy_card then
+        replay_context.other_card = source_card
+    end
+    if replay_context.destroy_card == proxy_card then
+        replay_context.destroy_card = source_card
+    end
+    if replay_context.destroying_card == proxy_card then
+        replay_context.destroying_card = source_card
+    end
+
+    replay_context.porkify_mimic_replay_active = true
+    replay_context.porkify_mimic_proxy_card = proxy_card
+    replay_context.porkify_mimic_source_card = source_card
+
+    return replay_context
+end
+
+local function porkify_resolve_mimic_replay(card, context)
+    if context and context.porkify_mimic_replay_active then
+        return card, context
+    end
+
+    local proxy_card = nil
+    local source_card = nil
+
+    if card then
+        source_card = porkify_get_mimic_replay_source(card)
+        if source_card then
+            proxy_card = card
+        end
+    end
+
+    if not source_card and context and context.other_card then
+        source_card = porkify_get_mimic_replay_source(context.other_card)
+        if source_card then
+            proxy_card = context.other_card
+        end
+    end
+
+    if not (proxy_card and source_card) then
+        return card, context
+    end
+
+    local replay_context = porkify_build_mimic_replay_context(context, proxy_card, source_card) or context
+    local replay_card = (card == proxy_card) and source_card or card
+    return replay_card, replay_context
+end
+
 local function porkify_blank_runtime_rank_override(card)
     return nil
 end
@@ -787,15 +939,16 @@ function porkify_install_blank_vanilla_joker_patch()
     if Card and Card.calculate_joker then
         if Porkify_blank_calculate_joker == nil then
             Porkify_blank_calculate_joker = function(self, context)
-                local eff, post = porkify_with_blank_card_rank_override(self, context, function()
-                    return Porkify_blank_calculate_joker_ref(self, context)
+                local _, resolved_context = porkify_resolve_mimic_replay(nil, context)
+                local eff, post = porkify_with_blank_card_rank_override(self, resolved_context, function()
+                    return Porkify_blank_calculate_joker_ref(self, resolved_context)
                 end)
 
                 if eff ~= nil and (type(eff) ~= "table" or next(eff) ~= nil) then
                     return eff, post
                 end
 
-                local a, b, c, d = porkify_blank_match_vanilla_joker(self, context)
+                local a, b, c, d = porkify_blank_match_vanilla_joker(self, resolved_context)
                 if a ~= nil or b ~= nil or c ~= nil or d ~= nil then
                     return a, b, c, d
                 end
@@ -846,8 +999,91 @@ function porkify_install_blank_calculate_card_areas_patch()
 end
 
 function porkify_install_blank_score_card_patch()
-    return
+    if not (SMODS and type(SMODS.score_card) == "function" and SMODS.get_enhancements) then
+        return
+    end
+
+    if Porkify_score_card_mimic == nil then
+        Porkify_score_card_mimic = function(card, context)
+            Porkify_score_card_mimic_ref(card, context)
+
+            if not (card and context and context.cardarea == G.play and context.scoring_hand) then
+                return
+            end
+
+            local enhancements = SMODS.get_enhancements(card) or {}
+            if not enhancements.m_porkify_mimic then
+                return
+            end
+
+            local scoring_hand = context.scoring_hand or {}
+            local my_index = nil
+            for i = 1, #scoring_hand do
+                if scoring_hand[i] == card then
+                    my_index = i
+                    break
+                end
+            end
+
+            if not my_index or my_index <= 1 then
+                return
+            end
+
+            local left_card = scoring_hand[my_index - 1]
+            if not left_card or left_card == card then
+                return
+            end
+
+            local replay_context = {}
+            for k, v in pairs(context) do
+                replay_context[k] = v
+            end
+
+            porkify_set_mimic_popup_proxy(left_card, card)
+            local ok, err = pcall(SMODS.score_card, left_card, replay_context)
+            porkify_set_mimic_popup_proxy(nil, nil)
+            if not ok then
+                error(err)
+            end
+        end
+    end
+
+    if SMODS.score_card ~= Porkify_score_card_mimic then
+        Porkify_score_card_mimic_ref = SMODS.score_card
+        SMODS.score_card = Porkify_score_card_mimic
+    end
 end
+
+porkify_install_blank_score_card_patch()
+
+function porkify_install_blank_calculate_effect_table_key_patch()
+    if not (SMODS and type(SMODS.calculate_effect_table_key) == "function") then
+        return
+    end
+
+    if Porkify_calculate_effect_table_key_mimic == nil then
+        Porkify_calculate_effect_table_key_mimic = function(effect_table, key, card, ret)
+            local effect = effect_table[key]
+            if key ~= 'smods' and type(effect) == 'table' then
+                local scored_card = effect.scored_card or card
+                local calc = SMODS.calculate_effect(porkify_apply_mimic_popup_proxy(effect, scored_card), scored_card, key == 'edition')
+                for k, v in pairs(calc) do
+                    ret[k] = type(ret[k]) == 'number' and ret[k] + v or v
+                end
+                return
+            end
+
+            return Porkify_calculate_effect_table_key_mimic_ref(effect_table, key, card, ret)
+        end
+    end
+
+    if SMODS.calculate_effect_table_key ~= Porkify_calculate_effect_table_key_mimic then
+        Porkify_calculate_effect_table_key_mimic_ref = SMODS.calculate_effect_table_key
+        SMODS.calculate_effect_table_key = Porkify_calculate_effect_table_key_mimic
+    end
+end
+
+porkify_install_blank_calculate_effect_table_key_patch()
 
 function porkify_install_blank_vanilla_center_patches()
     return
@@ -2644,21 +2880,23 @@ end
 if type(eval_card) == "function" and not Porkify_eval_card_pride then
     Porkify_eval_card_pride = eval_card
     function eval_card(card, context)
+        local resolved_card, resolved_context = porkify_resolve_mimic_replay(card, context)
+
         if G and G.GAME then
             G.GAME.current_round = G.GAME.current_round or {}
-            if context
-                and context.before
-                and context.cardarea == G.jokers
-                and porkify_scoring_hand_has_dice_seal(context) then
+            if resolved_context
+                and resolved_context.before
+                and resolved_context.cardarea == G.jokers
+                and porkify_scoring_hand_has_dice_seal(resolved_context) then
                 G.GAME.current_round.porkify_dice_probability_active = true
             end
         end
 
-        local eff, post = Porkify_eval_card_pride(card, context)
+        local eff, post = Porkify_eval_card_pride(resolved_card, resolved_context)
 
         if G and G.GAME then
             G.GAME.current_round = G.GAME.current_round or {}
-            if context and context.setting_blind then
+            if resolved_context and resolved_context.setting_blind then
                 porkify_consume_no_reward_blind()
                 if G.GAME.porkify_force_final_boss_pending and G.GAME.blind_choices and G.GAME.blind_choices.Boss then
                     local key = porkify_choose_final_boss_key()
@@ -2667,13 +2905,14 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
                 porkify_apply_pending_final_boss_to_active_blind()
                 G.GAME.current_round.porkify_glitched_returned_ids = {}
             end
-            if context and (
-                (context.after and context.cardarea == G.jokers)
-                or context.end_of_round
-                or context.setting_blind
-                or context.hand_drawn
+            if resolved_context and (
+                (resolved_context.after and resolved_context.cardarea == G.jokers)
+                or resolved_context.end_of_round
+                or resolved_context.setting_blind
+                or resolved_context.hand_drawn
             ) then
                 G.GAME.current_round.porkify_dice_probability_active = nil
+                porkify_clear_mimic_replays()
             end
         end
 
@@ -2807,17 +3046,48 @@ local function load_editions_folder()
     end
 end
 
-local enhancementIndexList = {7,3,10,9,8,1,2,5,6,4}
-
 local function load_enhancements_folder()
     local mod_path = SMODS.current_mod.path
     local enhancements_path = mod_path .. "/enhancements"
     local files = NFS.getDirectoryItemsInfo(enhancements_path)
-    for i = 1, #enhancementIndexList do
-        local file_name = files[enhancementIndexList[i]].name
-        if file_name:sub(-4) == ".lua" then
-            assert(SMODS.load_file("enhancements/" .. file_name))()
+
+    local preferred_order = {
+        "meteor.lua",
+        "crumpled.lua",
+        "revolving.lua",
+        "plant.lua",
+        "mirror.lua",
+        "ancient.lua",
+        "galaxy.lua",
+        "dot.lua",
+        "emerald.lua",
+        "diamond.lua",
+        "exclaim.lua",
+        "mimic.lua",
+    }
+
+    local file_lookup = {}
+    for _, info in ipairs(files) do
+        if info.name and info.name:sub(-4) == ".lua" then
+            file_lookup[info.name] = true
         end
+    end
+
+    for _, file_name in ipairs(preferred_order) do
+        if file_lookup[file_name] then
+            assert(SMODS.load_file("enhancements/" .. file_name))()
+            file_lookup[file_name] = nil
+        end
+    end
+
+    local remaining_files = {}
+    for file_name, _ in pairs(file_lookup) do
+        remaining_files[#remaining_files + 1] = file_name
+    end
+    table.sort(remaining_files)
+
+    for _, file_name in ipairs(remaining_files) do
+        assert(SMODS.load_file("enhancements/" .. file_name))()
     end
 end
 

@@ -39,7 +39,7 @@ SMODS.Joker{ -- Toilet
     loc_vars = function(self, info_queue, card)
         -- Show current Xmult with 1 decimal place
         local xm = card.ability.extra.Xmult or 1.0
-        local shown = string.format('%.1f', xm)
+        local shown = xm
         return { vars = { shown } }
     end,
 
