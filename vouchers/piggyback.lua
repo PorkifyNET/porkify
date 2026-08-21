@@ -1,15 +1,13 @@
 
 SMODS.Voucher {
     key = 'piggyback',
-    config = {
-        extra = 4
-    },
     pos = { x = 1, y = 0 },
     loc_txt = {
         name = 'Piggyback',
         text = {
-            [1] = '{C:purple}Porkify {}cards may',
-            [2] = 'appear in the {C:green}shop{}'
+            [1] = 'Always add a random',
+            [2] = '{C:dark_edition}Negative{} {C:purple}Porkify{} Pack',
+            [3] = 'to the {C:green}shop{}'
         },
         unlock = {
             [1] = 'Unlocked by default.'
@@ -30,7 +28,8 @@ SMODS.Voucher {
     redeem = function(self, voucher)
         G.E_MANAGER:add_event(Event({
             func = function()
-                G.GAME.porkify_rate = self.config.extra or 4
+                G.GAME.modifiers = G.GAME.modifiers or {}
+                SMODS.change_booster_limit(1)
                 return true
             end
         }))

@@ -105,6 +105,25 @@ if SMODS and SMODS.add_card and not Porkify_smods_add_card_sticker_source_guard 
 end
 
 SMODS.Sticker{
+    key = "favorite",
+    atlas = "CustomStickers",
+    pos = { x = 4, y = 2 },
+    badge_colour = HEX("E17AA4"),
+    default_compat = false,
+    sets = { Base = true, Enhanced = true, Default = true },
+    needs_enable_flag = false,
+    loc_txt = {
+        name = "Favorite",
+        label = "Favorite",
+        text = {
+            "One of your {C:attention}most-played{}",
+            "playing cards this run"
+        }
+    },
+    apply = apply_porkify_sticker
+}
+
+SMODS.Sticker{
     key = "bulky",
     atlas = "CustomStickers",
     pos = { x = 2, y = 2 },

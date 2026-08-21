@@ -1,14 +1,11 @@
 SMODS.Voucher {
-    key = 'gluttony',
-    config = {
-        extra = 4
-    },
-    pos = { x = 0, y = 0 },
+    key = 'magnet',
+    pos = { x = 2, y = 0 },
     loc_txt = {
-        name = 'Gluttony',
+        name = 'Magnet',
         text = {
-            [1] = '{C:purple}Porkify{} cards may',
-            [2] = 'appear in the {C:green}shop{}'
+            [1] = 'Your {C:attention}1{} most played card',
+            [2] = 'is always drawn {C:attention}first{}'
         },
         unlock = {
             [1] = 'Unlocked by default.'
@@ -21,14 +18,12 @@ SMODS.Voucher {
     can_repeat_soul = false,
     atlas = 'CustomVouchers',
 
-    credit_badges = {
-        { text = "Art: Cebee", colour = "59A487" }
-     },
-    
     redeem = function(self, voucher)
         G.E_MANAGER:add_event(Event({
             func = function()
-                G.GAME.porkify_rate = self.config.extra or 4
+                if Porkify_refresh_favorite_stickers then
+                    Porkify_refresh_favorite_stickers()
+                end
                 return true
             end
         }))

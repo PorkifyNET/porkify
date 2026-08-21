@@ -41,7 +41,7 @@ SMODS.Joker{ -- Shooting Star
         extra = {
             target_rank = "Ace",
             mult = 0,
-            mult_gain = 1
+            mult_gain = 2
         }
     },
     loc_txt = {
@@ -60,7 +60,7 @@ SMODS.Joker{ -- Shooting Star
     rarity = 1,
     blueprint_compat = true,
     eternal_compat = true,
-    perishable_compat = true,
+    perishable_compat = false,
     unlocked = true,
     discovered = false,
     atlas = 'CustomJokers',

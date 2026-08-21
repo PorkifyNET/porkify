@@ -30,7 +30,7 @@ SMODS.Joker{ --The Rectangle
     rarity = 2,
     blueprint_compat = true,
     eternal_compat = true,
-    perishable_compat = true,
+    perishable_compat = false,
     unlocked = false,
     discovered = false,
     atlas = 'CustomJokers',

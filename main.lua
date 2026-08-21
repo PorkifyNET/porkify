@@ -70,6 +70,17 @@ SMODS.Atlas({
     }
 })
 
+SMODS.Atlas({
+    key = "CustomTags",
+    path = "CustomTags.png",
+    px = 64,
+    py = 64,
+    atlas_table = "ASSET_ATLAS",
+    prefix_config = {
+        atlas = false
+    }
+})
+
 local NFS = require("nativefs")
 local PORKIFY_MOD = SMODS.current_mod
 to_big = to_big or function(a) return a end
@@ -333,9 +344,26 @@ local function load_seals_folder()
     end
 end
 
+local function load_tags_folder()
+    local mod_path = PORKIFY_MOD.path
+    local tags_path = mod_path .. "/tags"
+    local ok, files = pcall(NFS.getDirectoryItemsInfo, tags_path)
+    if not ok or not files then
+        return
+    end
+
+    for _, info in ipairs(files or {}) do
+        local file_name = info.name
+        if file_name:sub(-4) == ".lua" then
+            assert(SMODS.load_file("tags/" .. file_name))()
+        end
+    end
+end
+
 load_jokers_folder()
 load_stickers_folder()
 load_stakes_folder()
+load_tags_folder()
 
 PORKIFY_FOOD_JOKERS = {
     ["j_gros_michel"] = true,
@@ -1218,6 +1246,21 @@ function CardArea:emplace(card, location, stay_flipped)
     if self == G.hand and porkify_is_resolute_card(card) and card and card.facing == 'back' then
         card:flip()
         card.ability.wheel_flipped = nil
+    end
+    if self == G.shop_booster
+        and card
+        and card.set_edition
+        and G
+        and G.GAME
+        and G.GAME.current_round
+        and G.GAME.current_round.porkify_piggyback_forced_pack_index
+        and card.ability
+        and card.ability.booster_pos == G.GAME.current_round.porkify_piggyback_forced_pack_index
+    then
+        card:set_edition("e_negative", true)
+    end
+    if self == G.deck or self == G.hand or self == G.discard or self == G.play then
+        Porkify_refresh_favorite_stickers()
     end
     return result
 end
@@ -2218,8 +2261,60 @@ local function porkify_selected_back_matches(key)
         or back_key:find(key, 1, true) ~= nil
 end
 
+local PORKIFY_SHOP_PACK_KEYS = {
+    "p_porkify_tiny_porkify_pack",
+    "p_porkify_porkify_pack",
+    "p_porkify_jumbo_porkify_pack",
+    "p_porkify_mega_porkify_pack"
+}
+
+local function porkify_pick_random_shop_pack_key(seed_suffix)
+    local available = {}
+    for i = 1, #PORKIFY_SHOP_PACK_KEYS do
+        local key = PORKIFY_SHOP_PACK_KEYS[i]
+        if G and G.P_CENTERS and G.P_CENTERS[key] then
+            available[#available + 1] = key
+        end
+    end
+
+    if #available == 0 then
+        return nil
+    end
+
+    return pseudorandom_element(
+        available,
+        pseudoseed("porkify_piggyback_shop_pack_" .. tostring(seed_suffix or 0))
+    )
+end
+
 local porkify_get_pack_ref = get_pack
 function get_pack(_key, _type)
+    if _key == "shop_pack"
+        and not _type
+        and G
+        and G.GAME
+        and G.GAME.used_vouchers
+        and G.GAME.used_vouchers.v_porkify_piggyback
+    then
+        local used_packs = G.GAME.current_round and G.GAME.current_round.used_packs or {}
+        local total_slots = ((G.GAME.starting_params and G.GAME.starting_params.boosters_in_shop) or 0)
+            + ((G.GAME.modifiers and G.GAME.modifiers.extra_boosters) or 0)
+        local next_index = 1
+        while used_packs[next_index] ~= nil do
+            next_index = next_index + 1
+        end
+
+        if total_slots > 0 and next_index == total_slots then
+            local forced_key = porkify_pick_random_shop_pack_key(next_index)
+            if forced_key and G.P_CENTERS and G.P_CENTERS[forced_key] then
+                G.GAME.current_round = G.GAME.current_round or {}
+                G.GAME.current_round.porkify_piggyback_forced_pack_index = next_index
+                G.GAME.current_round.porkify_piggyback_forced_pack_key = forced_key
+                return G.P_CENTERS[forced_key]
+            end
+        end
+    end
+
     if porkify_selected_back_matches("fixed_deck") and _key == "shop_pack" and not _type and G and G.GAME then
         local buffoon_keys = {
             "p_buffoon_normal_1",
@@ -2607,10 +2702,406 @@ local function porkify_is_card_debuffed_for_draw(card)
     return ok and debuffed == true
 end
 
+local function porkify_get_card_play_count(card)
+    return tonumber(card and card.ability and card.ability.porkify_play_count) or 0
+end
+
+local function porkify_is_in_playing_cards(card)
+    if not (G and G.playing_cards and card) then
+        return false
+    end
+
+    for i = 1, #G.playing_cards do
+        if G.playing_cards[i] == card then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function porkify_clear_favorite_tracking(card)
+    if not (card and card.ability) then
+        return
+    end
+
+    card.ability.porkify_play_count = nil
+    card.ability.porkify_favorite = nil
+    card.ability.favorite = nil
+end
+
+local function porkify_mark_card_played(card)
+    if not (card and card.ability) then
+        return
+    end
+
+    card.ability.porkify_play_count = porkify_get_card_play_count(card) + 1
+end
+
+local function porkify_get_magnet_draw_count()
+    local used_vouchers = G and G.GAME and G.GAME.used_vouchers
+    if not used_vouchers then
+        return 0
+    end
+    if used_vouchers.v_porkify_electromagnet then
+        return 3
+    end
+    if used_vouchers.v_porkify_magnet then
+        return 1
+    end
+    return 0
+end
+
+local function porkify_is_playing_card_center(card)
+    local center = card and card.config and card.config.center
+    local set = center and center.set
+    return set == "Base" or set == "Enhanced" or set == "Default"
+end
+
+if Card.add_to_deck and not Porkify_card_add_to_deck_favorite_tracking then
+    Porkify_card_add_to_deck_favorite_tracking = Card.add_to_deck
+    function Card:add_to_deck(from_debuff)
+        local is_new_playing_card_copy = porkify_is_playing_card_center(self) and not porkify_is_in_playing_cards(self)
+        if is_new_playing_card_copy then
+            porkify_clear_favorite_tracking(self)
+        end
+
+        return Porkify_card_add_to_deck_favorite_tracking(self, from_debuff)
+    end
+end
+
+local function porkify_get_favorite_sticker_count()
+    return porkify_get_magnet_draw_count()
+end
+
+local function porkify_get_ranked_magnet_cards(cards)
+    if type(cards) ~= "table" then
+        return {}
+    end
+
+    local ranked = {}
+    local deck_order = 0
+
+    for i = 1, #cards do
+        local queued = cards[i]
+        local play_count = porkify_get_card_play_count(queued)
+        if queued and not porkify_is_card_debuffed_for_draw(queued) then
+            deck_order = deck_order + 1
+            ranked[#ranked + 1] = {
+                card = queued,
+                play_count = play_count,
+                deck_order = deck_order
+            }
+        end
+    end
+
+    table.sort(ranked, function(a, b)
+        if a.play_count ~= b.play_count then
+            return a.play_count > b.play_count
+        end
+        local a_is_favorite = a.card and a.card.ability and (a.card.ability.porkify_favorite or a.card.ability.favorite)
+        local b_is_favorite = b.card and b.card.ability and (b.card.ability.porkify_favorite or b.card.ability.favorite)
+        if a_is_favorite ~= b_is_favorite then
+            return a_is_favorite and not b_is_favorite
+        end
+        return a.deck_order < b.deck_order
+    end)
+
+    return ranked
+end
+
+function Porkify_refresh_favorite_stickers()
+    if not (G and G.playing_cards) then
+        return
+    end
+
+    local favorite_sticker = SMODS and SMODS.Stickers and (SMODS.Stickers.favorite or SMODS.Stickers.porkify_favorite)
+
+    local favorite_count = porkify_get_favorite_sticker_count()
+    local ranked = porkify_get_ranked_magnet_cards(G.playing_cards)
+    local selected = {}
+
+    for i = 1, math.min(favorite_count, #ranked) do
+        selected[ranked[i].card] = true
+    end
+
+    for i = 1, #G.playing_cards do
+        local playing_card = G.playing_cards[i]
+        if playing_card and selected[playing_card] then
+            local has_favorite = playing_card.ability and (playing_card.ability.porkify_favorite or playing_card.ability.favorite)
+            if not has_favorite then
+                if favorite_sticker and favorite_sticker.apply then
+                    favorite_sticker:apply(playing_card, true)
+                elseif playing_card.ability then
+                    playing_card.ability.favorite = true
+                end
+            end
+        elseif playing_card then
+            if favorite_sticker and favorite_sticker.apply then
+                if playing_card.ability and (playing_card.ability.porkify_favorite or playing_card.ability.favorite) then
+                    favorite_sticker:apply(playing_card, false)
+                end
+            elseif playing_card.ability then
+                playing_card.ability.porkify_favorite = nil
+                playing_card.ability.favorite = nil
+            end
+        end
+    end
+end
+_G.Porkify_refresh_favorite_stickers = Porkify_refresh_favorite_stickers
+
+local function porkify_card_center_key(card)
+    local center = card and card.config and card.config.center
+    return (center and (center.key or center.original_key))
+        or (card and card.config and card.config.center_key)
+        or (card and card.ability and card.ability.name)
+end
+
+local function porkify_card_center_set(card)
+    local center = card and card.config and card.config.center
+    return (center and center.set) or (card and card.ability and card.ability.set)
+end
+
+local function porkify_is_buffoon_pack_active()
+    local pack = booster_obj
+    local pack_key = pack and pack.key
+    local pack_kind = pack and pack.kind
+
+    return pack_kind == "Buffoon"
+        or (type(pack_key) == "string" and pack_key:find("buffoon", 1, true) ~= nil)
+end
+
+local function porkify_pack_already_contains_key(key)
+    if type(key) ~= "string" or not (G and G.pack_cards and G.pack_cards.cards) then
+        return false
+    end
+
+    for _, card in ipairs(G.pack_cards.cards) do
+        if porkify_card_center_key(card) == key then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function porkify_player_has_joker_key(key)
+    if type(key) ~= "string" or not (G and G.jokers and G.jokers.cards) then
+        return false
+    end
+
+    for _, joker in ipairs(G.jokers.cards) do
+        if porkify_card_center_key(joker) == key then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function porkify_get_profile_usage_table(table_name)
+    local profile_key = G and G.SETTINGS and G.SETTINGS.profile
+    local profiles = G and G.PROFILES
+    local profile = profile_key and profiles and profiles[profile_key]
+    local usage_table = profile and profile[table_name]
+    return type(usage_table) == "table" and usage_table or nil
+end
+
+local function porkify_get_center_for_usage_key(key)
+    if type(key) ~= "string" then
+        return nil
+    end
+    return (G and G.P_CENTERS and G.P_CENTERS[key]) or (G and G.P_CENTERS and G.P_CENTERS[key:gsub("^c_", "")])
+end
+
+local function porkify_get_native_most_used_consumable_key(expected_set)
+    local usage_table = porkify_get_profile_usage_table("consumeable_usage")
+    if type(expected_set) ~= "string" or not usage_table then
+        return nil
+    end
+
+    local best_key, best_entry
+    for key, entry in pairs(usage_table) do
+        local center = porkify_get_center_for_usage_key(key)
+        local center_set = center and center.set
+        local count = tonumber(entry and entry.count) or 0
+        local order = tonumber(entry and entry.order) or math.huge
+
+        if center_set == expected_set and count > 0 then
+            local best_count = tonumber(best_entry and best_entry.count) or -1
+            local best_order = tonumber(best_entry and best_entry.order) or math.huge
+            if count > best_count
+                or (count == best_count and order < best_order)
+                or (count == best_count and order == best_order and key < best_key)
+            then
+                best_key = key
+                best_entry = entry
+            end
+        end
+    end
+
+    return best_key
+end
+
+local function porkify_get_native_most_used_joker_key()
+    local usage_table = porkify_get_profile_usage_table("joker_usage")
+    if not usage_table then
+        return nil
+    end
+
+    local best_key, best_entry
+    for key, entry in pairs(usage_table) do
+        local count = tonumber(entry and entry.count) or 0
+        local order = tonumber(entry and entry.order) or math.huge
+
+        if count > 0 then
+            local best_count = tonumber(best_entry and best_entry.count) or -1
+            local best_order = tonumber(best_entry and best_entry.order) or math.huge
+            if count > best_count
+                or (count == best_count and order < best_order)
+                or (count == best_count and order == best_order and key < best_key)
+            then
+                best_key = key
+                best_entry = entry
+            end
+        end
+    end
+
+    return best_key
+end
+
+local function porkify_get_forced_pack_card_key(set_name)
+    local used_vouchers = G and G.GAME and G.GAME.used_vouchers
+    if not used_vouchers or not (G and G.pack_cards) then
+        return nil
+    end
+
+    if used_vouchers.v_porkify_pattern then
+        local consumable_key = porkify_get_native_most_used_consumable_key(set_name)
+        if consumable_key and not porkify_pack_already_contains_key(consumable_key) then
+            return consumable_key
+        end
+    end
+
+    if set_name == "Joker"
+        and used_vouchers.v_porkify_tesselation
+        and porkify_is_buffoon_pack_active()
+    then
+        local joker_key = porkify_get_native_most_used_joker_key()
+        if joker_key
+            and not porkify_pack_already_contains_key(joker_key)
+            and (
+                not porkify_player_has_joker_key(joker_key)
+                or porkify_player_has_joker_key("j_showman")
+            )
+        then
+            return joker_key
+        end
+    end
+
+    return nil
+end
+
+local function porkify_get_pack_force_state()
+    if not (G and G.GAME) then
+        return nil
+    end
+
+    G.GAME.current_round = G.GAME.current_round or {}
+    local state = G.GAME.current_round.porkify_forced_pack_state
+    local active_pack_ref = booster_obj or G.pack_cards
+
+    if type(state) ~= "table" or state.ref ~= active_pack_ref then
+        state = {
+            ref = active_pack_ref,
+            used = false
+        }
+        G.GAME.current_round.porkify_forced_pack_state = state
+    end
+
+    return state
+end
+
+local function porkify_get_magnet_priority_lookup(cards)
+    local target_count = porkify_get_magnet_draw_count()
+    if target_count <= 0 or type(cards) ~= "table" then
+        return nil
+    end
+
+    local ranked = porkify_get_ranked_magnet_cards(cards)
+    if #ranked == 0 then
+        return nil
+    end
+
+    local selected = {}
+    for i = 1, math.min(target_count, #ranked) do
+        selected[ranked[i].card] = i
+    end
+
+    return selected
+end
+
+if type(create_card) == "function" and not Porkify_create_card_pattern then
+    Porkify_create_card_pattern = create_card
+    function create_card(...)
+        local arg_count = select("#", ...)
+        local args = { ... }
+        if type(args[1]) ~= "string" then
+            return Porkify_create_card_pattern(unpack(args, 1, arg_count))
+        end
+
+        local set_name = args[1]
+        local area = args[2]
+        local forced_key = args[7]
+
+        if area == G.pack_cards and forced_key == nil then
+            local pack_force_state = porkify_get_pack_force_state()
+            if pack_force_state and not pack_force_state.used then
+                local voucher_forced_key = porkify_get_forced_pack_card_key(set_name)
+                if voucher_forced_key then
+                    args[7] = voucher_forced_key
+                    pack_force_state.used = true
+                end
+            end
+        end
+
+        return Porkify_create_card_pattern(unpack(args, 1, arg_count))
+    end
+end
+
 function porkify_is_eligible_gravitas_draw(card)
     return card
         and porkify_is_gravitas_seal(card)
         and not porkify_is_card_debuffed_for_draw(card)
+end
+
+local function porkify_split_draw_priorities(cards)
+    local gravitas_first = {}
+    local magnet_first = {}
+    local normal_draws = {}
+    local magnet_lookup = porkify_get_magnet_priority_lookup(cards)
+
+    for i = 1, #cards do
+        local queued = cards[i]
+        if porkify_is_eligible_gravitas_draw(queued) then
+            gravitas_first[#gravitas_first + 1] = queued
+        elseif magnet_lookup and magnet_lookup[queued] then
+            magnet_first[#magnet_first + 1] = {
+                card = queued,
+                rank = magnet_lookup[queued]
+            }
+        else
+            normal_draws[#normal_draws + 1] = queued
+        end
+    end
+
+    if #magnet_first > 1 then
+        table.sort(magnet_first, function(a, b)
+            return a.rank < b.rank
+        end)
+    end
+
+    return gravitas_first, magnet_first, normal_draws
 end
 
 local function porkify_prepare_cards_to_draw(cards_to_draw, hand_space)
@@ -2635,22 +3126,15 @@ local function porkify_prepare_cards_to_draw(cards_to_draw, hand_space)
     end
 
     if #compacted > 1 then
-        local gravitas_first = {}
-        local normal_draws = {}
+        local gravitas_first, magnet_first, normal_draws = porkify_split_draw_priorities(compacted)
 
-        for i = 1, #compacted do
-            local queued = compacted[i]
-            if porkify_is_eligible_gravitas_draw(queued) then
-                gravitas_first[#gravitas_first + 1] = queued
-            else
-                normal_draws[#normal_draws + 1] = queued
-            end
-        end
-
-        if #gravitas_first > 0 then
+        if #gravitas_first > 0 or #magnet_first > 0 then
             local reordered = {}
             for i = 1, #gravitas_first do
                 reordered[#reordered + 1] = gravitas_first[i]
+            end
+            for i = 1, #magnet_first do
+                reordered[#reordered + 1] = magnet_first[i].card
             end
             for i = 1, #normal_draws do
                 reordered[#reordered + 1] = normal_draws[i]
@@ -2667,21 +3151,19 @@ local function porkify_get_prioritized_deck_sequence(deck_cards)
         return {}
     end
 
-    local gravitas_first = {}
-    local normal_draws = {}
+    local draw_sequence = {}
 
     for i = #deck_cards, 1, -1 do
-        local queued = deck_cards[i]
-        if porkify_is_eligible_gravitas_draw(queued) then
-            gravitas_first[#gravitas_first + 1] = queued
-        else
-            normal_draws[#normal_draws + 1] = queued
-        end
+        draw_sequence[#draw_sequence + 1] = deck_cards[i]
     end
 
+    local gravitas_first, magnet_first, normal_draws = porkify_split_draw_priorities(draw_sequence)
     local prioritized = {}
     for i = 1, #gravitas_first do
         prioritized[#prioritized + 1] = gravitas_first[i]
+    end
+    for i = 1, #magnet_first do
+        prioritized[#prioritized + 1] = magnet_first[i].card
     end
     for i = 1, #normal_draws do
         prioritized[#prioritized + 1] = normal_draws[i]
@@ -2814,6 +3296,46 @@ local function porkify_is_pride_seal(card)
     return seal == "porkify_pride" or seal == "pride"
 end
 
+local function porkify_apply_gold_seal_tag_to_hand(cards)
+    if type(cards) ~= "table" or #cards == 0 then
+        return false
+    end
+
+    local applied = false
+    for _, played_card in ipairs(cards) do
+        if played_card and played_card.set_seal then
+            played_card:set_seal("Gold", nil, true)
+            played_card:juice_up(0.3, 0.3)
+            applied = true
+        end
+    end
+
+    return applied
+end
+
+local function porkify_get_card_tracking_key(card)
+    return card and (card.unique_val or card.sort_id or card.playing_card or tostring(card))
+end
+
+local function porkify_consume_gold_seal_tag()
+    if not (G and G.GAME and G.GAME.current_round) then
+        return
+    end
+
+    local gold_seal_tag = G.GAME.porkify_gold_seal_tag_ref
+    G.GAME.porkify_gold_seal_tag_ref = nil
+    G.GAME.porkify_gold_seal_tag_pending = nil
+    G.GAME.current_round.porkify_gold_seal_tag_active = nil
+    G.GAME.current_round.porkify_gold_seal_tag_cards = nil
+
+    if gold_seal_tag and not gold_seal_tag.triggered then
+        gold_seal_tag.triggered = true
+        gold_seal_tag:yep("+", G.C.GOLD, function()
+            return true
+        end)
+    end
+end
+
 local function porkify_count_played_pride_seals()
     local scoring_hand = SMODS and SMODS.last_hand and SMODS.last_hand.scoring_hand
     if type(scoring_hand) ~= "table" then
@@ -2857,6 +3379,25 @@ if type(draw_card) == "function" and not Porkify_draw_card_glitched then
     Porkify_draw_card_glitched = draw_card
     function draw_card(from, to, percent, dir, sort, card, delay, mute, stay_flipped, vol)
         local current_round = G and G.GAME and G.GAME.current_round
+        if from == G.hand and to == G.play and card and not card.debuff then
+            if current_round and G.GAME and G.GAME.porkify_gold_seal_tag_pending then
+                current_round.porkify_gold_seal_tag_active = true
+                current_round.porkify_gold_seal_tag_cards = {}
+                G.GAME.porkify_gold_seal_tag_pending = nil
+            end
+            if current_round and current_round.porkify_gold_seal_tag_active then
+                local tracked_cards = current_round.porkify_gold_seal_tag_cards or {}
+                current_round.porkify_gold_seal_tag_cards = tracked_cards
+                tracked_cards[porkify_get_card_tracking_key(card)] = true
+                if card.set_seal then
+                    card:set_seal("Gold", nil, true)
+                    card:juice_up(0.3, 0.3)
+                end
+            end
+            porkify_mark_card_played(card)
+            Porkify_refresh_favorite_stickers()
+        end
+
         if from == G.play
             and to == G.discard
             and card
@@ -2870,6 +3411,18 @@ if type(draw_card) == "function" and not Porkify_draw_card_glitched then
                 returned[card_key] = true
                 to = G.hand
                 sort = true
+            end
+        end
+
+        if from == G.play
+            and current_round
+            and current_round.porkify_gold_seal_tag_active
+            and card
+        then
+            local tracked_cards = current_round.porkify_gold_seal_tag_cards or {}
+            tracked_cards[porkify_get_card_tracking_key(card)] = nil
+            if not next(tracked_cards) then
+                porkify_consume_gold_seal_tag()
             end
         end
 
@@ -3091,17 +3644,44 @@ local function load_enhancements_folder()
     end
 end
 
-local voucherIndexList = {1,2}
-
 local function load_vouchers_folder()
     local mod_path = SMODS.current_mod.path
     local vouchers_path = mod_path .. "/vouchers"
     local files = NFS.getDirectoryItemsInfo(vouchers_path)
-    for i = 1, #voucherIndexList do
-        local file_name = files[voucherIndexList[i]].name
-        if file_name:sub(-4) == ".lua" then
-            assert(SMODS.load_file("vouchers/" .. file_name))()
+
+    local preferred_order = {
+        "gluttony.lua",
+        "piggyback.lua",
+        "silverspoon.lua",
+        "heirloom.lua",
+        "magnet.lua",
+        "electromagnet.lua",
+        "pattern.lua",
+        "tesselation.lua",
+    }
+
+    local file_lookup = {}
+    for _, info in ipairs(files or {}) do
+        if info.name and info.name:sub(-4) == ".lua" then
+            file_lookup[info.name] = true
         end
+    end
+
+    for _, file_name in ipairs(preferred_order) do
+        if file_lookup[file_name] then
+            assert(SMODS.load_file("vouchers/" .. file_name))()
+            file_lookup[file_name] = nil
+        end
+    end
+
+    local remaining_files = {}
+    for file_name, _ in pairs(file_lookup) do
+        remaining_files[#remaining_files + 1] = file_name
+    end
+    table.sort(remaining_files)
+
+    for _, file_name in ipairs(remaining_files) do
+        assert(SMODS.load_file("vouchers/" .. file_name))()
     end
 end
 

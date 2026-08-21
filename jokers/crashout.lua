@@ -31,7 +31,7 @@ SMODS.Joker{ --Crashout
     rarity = 3,
     blueprint_compat = true,
     eternal_compat = true,
-    perishable_compat = true,
+    perishable_compat = false,
     unlocked = false,
     discovered = false,
     atlas = 'CustomJokers',
