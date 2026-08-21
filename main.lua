@@ -3322,17 +3322,20 @@ local function porkify_consume_gold_seal_tag()
         return
     end
 
-    local gold_seal_tag = G.GAME.porkify_gold_seal_tag_ref
-    G.GAME.porkify_gold_seal_tag_ref = nil
+    local gold_seal_tags = G.GAME.current_round.porkify_gold_seal_tag_refs or G.GAME.porkify_gold_seal_tag_refs or {}
+    G.GAME.porkify_gold_seal_tag_refs = nil
     G.GAME.porkify_gold_seal_tag_pending = nil
     G.GAME.current_round.porkify_gold_seal_tag_active = nil
     G.GAME.current_round.porkify_gold_seal_tag_cards = nil
+    G.GAME.current_round.porkify_gold_seal_tag_refs = nil
 
-    if gold_seal_tag and not gold_seal_tag.triggered then
-        gold_seal_tag.triggered = true
-        gold_seal_tag:yep("+", G.C.GOLD, function()
-            return true
-        end)
+    for _, gold_seal_tag in ipairs(gold_seal_tags) do
+        if gold_seal_tag and not gold_seal_tag.triggered then
+            gold_seal_tag.triggered = true
+            gold_seal_tag:yep("+", G.C.GOLD, function()
+                return true
+            end)
+        end
     end
 end
 
@@ -3383,6 +3386,8 @@ if type(draw_card) == "function" and not Porkify_draw_card_glitched then
             if current_round and G.GAME and G.GAME.porkify_gold_seal_tag_pending then
                 current_round.porkify_gold_seal_tag_active = true
                 current_round.porkify_gold_seal_tag_cards = {}
+                current_round.porkify_gold_seal_tag_refs = G.GAME.porkify_gold_seal_tag_refs or {}
+                G.GAME.porkify_gold_seal_tag_refs = nil
                 G.GAME.porkify_gold_seal_tag_pending = nil
             end
             if current_round and current_round.porkify_gold_seal_tag_active then

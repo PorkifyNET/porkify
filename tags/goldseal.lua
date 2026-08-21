@@ -17,7 +17,8 @@ SMODS.Tag({
         end
 
         G.GAME.porkify_gold_seal_tag_pending = true
-        G.GAME.porkify_gold_seal_tag_ref = tag
+        G.GAME.porkify_gold_seal_tag_refs = G.GAME.porkify_gold_seal_tag_refs or {}
+        G.GAME.porkify_gold_seal_tag_refs[#G.GAME.porkify_gold_seal_tag_refs + 1] = tag
         return true
     end,
     in_pool = function(self, args)
