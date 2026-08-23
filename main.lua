@@ -263,6 +263,13 @@ function Game:start_run(args)
         end
     end
 
+    if G and G.GAME then
+        G.GAME.porkify_shop_tag_slots_applied = 0
+        G.GAME.porkify_shop_flow_active = false
+        G.GAME.porkify_shop_pending_size_delta = 0
+        G.GAME.porkify_pending_shop_tag_cards = nil
+    end
+
     porkify_register_too_many_blanks_hand()
 
     return result
@@ -1868,6 +1875,340 @@ function Porkify_pick_random_enhancement_key()
     return pseudorandom_element(pool, pseudoseed("porkify_random_enhancement"))
 end
 
+local function porkify_shop_tag_card_type(kind)
+    return "Base"
+end
+
+local function porkify_apply_tag_card_free_state(card)
+    if not card then
+        return
+    end
+
+    card.ability = card.ability or {}
+    card.ability.couponed = true
+    card.ability.porkify_tag_free = true
+    card.from_tag = true
+    if card.set_cost then
+        card:set_cost()
+    end
+    card.cost = 0
+end
+
+local function porkify_apply_tag_card_edition(card, kind)
+    if not (card and card.set_edition and G and G.GAME and G.GAME.used_vouchers) then
+        return
+    end
+
+    if kind == "enhanced" or kind == "mimic" then
+        if G.GAME.used_vouchers["v_illusion"] and pseudorandom(pseudoseed("illusion")) > 0.8 then
+            card:set_edition(poll_edition("illusion", nil, true, true))
+        end
+        return
+    end
+
+    if G.GAME.used_vouchers["v_illusion"] and pseudorandom(pseudoseed("illusion")) > 0.8 then
+        card:set_edition(poll_edition("illusion", nil, true, true))
+    end
+end
+
+local function porkify_refresh_shop_card_mouse_ui(card)
+    if not (card and card.area == G.shop_jokers and create_shop_card_ui) then
+        return
+    end
+
+    local ui_children = {
+        "price",
+        "buy_button",
+        "buy_and_use_button",
+        "focused_ui"
+    }
+
+    for i = 1, #ui_children do
+        local key = ui_children[i]
+        local child = card.children and card.children[key]
+        if child and child.remove then
+            child:remove()
+        end
+        if card.children then
+            card.children[key] = nil
+        end
+    end
+
+    create_shop_card_ui(card, nil, card.area)
+end
+
+local function porkify_has_later_pending_shop_slot_tag(current_tag)
+    if not (G and G.GAME and G.GAME.tags and current_tag) then
+        return false
+    end
+
+    local seen_current = false
+    for i = 1, #G.GAME.tags do
+        local candidate = G.GAME.tags[i]
+        if candidate == current_tag then
+            seen_current = true
+        elseif seen_current and candidate and not candidate.triggered then
+            local reserve_amount = candidate.config and tonumber(candidate.config.porkify_shop_reserve_amount)
+            if reserve_amount and reserve_amount > 0 then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+local function porkify_flush_pending_shop_slot_reservations()
+    if not (G and G.GAME and change_shop_size) then
+        return false
+    end
+
+    local pending = math.max(0, math.floor(tonumber(G.GAME.porkify_shop_pending_size_delta) or 0))
+    if pending <= 0 then
+        return false
+    end
+
+    G.GAME.porkify_shop_pending_size_delta = 0
+    G.GAME.porkify_shop_tag_slots_applied = (G.GAME.porkify_shop_tag_slots_applied or 0) + pending
+    change_shop_size(pending)
+    return true
+end
+
+local function porkify_queue_shop_tag_card(kind, tag)
+    if not (G and G.GAME and tag and kind) then
+        return false
+    end
+
+    G.GAME.porkify_pending_shop_tag_cards = G.GAME.porkify_pending_shop_tag_cards or {}
+    G.GAME.porkify_pending_shop_tag_cards[#G.GAME.porkify_pending_shop_tag_cards + 1] = {
+        kind = kind,
+        tag = tag
+    }
+    return true
+end
+
+function Porkify_reserve_shop_tag_slots(tag, amount)
+    if not (tag and G and G.GAME and change_shop_size) then
+        return false
+    end
+
+    local extra = math.max(0, math.floor(tonumber(amount) or 0))
+    if extra <= 0 then
+        return false
+    end
+
+    tag.ability = tag.ability or {}
+    if tag.ability.porkify_shop_slots_reserved then
+        return false
+    end
+
+    tag.ability.porkify_shop_slots_reserved = extra
+    G.GAME.porkify_shop_pending_size_delta = (G.GAME.porkify_shop_pending_size_delta or 0) + extra
+
+    if not porkify_has_later_pending_shop_slot_tag(tag) then
+        porkify_flush_pending_shop_slot_reservations()
+    end
+
+    return true
+end
+
+local function porkify_create_tag_shop_card(kind, tag, area)
+    if not (tag and area == G.shop_jokers and SMODS and SMODS.create_card and create_shop_card_ui) then
+        return nil
+    end
+
+    local card_type = porkify_shop_tag_card_type(kind)
+    local key_append = "ptg_" .. tostring(tag.ID or pseudorandom(pseudoseed("porkify_tag_card_fallback")))
+    local shop_card = SMODS.create_card({
+        set = card_type,
+        area = area,
+        key_append = key_append,
+        front = false
+    })
+    if not shop_card then
+        return nil
+    end
+
+    if kind == "gold_seal" and shop_card.set_seal then
+        shop_card:set_seal("Gold", nil, true)
+    elseif kind == "gravitas" and shop_card.set_seal then
+        shop_card:set_seal("porkify_gravitas", nil, true)
+    elseif kind == "enhanced" and shop_card.set_ability then
+        local enhancement_key = Porkify_pick_random_enhancement_key()
+        if enhancement_key and G.P_CENTERS and G.P_CENTERS[enhancement_key] then
+            shop_card:set_ability(G.P_CENTERS[enhancement_key], nil, true)
+        end
+    elseif kind == "mimic" and shop_card.set_ability and G.P_CENTERS and G.P_CENTERS["m_porkify_mimic"] then
+        shop_card:set_ability(G.P_CENTERS["m_porkify_mimic"], nil, true)
+    end
+
+    porkify_apply_tag_card_edition(shop_card, kind)
+    porkify_apply_tag_card_free_state(shop_card)
+
+    create_shop_card_ui(shop_card, card_type, area)
+    shop_card.states.visible = false
+
+    tag.ability = tag.ability or {}
+    tag.ability.porkify_shop_slots_reserved = nil
+
+    local colour = (kind == "gold_seal" and G.C.GOLD) or (kind == "gravitas" and G.C.PURPLE) or G.C.GREEN
+    local lock = tag.ID
+    G.CONTROLLER.locks[lock] = true
+    tag:yep("+", colour, function()
+        if shop_card.start_materialize then
+            shop_card:start_materialize()
+        end
+        if kind == "enhanced" or kind == "mimic" then
+            porkify_refresh_shop_card_mouse_ui(shop_card)
+        end
+        G.CONTROLLER.locks[lock] = nil
+        return true
+    end)
+    tag.triggered = true
+
+    return shop_card
+end
+
+function Porkify_apply_playing_card_shop_tag(kind, tag, context)
+    if not (tag and context) then
+        return
+    end
+
+    if context.type == "shop_start" then
+        if tag.triggered then
+            return
+        end
+        if not porkify_queue_shop_tag_card(kind, tag) then
+            return
+        end
+        return Porkify_reserve_shop_tag_slots(tag, 1)
+    end
+end
+
+function Porkify_apply_shop_expansion_tag(tag, context, amount)
+    if not (tag and context and context.type == "shop_start") then
+        return
+    end
+
+    if tag.triggered then
+        return
+    end
+
+    if not Porkify_reserve_shop_tag_slots(tag, amount) then
+        return
+    end
+
+    tag.ability = tag.ability or {}
+    tag.ability.porkify_shop_slots_reserved = nil
+    tag:yep("+", G.C.GREEN, function()
+        return true
+    end)
+    tag.triggered = true
+    return true
+end
+
+if type(create_card_for_shop) == "function" and not Porkify_create_card_for_shop_pending_tags then
+    Porkify_create_card_for_shop_pending_tags = create_card_for_shop
+    function create_card_for_shop(area)
+        if area == G.shop_jokers and G and G.GAME then
+            local pending = G.GAME.porkify_pending_shop_tag_cards
+            if type(pending) == "table" and #pending > 0 then
+                local entry = table.remove(pending, 1)
+                local card = entry and porkify_create_tag_shop_card(entry.kind, entry.tag, area)
+                if card then
+                    if not pending[1] then
+                        G.GAME.porkify_pending_shop_tag_cards = nil
+                    end
+                    return card
+                end
+            end
+        end
+
+        return Porkify_create_card_for_shop_pending_tags(area)
+    end
+end
+
+function Porkify_open_tag_pack(booster_key, tag)
+    if not (tag and G and G.GAME and G.STATES and G.P_CENTERS and G.P_CENTERS[booster_key] and SMODS and SMODS.create_card) then
+        return false
+    end
+
+    tag:yep("+", G.C.GOLD, function()
+        local pack = SMODS.create_card({
+            set = "Booster",
+            key = booster_key,
+            area = nil,
+            no_edition = true,
+            skip_materialize = true,
+            bypass_discovery_center = true,
+            scale = { w = 1.27, h = 1.27 }
+        })
+        if not pack then
+            return false
+        end
+
+        if G.blind_select and not G.blind_select.alignment.offset.py then
+            G.blind_select.alignment.offset.py = G.blind_select.alignment.offset.y
+            G.blind_select.alignment.offset.y = G.ROOM.T.y + 39
+        end
+
+        pack.cost = 0
+        pack.from_tag = true
+        G.GAME.PACK_INTERRUPT = G.STATE
+
+        if pack.T then
+            pack.T.w = G.CARD_W * 1.27
+            pack.T.h = G.CARD_H * 1.27
+            if G.play and G.play.T then
+                pack.T.x = G.play.T.x + G.play.T.w * 0.5 - pack.T.w * 0.5
+                pack.T.y = G.play.T.y + G.play.T.h * 0.5 - pack.T.h * 0.5
+            end
+        end
+        if pack.open then
+            pack:open()
+            return true
+        end
+
+        return false
+    end)
+    tag.triggered = true
+    return true
+end
+
+if type(Game.update) == "function" and not Porkify_game_update_shop_tags then
+    Porkify_game_update_shop_tags = Game.update
+    function Game:update(dt)
+        local result = Porkify_game_update_shop_tags(self, dt)
+        if G and G.GAME and G.STATES then
+            local in_shop_flow = G.STATE == G.STATES.SHOP
+                or G.GAME.PACK_INTERRUPT == G.STATES.SHOP
+                or (G.shop_jokers and not G.shop_jokers.REMOVED)
+
+            if in_shop_flow then
+                G.GAME.porkify_shop_flow_active = true
+            elseif G.GAME.porkify_shop_flow_active then
+                local applied_slots = G.GAME.porkify_shop_tag_slots_applied or 0
+                if applied_slots > 0 and change_shop_size then
+                    change_shop_size(-applied_slots)
+                    G.GAME.porkify_shop_tag_slots_applied = 0
+                end
+                G.GAME.porkify_shop_pending_size_delta = 0
+                G.GAME.porkify_pending_shop_tag_cards = nil
+                if G.GAME.tags then
+                    for i = 1, #G.GAME.tags do
+                        local tag = G.GAME.tags[i]
+                        if tag and tag.ability then
+                            tag.ability.porkify_shop_slots_reserved = nil
+                        end
+                    end
+                end
+                G.GAME.porkify_shop_flow_active = false
+            end
+        end
+        return result
+    end
+end
+
 local function porkify_try_open_fixed_deck_pack()
     if not (G and G.GAME and G.STATES) then
         return
@@ -3296,49 +3637,6 @@ local function porkify_is_pride_seal(card)
     return seal == "porkify_pride" or seal == "pride"
 end
 
-local function porkify_apply_gold_seal_tag_to_hand(cards)
-    if type(cards) ~= "table" or #cards == 0 then
-        return false
-    end
-
-    local applied = false
-    for _, played_card in ipairs(cards) do
-        if played_card and played_card.set_seal then
-            played_card:set_seal("Gold", nil, true)
-            played_card:juice_up(0.3, 0.3)
-            applied = true
-        end
-    end
-
-    return applied
-end
-
-local function porkify_get_card_tracking_key(card)
-    return card and (card.unique_val or card.sort_id or card.playing_card or tostring(card))
-end
-
-local function porkify_consume_gold_seal_tag()
-    if not (G and G.GAME and G.GAME.current_round) then
-        return
-    end
-
-    local gold_seal_tags = G.GAME.current_round.porkify_gold_seal_tag_refs or G.GAME.porkify_gold_seal_tag_refs or {}
-    G.GAME.porkify_gold_seal_tag_refs = nil
-    G.GAME.porkify_gold_seal_tag_pending = nil
-    G.GAME.current_round.porkify_gold_seal_tag_active = nil
-    G.GAME.current_round.porkify_gold_seal_tag_cards = nil
-    G.GAME.current_round.porkify_gold_seal_tag_refs = nil
-
-    for _, gold_seal_tag in ipairs(gold_seal_tags) do
-        if gold_seal_tag and not gold_seal_tag.triggered then
-            gold_seal_tag.triggered = true
-            gold_seal_tag:yep("+", G.C.GOLD, function()
-                return true
-            end)
-        end
-    end
-end
-
 local function porkify_count_played_pride_seals()
     local scoring_hand = SMODS and SMODS.last_hand and SMODS.last_hand.scoring_hand
     if type(scoring_hand) ~= "table" then
@@ -3383,22 +3681,6 @@ if type(draw_card) == "function" and not Porkify_draw_card_glitched then
     function draw_card(from, to, percent, dir, sort, card, delay, mute, stay_flipped, vol)
         local current_round = G and G.GAME and G.GAME.current_round
         if from == G.hand and to == G.play and card and not card.debuff then
-            if current_round and G.GAME and G.GAME.porkify_gold_seal_tag_pending then
-                current_round.porkify_gold_seal_tag_active = true
-                current_round.porkify_gold_seal_tag_cards = {}
-                current_round.porkify_gold_seal_tag_refs = G.GAME.porkify_gold_seal_tag_refs or {}
-                G.GAME.porkify_gold_seal_tag_refs = nil
-                G.GAME.porkify_gold_seal_tag_pending = nil
-            end
-            if current_round and current_round.porkify_gold_seal_tag_active then
-                local tracked_cards = current_round.porkify_gold_seal_tag_cards or {}
-                current_round.porkify_gold_seal_tag_cards = tracked_cards
-                tracked_cards[porkify_get_card_tracking_key(card)] = true
-                if card.set_seal then
-                    card:set_seal("Gold", nil, true)
-                    card:juice_up(0.3, 0.3)
-                end
-            end
             porkify_mark_card_played(card)
             Porkify_refresh_favorite_stickers()
         end
@@ -3416,18 +3698,6 @@ if type(draw_card) == "function" and not Porkify_draw_card_glitched then
                 returned[card_key] = true
                 to = G.hand
                 sort = true
-            end
-        end
-
-        if from == G.play
-            and current_round
-            and current_round.porkify_gold_seal_tag_active
-            and card
-        then
-            local tracked_cards = current_round.porkify_gold_seal_tag_cards or {}
-            tracked_cards[porkify_get_card_tracking_key(card)] = nil
-            if not next(tracked_cards) then
-                porkify_consume_gold_seal_tag()
             end
         end
 

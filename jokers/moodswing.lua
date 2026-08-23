@@ -36,7 +36,7 @@ SMODS.Joker{ -- Mood Swing
         extra = {
             target_hand = "High Card",
             chips = 0,
-            chip_gain = 12,
+            chip_gain = 8,
             active_this_hand = false,
             hand_rolls = 0
         }
@@ -44,10 +44,10 @@ SMODS.Joker{ -- Mood Swing
     loc_txt = {
         ["name"] = "Mood Swing",
         ["text"] = {
-            [1] = "{C:blue}+#2#{} Chips if played hand",
-            [2] = "contains a {C:attention}#1#{}",
-            [3] = "{C:red}-#2#{} Chips if it is not",
-            [4] = "{C:inactive}(Hand changes every hand){}",
+            [1] = "This Joker gains {C:blue}+#2#{} Chips",
+            [2] = "when played hand is a",
+            [3] = "{C:attention}#1#{}",
+            [4] = "{s:0.75}Hand changes every hand{}",
             [5] = "{C:inactive}(Currently {C:blue}#3#{} {C:inactive}Chips){}"
         }
     },
@@ -68,7 +68,7 @@ SMODS.Joker{ -- Mood Swing
         return {
             vars = {
                 localize(porkify_moodswing_target_hand(card), "poker_hands"),
-                extra.chip_gain or 12,
+                extra.chip_gain or 8,
                 ((extra.chips or 0) >= 0 and "+" or "") .. tostring(extra.chips or 0)
             }
         }
@@ -85,19 +85,16 @@ SMODS.Joker{ -- Mood Swing
     calculate = function(self, card, context)
         local extra = card.ability.extra or {}
 
-        if context.before and context.cardarea == G.jokers then
+        if context.before and context.cardarea == G.jokers and context.scoring_name then
             local target = porkify_moodswing_target_hand(card)
-            local poker_hands = context.poker_hands or {}
-            extra.active_this_hand = target and poker_hands[target] and next(poker_hands[target]) ~= nil
+            extra.active_this_hand = context.scoring_name == target
             card.ability.extra = extra
 
-            local chip_gain = extra.chip_gain or 12
+            local chip_gain = extra.chip_gain or 8
             local upgraded = extra.active_this_hand
 
             if upgraded then
                 extra.chips = (extra.chips or 0) + chip_gain
-            else
-                extra.chips = math.max(((extra.chips or 0) - chip_gain), 0)
             end
 
             extra.hand_rolls = (extra.hand_rolls or 0) + 1
@@ -111,10 +108,12 @@ SMODS.Joker{ -- Mood Swing
             extra.active_this_hand = false
             card.ability.extra = extra
 
-            return {
-                message = upgraded and "Upgrade!" or "Downgrade...",
-                colour = upgraded and G.C.BLUE or G.C.RED
-            }
+            if upgraded then
+                return {
+                    message = "Upgrade!",
+                    colour = G.C.BLUE
+                }
+            end
         end
 
         if context.cardarea == G.jokers and context.joker_main then

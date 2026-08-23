@@ -2,24 +2,17 @@ SMODS.Tag({
     key = "gold_seal",
     atlas = "CustomTags",
     pos = { x = 0, y = 0 },
-    config = {},
+    config = { type = "store_joker_create", porkify_shop_reserve_amount = 1 },
     loc_txt = {
         name = "Gold Seal Tag",
         text = {
-            [1] = "The next played hand",
-            [2] = "gains {C:gold}Gold{} Seals",
-            [3] = "on all cards"
+            [1] = "Shop has a free",
+            [2] = "{C:attention}playing card{} with a",
+            [3] = "{C:gold}Gold Seal{}"
         }
     },
     apply = function(self, tag, context)
-        if context.type ~= "immediate" then
-            return
-        end
-
-        G.GAME.porkify_gold_seal_tag_pending = true
-        G.GAME.porkify_gold_seal_tag_refs = G.GAME.porkify_gold_seal_tag_refs or {}
-        G.GAME.porkify_gold_seal_tag_refs[#G.GAME.porkify_gold_seal_tag_refs + 1] = tag
-        return true
+        return Porkify_apply_playing_card_shop_tag("gold_seal", tag, context)
     end,
     in_pool = function(self, args)
         return true

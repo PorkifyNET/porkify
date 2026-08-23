@@ -65,6 +65,10 @@ SMODS.Joker{ --Cardception
 local card_set_cost_ref = Card.set_cost
 function Card:set_cost()
     card_set_cost_ref(self)
+
+    if self.ability and self.ability.porkify_tag_free then
+        self.cost = 0
+    end
     
     if next(SMODS.find_card("j_porkify_cardception")) then
         if (self.ability.set == 'Enhanced' or (self.ability.set == 'Booster' and self.config.center.kind == 'Standard')) then

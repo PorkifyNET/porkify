@@ -35,13 +35,33 @@ local function porkify_step_ladder_hand_has_rank(context, rank)
     return false
 end
 
+local function porkify_step_ladder_ensure_locked_loc()
+    if not (G and G.localization and G.localization.descriptions and G.localization.descriptions.Other and loc_parse_string) then
+        return
+    end
+
+    if not G.localization.descriptions.Other.porkify_stepladder_locked then
+        G.localization.descriptions.Other.porkify_stepladder_locked = {
+            text = {
+                [1] = "{C:red}+#1#{} Mult",
+                [2] = "{C:green}Top reached!{}"
+            },
+            text_parsed = {
+                loc_parse_string("{C:red}+#1#{} Mult"),
+                loc_parse_string("{C:green}Top reached!{}")
+            }
+        }
+    end
+end
+
 SMODS.Joker{ -- Step Ladder
     key = "stepladder",
     config = {
         extra = {
             required_rank = 2,
             mult = 0,
-            mult_gain = 5
+            mult_gain = 5,
+            locked = false
         }
     },
     loc_txt = {
@@ -67,6 +87,19 @@ SMODS.Joker{ -- Step Ladder
 
     loc_vars = function(self, info_queue, card)
         local extra = (card and card.ability and card.ability.extra) or self.config.extra
+        if extra.locked then
+            porkify_step_ladder_ensure_locked_loc()
+            return {
+                key = "porkify_stepladder_locked",
+                set = "Other",
+                name_set = "Joker",
+                name_key = self.key,
+                vars = {
+                    extra.mult or 0
+                }
+            }
+        end
+
         return {
             vars = {
                 porkify_step_ladder_rank_label(extra.required_rank or 2),
@@ -81,6 +114,7 @@ SMODS.Joker{ -- Step Ladder
         extra.required_rank = extra.required_rank or 2
         extra.mult = extra.mult or 0
         extra.mult_gain = extra.mult_gain or 5
+        extra.locked = extra.locked or false
         card.ability.extra = extra
     end,
 
@@ -89,12 +123,21 @@ SMODS.Joker{ -- Step Ladder
 
         if context.before and context.cardarea == G.jokers then
             local required_rank = extra.required_rank or 2
+            local locked = extra.locked or false
             local matched = porkify_step_ladder_hand_has_rank(context, required_rank)
 
             if not context.blueprint then
+                if locked then
+                    return
+                end
+
                 if matched then
                     extra.mult = (extra.mult or 0) + (extra.mult_gain or 5)
-                    extra.required_rank = porkify_step_ladder_next_rank(required_rank)
+                    if required_rank == 14 then
+                        extra.locked = true
+                    else
+                        extra.required_rank = porkify_step_ladder_next_rank(required_rank)
+                    end
                     card.ability.extra = extra
 
                     return {
@@ -136,6 +179,13 @@ SMODS.Joker{ -- Step Ladder
                 { ref_table = "card.joker_display_values", ref_value = "rank_text", colour = G.C.IMPORTANT },
                 { text = ")", colour = G.C.GREY }
             },
+            style_function = function(card, text, reminder_text, extra)
+                if reminder_text and reminder_text.children and reminder_text.children[2] then
+                    local locked = card and card.ability and card.ability.extra and card.ability.extra.locked
+                    reminder_text.children[2].config.colour = locked and G.C.GREEN or G.C.IMPORTANT
+                end
+                return false
+            end,
 
             calc_function = function(card)
                 local extra = (card.ability and card.ability.extra) or {}
@@ -143,7 +193,7 @@ SMODS.Joker{ -- Step Ladder
                 local mult = extra.mult or 0
 
                 card.joker_display_values.mult_text = "+" .. tostring(mult)
-                card.joker_display_values.rank_text = porkify_step_ladder_rank_label(required_rank)
+                card.joker_display_values.rank_text = extra.locked and "Completed!" or porkify_step_ladder_rank_label(required_rank)
             end
         }
     end
