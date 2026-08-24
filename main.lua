@@ -268,6 +268,10 @@ function Game:start_run(args)
         G.GAME.porkify_shop_flow_active = false
         G.GAME.porkify_shop_pending_size_delta = 0
         G.GAME.porkify_pending_shop_tag_cards = nil
+        G.GAME.porkify_pencil_unused_discards = math.max(
+            0,
+            math.floor(tonumber(G.GAME.porkify_pencil_unused_discards) or 0)
+        )
     end
 
     porkify_register_too_many_blanks_hand()
@@ -430,6 +434,55 @@ local function porkify_is_resolute_card(card)
     local center = card and card.config and card.config.center
     local center_key = (center and center.key) or (card and card.config and card.config.center_key)
     return center_key == "m_porkify_revolving"
+end
+
+local function porkify_get_pencil_unused_discards_total()
+    if not (G and G.GAME) then
+        return 0
+    end
+    G.GAME.porkify_pencil_unused_discards = math.max(0, math.floor(tonumber(G.GAME.porkify_pencil_unused_discards) or 0))
+    return G.GAME.porkify_pencil_unused_discards
+end
+_G.porkify_get_pencil_unused_discards_total = porkify_get_pencil_unused_discards_total
+
+local function porkify_record_pencil_unused_discards()
+    if not (G and G.GAME) then
+        return 0
+    end
+
+    local current_round = G.GAME.current_round or {}
+    local round_resets = G.GAME.round_resets or {}
+    local round_key = tostring(round_resets.ante or 0) .. "_" .. tostring(G.GAME.round or 0)
+
+    if current_round.porkify_pencil_unused_discards_recorded_round == round_key then
+        return porkify_get_pencil_unused_discards_total()
+    end
+
+    current_round.porkify_pencil_unused_discards_recorded_round = round_key
+    G.GAME.current_round = current_round
+    G.GAME.porkify_pencil_unused_discards =
+        porkify_get_pencil_unused_discards_total() + math.max(0, current_round.discards_left or 0)
+
+    return G.GAME.porkify_pencil_unused_discards
+end
+
+local function porkify_card_is_protected_from_destruction(card)
+    return porkify_is_resolute_card(card)
+end
+
+local function porkify_filter_destroyed_cards(cards)
+    if type(cards) ~= "table" then
+        return cards
+    end
+
+    local filtered = {}
+    for i = 1, #cards do
+        local entry = cards[i]
+        if entry and not porkify_card_is_protected_from_destruction(entry) then
+            filtered[#filtered + 1] = entry
+        end
+    end
+    return filtered
 end
 
 local function porkify_is_blank_seal_card(card)
@@ -2837,6 +2890,43 @@ if SMODS and SMODS.pseudorandom_probability and not Porkify_pseudorandom_probabi
     end
 end
 
+if SMODS and SMODS.destroy_cards and not Porkify_destroy_cards_resolute then
+    Porkify_destroy_cards_resolute = SMODS.destroy_cards
+    SMODS.destroy_cards = function(cards, ...)
+        return Porkify_destroy_cards_resolute(porkify_filter_destroyed_cards(cards), ...)
+    end
+end
+
+if Card and type(Card.remove_from_deck) == "function" and not Porkify_remove_from_deck_resolute then
+    Porkify_remove_from_deck_resolute = Card.remove_from_deck
+    function Card:remove_from_deck(...)
+        if porkify_card_is_protected_from_destruction(self) then
+            return nil
+        end
+        return Porkify_remove_from_deck_resolute(self, ...)
+    end
+end
+
+if Card and type(Card.start_dissolve) == "function" and not Porkify_start_dissolve_resolute then
+    Porkify_start_dissolve_resolute = Card.start_dissolve
+    function Card:start_dissolve(...)
+        if porkify_card_is_protected_from_destruction(self) then
+            return nil
+        end
+        return Porkify_start_dissolve_resolute(self, ...)
+    end
+end
+
+if Card and type(Card.shatter) == "function" and not Porkify_shatter_resolute then
+    Porkify_shatter_resolute = Card.shatter
+    function Card:shatter(...)
+        if porkify_card_is_protected_from_destruction(self) then
+            return nil
+        end
+        return Porkify_shatter_resolute(self, ...)
+    end
+end
+
 if type(get_blind_amount) == "function" and not Porkify_get_blind_amount then
     Porkify_get_blind_amount = get_blind_amount
     function get_blind_amount(ante)
@@ -3724,6 +3814,12 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
 
         if G and G.GAME then
             G.GAME.current_round = G.GAME.current_round or {}
+            if resolved_context
+                and resolved_context.end_of_round
+                and resolved_context.main_eval
+                and not resolved_context.game_over then
+                porkify_record_pencil_unused_discards()
+            end
             if resolved_context and resolved_context.setting_blind then
                 porkify_consume_no_reward_blind()
                 if G.GAME.porkify_force_final_boss_pending and G.GAME.blind_choices and G.GAME.blind_choices.Boss then

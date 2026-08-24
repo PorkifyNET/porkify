@@ -6,8 +6,8 @@ SMODS.Enhancement {
         name = 'Resolute',
         text = {
             [1] = 'This card cannot',
-            [2] = 'be debuffed by',
-            [3] = '{C:attention}Boss Blinds{}'
+            [2] = 'be {C:attention}debuffed{} or',
+            [3] = '{C:red}destroyed{}'
         }
     },
     atlas = 'CustomEnhancements',

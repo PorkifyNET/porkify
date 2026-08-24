@@ -3,15 +3,14 @@ SMODS.Joker{ --Pencil
     key = "pencil",
     config = {
         extra = {
-            PencilMult = 0,
-            discardsremaining = 0
+            PencilMult = 0
         }
     },
     loc_txt = {
         ['name'] = 'Pencil',
         ['text'] = {
-            [1] = 'This Joker gains {C:red}+1{} Mult',
-            [2] = 'for every unused {C:attention}discard{}',
+            [1] = '{C:red}+1{} Mult per unused',
+            [2] = '{C:attention}discard{} this run',
             [3] = '{C:inactive}(Currently{} {C:red}+#1#{} {C:inactive}Mult){}'
         },
         ['unlock'] = {
@@ -38,22 +37,27 @@ SMODS.Joker{ --Pencil
     unlock_condition = { type = 'c_cards_discarded', extra = 150 },
     
     loc_vars = function(self, info_queue, card)
-        
-        return {vars = {card.ability.extra.PencilMult, (G.GAME.current_round.discards_left or 0)}}
+        local total = (porkify_get_pencil_unused_discards_total and porkify_get_pencil_unused_discards_total())
+            or ((card and card.ability and card.ability.extra and card.ability.extra.PencilMult) or 0)
+        return {vars = {total}}
     end,
     
     calculate = function(self, card, context)
         if context.end_of_round and context.game_over == false and context.main_eval  then
             return {
                 func = function()
-                    card.ability.extra.PencilMult = (card.ability.extra.PencilMult) + G.GAME.current_round.discards_left
+                    local total = (porkify_get_pencil_unused_discards_total and porkify_get_pencil_unused_discards_total())
+                        or ((card.ability.extra and card.ability.extra.PencilMult) or 0)
+                    card.ability.extra.PencilMult = total
                     return true
                 end
             }
         end
         if context.cardarea == G.jokers and context.joker_main  then
+            local total = (porkify_get_pencil_unused_discards_total and porkify_get_pencil_unused_discards_total())
+                or ((card.ability.extra and card.ability.extra.PencilMult) or 0)
             return {
-                mult = card.ability.extra.PencilMult
+                mult = total
             }
         end
     end,
@@ -65,7 +69,11 @@ SMODS.Joker{ --Pencil
 		},
 
 		calc_function = function(card)
-		  local stored = (card.ability.extra and card.ability.extra.PencilMult) or 0
+		  local stored = (porkify_get_pencil_unused_discards_total and porkify_get_pencil_unused_discards_total())
+              or ((card.ability.extra and card.ability.extra.PencilMult) or 0)
+          if card.ability and card.ability.extra then
+              card.ability.extra.PencilMult = stored
+          end
 
 		  card.joker_display_values.mult_text = "+" .. tostring(stored)
 		end

@@ -36,7 +36,7 @@ SMODS.Joker{ -- Mood Swing
         extra = {
             target_hand = "High Card",
             chips = 0,
-            chip_gain = 8,
+            chip_gain = 12,
             active_this_hand = false,
             hand_rolls = 0
         }
@@ -68,7 +68,7 @@ SMODS.Joker{ -- Mood Swing
         return {
             vars = {
                 localize(porkify_moodswing_target_hand(card), "poker_hands"),
-                extra.chip_gain or 8,
+                extra.chip_gain or 12,
                 ((extra.chips or 0) >= 0 and "+" or "") .. tostring(extra.chips or 0)
             }
         }
@@ -90,7 +90,7 @@ SMODS.Joker{ -- Mood Swing
             extra.active_this_hand = context.scoring_name == target
             card.ability.extra = extra
 
-            local chip_gain = extra.chip_gain or 8
+            local chip_gain = extra.chip_gain or 12
             local upgraded = extra.active_this_hand
 
             if upgraded then
