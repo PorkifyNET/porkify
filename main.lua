@@ -467,11 +467,29 @@ local function porkify_record_pencil_unused_discards()
 end
 
 local function porkify_card_is_protected_from_destruction(card)
+    if not card then
+        return false
+    end
+
+    if not (SMODS and SMODS.is_playing_card and SMODS.is_playing_card(card)) then
+        return false
+    end
+    if not (card.base and card.base.value and card.base.suit) then
+        return false
+    end
+
     return porkify_is_resolute_card(card)
 end
 
 local function porkify_filter_destroyed_cards(cards)
     if type(cards) ~= "table" then
+        return cards
+    end
+
+    if cards.ability or cards.config or cards.base then
+        if porkify_card_is_protected_from_destruction(cards) then
+            return {}
+        end
         return cards
     end
 
@@ -3175,12 +3193,19 @@ local function porkify_get_magnet_draw_count()
         return 0
     end
     if used_vouchers.v_porkify_electromagnet then
-        return 3
+        return 1
     end
     if used_vouchers.v_porkify_magnet then
         return 1
     end
     return 0
+end
+
+local function porkify_is_favorite_playing_card(card)
+    return card
+        and card.ability
+        and not card.debuff
+        and (card.ability.porkify_favorite or card.ability.favorite)
 end
 
 local function porkify_is_playing_card_center(card)
@@ -3770,9 +3795,27 @@ if type(draw_card) == "function" and not Porkify_draw_card_glitched then
     Porkify_draw_card_glitched = draw_card
     function draw_card(from, to, percent, dir, sort, card, delay, mute, stay_flipped, vol)
         local current_round = G and G.GAME and G.GAME.current_round
+        local used_vouchers = G and G.GAME and G.GAME.used_vouchers
         if from == G.hand and to == G.play and card and not card.debuff then
             porkify_mark_card_played(card)
             Porkify_refresh_favorite_stickers()
+        end
+
+        if from == G.play
+            and to == G.discard
+            and card
+            and current_round
+            and used_vouchers
+            and used_vouchers.v_porkify_electromagnet
+            and porkify_is_favorite_playing_card(card) then
+            local returned = current_round.porkify_electromagnet_returned_ids or {}
+            local card_key = card.unique_val or card.sort_id or tostring(card)
+            if not returned[card_key] then
+                current_round.porkify_electromagnet_returned_ids = returned
+                returned[card_key] = true
+                to = G.hand
+                sort = true
+            end
         end
 
         if from == G.play
@@ -3827,6 +3870,7 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
                     G.GAME.blind_choices.Boss = porkify_apply_final_boss_choice(G.GAME.blind_choices.Boss, key)
                 end
                 porkify_apply_pending_final_boss_to_active_blind()
+                G.GAME.current_round.porkify_electromagnet_returned_ids = {}
                 G.GAME.current_round.porkify_glitched_returned_ids = {}
             end
             if resolved_context and (

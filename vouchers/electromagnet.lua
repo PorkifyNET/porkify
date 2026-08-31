@@ -4,8 +4,9 @@ SMODS.Voucher {
     loc_txt = {
         name = 'Electromagnet',
         text = {
-            [1] = 'Your {C:attention}3{} most played cards',
-            [2] = 'are always drawn {C:attention}first{}'
+            [1] = 'Your favorite {C:attention}playing card{}',
+            [2] = '{C:green}returns{} to {C:blue}hand{} after being',
+            [3] = 'played {C:attention}once{} per round'
         },
         unlock = {
             [1] = 'Unlocked by default.'

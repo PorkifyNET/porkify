@@ -4,7 +4,7 @@ SMODS.Voucher {
     loc_txt = {
         name = 'Magnet',
         text = {
-            [1] = 'Your {C:attention}1{} most played card',
+            [1] = 'Your {C:attention}most played card{}',
             [2] = 'is always drawn {C:attention}first{}'
         },
         unlock = {

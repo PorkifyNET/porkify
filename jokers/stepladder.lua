@@ -69,7 +69,7 @@ SMODS.Joker{ -- Step Ladder
         ["text"] = {
             [1] = "This Joker gains {C:red}+#2#{} Mult if",
             [2] = "played hand contains a {C:attention}#1#{}",
-            [3] = "Resets if played hand does not",
+            [3] = "{s:0.75}Resets if played hand does not{}",
             [4] = "{C:inactive}(Currently {C:red}+#3#{} {C:inactive}Mult){}"
         }
     },
