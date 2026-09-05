@@ -23,12 +23,16 @@ SMODS.Joker{ --Fortune Cookie
     cost = 6,
     rarity = 2,
     blueprint_compat = true,
-    eternal_compat = true,
+    eternal_compat = false,
     perishable_compat = true,
     unlocked = true,
     discovered = true,
     atlas = 'CustomJokers',
     pools = { ["porkify_porkify_jokers"] = true },
+
+    credit_badges = {
+        { text = "Art: Pixelados", colour = "00AAFF" }
+     },
 
     calculate = function(self, card, context)
         if context.before and context.cardarea == G.jokers and not context.blueprint then

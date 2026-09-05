@@ -19,15 +19,15 @@ local function porkify_count_pride_seals()
     return count
 end
 
-SMODS.Joker{ --Spectrum
-    key = "spectrum",
+SMODS.Joker{ --Prideful Joker
+    key = "prideful_joker",
     config = {
         extra = {
             mult_per_pride = 4
         }
     },
     loc_txt = {
-        ['name'] = 'Spectrum',
+        ['name'] = 'Prideful Joker',
         ['text'] = {
             [1] = 'Gives {C:red}+#1#{} Mult for',
             [2] = 'each {C:gold}Pride Seal{} card',
@@ -43,8 +43,8 @@ SMODS.Joker{ --Spectrum
         w = 71,
         h = 95
     },
-    cost = 6,
-    rarity = 2,
+    cost = 5,
+    rarity = 1,
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -52,6 +52,15 @@ SMODS.Joker{ --Spectrum
     discovered = false,
     atlas = 'CustomJokers',
     pools = { ["porkify_porkify_jokers"] = true },
+
+    in_pool = function(self, args)
+        for _, playing_card in pairs(G.playing_cards or {}) do
+            if porkify_is_pride_seal_card(playing_card) then
+                return true
+            end
+        end
+        return false
+    end,
 
     loc_vars = function(self, info_queue, card)
         local pride_seal = G.P_SEALS and (G.P_SEALS["porkify_pride"] or G.P_SEALS["pride"])

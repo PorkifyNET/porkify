@@ -26,7 +26,7 @@ SMODS.Joker{ --Hot Dog
     cost = 5,
     rarity = 2,
     blueprint_compat = false,
-    eternal_compat = true,
+    eternal_compat = false,
     perishable_compat = true,
     unlocked = false,
     discovered = false,

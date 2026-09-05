@@ -28,7 +28,7 @@ SMODS.Joker{ --Pizza
     cost = 6,
     rarity = 2,
     blueprint_compat = false,
-    eternal_compat = true,
+    eternal_compat = false,
     perishable_compat = true,
     unlocked = false,
     discovered = false,

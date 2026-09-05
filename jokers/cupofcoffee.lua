@@ -8,9 +8,8 @@ SMODS.Joker{ --Cup of Coffee
     config = {
         extra = {
             Xmult = 3,
-            Xmult_loss = 0.2,
-            Xmult_min = 1,
-            pending_break = false
+            Xmult_loss = 0.3,
+            Xmult_min = 1
         }
     },
     loc_txt = {
@@ -49,7 +48,7 @@ SMODS.Joker{ --Cup of Coffee
         return {
             vars = {
                 porkify_coffee_format_xmult(extra.Xmult_start or 3),
-                porkify_coffee_format_xmult(extra.Xmult_loss or 0.2),
+                porkify_coffee_format_xmult(extra.Xmult_loss or 0.3),
                 porkify_coffee_format_xmult(extra.Xmult_min or 1),
                 porkify_coffee_format_xmult(extra.Xmult or 3)
             }
@@ -60,9 +59,8 @@ SMODS.Joker{ --Cup of Coffee
         local extra = card.ability.extra or {}
         extra.Xmult_start = extra.Xmult_start or 3
         extra.Xmult = extra.Xmult or extra.Xmult_start
-        extra.Xmult_loss = extra.Xmult_loss or 0.2
+        extra.Xmult_loss = extra.Xmult_loss or 0.3
         extra.Xmult_min = extra.Xmult_min or 1
-        extra.pending_break = false
         card.ability.extra = extra
     end,
 
@@ -77,38 +75,11 @@ SMODS.Joker{ --Cup of Coffee
 
         if context.after and context.cardarea == G.jokers and not context.blueprint then
             local current = extra.Xmult or extra.Xmult_start or 3
-            local next_value = current - (extra.Xmult_loss or 0.2)
+            local next_value = current - (extra.Xmult_loss or 0.3)
             extra.Xmult = math.max(next_value, extra.Xmult_min or 1)
-            extra.pending_break = (extra.Xmult <= (extra.Xmult_min or 1))
             card.ability.extra = extra
 
-            return {
-                message = extra.pending_break and "Empty!" or "Sipped...",
-                colour = extra.pending_break and G.C.RED or G.C.FILTER
-            }
-        end
-
-        if context.end_of_round and context.main_eval and not context.blueprint then
-            local blind = G and G.GAME and G.GAME.blind
-            local is_boss_blind = not not (
-                blind and (
-                    blind.boss
-                    or (blind.config and blind.config.blind and blind.config.blind.boss)
-                )
-            )
-
-            if is_boss_blind then
-                extra.Xmult = extra.Xmult_start or 3
-                extra.pending_break = false
-                card.ability.extra = extra
-
-                return {
-                    message = "Refilled!",
-                    colour = G.C.MULT
-                }
-            end
-
-            if extra.pending_break then
+            if extra.Xmult <= (extra.Xmult_min or 1) then
                 return {
                     func = function()
                         G.E_MANAGER:add_event(Event({
@@ -130,6 +101,31 @@ SMODS.Joker{ --Cup of Coffee
                         )
                         return true
                     end
+                }
+            end
+
+            return {
+                message = "Sipped...",
+                colour = G.C.FILTER
+            }
+        end
+
+        if context.end_of_round and context.main_eval and not context.blueprint then
+            local blind = G and G.GAME and G.GAME.blind
+            local is_boss_blind = not not (
+                blind and (
+                    blind.boss
+                    or (blind.config and blind.config.blind and blind.config.blind.boss)
+                )
+            )
+
+            if is_boss_blind then
+                extra.Xmult = extra.Xmult_start or 3
+                card.ability.extra = extra
+
+                return {
+                    message = "Refilled!",
+                    colour = G.C.MULT
                 }
             end
         end

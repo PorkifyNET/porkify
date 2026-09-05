@@ -26,7 +26,7 @@ SMODS.Joker{ --Hamburger
     cost = 10,
     rarity = 3,
     blueprint_compat = false,
-    eternal_compat = true,
+    eternal_compat = false,
     perishable_compat = true,
     unlocked = false,
     discovered = false,

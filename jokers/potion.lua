@@ -42,6 +42,15 @@ SMODS.Joker{ -- Potion
         { text = "Art: danidoespixels", colour = "4A5DF9" }
      },
 
+    in_pool = function(self, args)
+        for _, playing_card in pairs(G.playing_cards or {}) do
+            if playing_card and SMODS.get_enhancements(playing_card)["m_glass"] == true then
+                return true
+            end
+        end
+        return false
+    end,
+
     loc_vars = function(self, info_queue, card)
         local glass_center = G.P_CENTERS["m_glass"]
         if glass_center then

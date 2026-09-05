@@ -26,7 +26,7 @@ SMODS.Joker{ --Taco
     cost = 4,
     rarity = 1,
     blueprint_compat = true,
-    eternal_compat = true,
+    eternal_compat = false,
     perishable_compat = true,
     unlocked = false,
     discovered = false,

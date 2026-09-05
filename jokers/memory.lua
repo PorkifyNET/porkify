@@ -1,4 +1,4 @@
-local function porkify_pairing_test_has_pair(context)
+local function porkify_memory_pair_count(context)
     local scoring_hand = context and (context.scoring_hand or context.full_hand) or {}
     local rank_counts = {}
 
@@ -7,14 +7,18 @@ local function porkify_pairing_test_has_pair(context)
             local rank = played_card:get_id()
             if rank then
                 rank_counts[rank] = (rank_counts[rank] or 0) + 1
-                if rank_counts[rank] >= 2 then
-                    return true
-                end
             end
         end
     end
 
-    return false
+    local pair_count = 0
+    for _, count in pairs(rank_counts) do
+        if count >= 2 then
+            pair_count = pair_count + 1
+        end
+    end
+
+    return pair_count
 end
 
 SMODS.Joker{ -- Memory
@@ -28,9 +32,9 @@ SMODS.Joker{ -- Memory
     loc_txt = {
         ["name"] = "Memory",
         ["text"] = {
-            [1] = "This Joker gains {C:chips}+#2#{} Chips if",
-            [2] = "played hand contains a {C:attention}Pair{}",
-            [3] = "{C:red}-#2#{} Chips if it does not",
+            [1] = "This Joker gains {C:chips}+#2#{} Chips for",
+            [2] = "each {C:attention}Pair{} in played hand",
+            [3] = "{C:red}-#2#{} Chips if it contains none",
             [4] = "{C:inactive}(Currently {C:chips}+#1#{} {C:inactive}Chips){}"
         }
     },
@@ -60,8 +64,9 @@ SMODS.Joker{ -- Memory
         local extra = card.ability.extra or {}
 
         if context.before and context.cardarea == G.jokers and not context.blueprint then
-            if porkify_pairing_test_has_pair(context) then
-                extra.chips = (extra.chips or 0) + (extra.chip_gain or 4)
+            local pair_count = porkify_memory_pair_count(context)
+            if pair_count > 0 then
+                extra.chips = (extra.chips or 0) + ((extra.chip_gain or 4) * pair_count)
                 card.ability.extra = extra
                 return {
                     message = "Upgrade!",

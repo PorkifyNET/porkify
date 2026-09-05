@@ -1,12 +1,12 @@
-SMODS.Joker{ --Parity
-    key = "parity",
+SMODS.Joker{ --Game of Life
+    key = "game_of_life",
     config = {
         extra = {
             Xmult = 2.5
         }
     },
     loc_txt = {
-        ['name'] = 'Parity',
+        ['name'] = 'Game of Life',
         ['text'] = {
             [1] = '{X:red,C:white}X2.5{} Mult if played hand',
             [2] = 'contains both a scoring',
