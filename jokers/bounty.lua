@@ -26,17 +26,15 @@ SMODS.Joker{ -- Bounty
     config = {
         extra = {
             target_rank = 2,
-            round_index = 0,
-            scored_matches = 0
+            dollars = 2
         }
     },
     loc_txt = {
         ["name"] = "Bounty",
         ["text"] = {
-            [1] = "Earn {C:money}$1{} for every scored",
-            [2] = "{C:attention}#1#{} at end of round",
+            [1] = "Earn {C:money}$#2#{} for every played",
+            [2] = "{C:attention}#1#{} when scored",
             [3] = "{s:0.75}Rank changes every round{}",
-            [4] = "{C:inactive}(Currently {C:money}$#2#{}{C:inactive}){}",
         }
     },
     pos = { x = 3, y = 9 },
@@ -56,7 +54,7 @@ SMODS.Joker{ -- Bounty
         return {
             vars = {
                 porkify_bounty_rank_label(extra.target_rank or 2),
-                extra.scored_matches or 0
+                extra.dollars or 2
             }
         }
     end,
@@ -65,47 +63,30 @@ SMODS.Joker{ -- Bounty
         local extra = card.ability.extra or {}
         extra.round_index = extra.round_index or 0
         extra.target_rank = extra.target_rank or porkify_bounty_pick_rank(extra.round_index)
-        extra.scored_matches = extra.scored_matches or 0
         card.ability.extra = extra
     end,
 
-    calc_dollar_bonus = function(self, card)
-        local payout = tonumber(card.ability.extra and card.ability.extra.scored_matches) or 0
-        if payout > 0 then
-            return payout
-        end
-    end,
-
     calculate = function(self, card, context)
-        local extra = card.ability.extra or {}
-
-        if context.setting_blind and not context.blueprint then
+        local extra = card.ability.extra
+        if context.end_of_round and context.main_eval and not context.game_over and not context.blueprint then
             extra.round_index = (extra.round_index or 0) + 1
             extra.target_rank = porkify_bounty_pick_rank(extra.round_index)
-            extra.scored_matches = 0
-            card.ability.extra = extra
         end
 
-        if context.individual
-            and context.cardarea == G.play
-            and context.other_card
-            and not context.blueprint
-            and porkify_card_matches_rank(context.other_card, extra.target_rank or 2)
-        then
-            extra.scored_matches = (extra.scored_matches or 0) + 1
-            card.ability.extra = extra
-
-            return {
-                message = "+$1",
-                colour = G.C.MONEY
-            }
+        if context.individual and context.cardarea == G.play then
+            local played_card = context.other_card
+            if porkify_card_matches_rank(played_card, extra.target_rank or 2) then
+                return {
+                    dollars = extra.dollars or 2
+                }
+            end
         end
     end,
 
     joker_display_def = function(JokerDisplay)
         return {
             text = {
-                { ref_table = "card.joker_display_values", ref_value = "payout_text", colour = G.C.MONEY }
+                { ref_table = "card.joker_display_values", ref_value = "payout_text", colour = G.C.MONEY, retrigger_type = "mult" }
             },
             reminder_text = {
                 { text = "(", colour = G.C.GREY },
@@ -115,8 +96,19 @@ SMODS.Joker{ -- Bounty
 
             calc_function = function(card)
                 local extra = (card.ability and card.ability.extra) or {}
+                local hits = 0
+                local text, _, scoring_hand = JokerDisplay.evaluate_hand()
 
-                card.joker_display_values.payout_text = "+$" .. tostring(extra.scored_matches or 0)
+                if text ~= "Unknown" and scoring_hand then
+                    for _, c in pairs(scoring_hand) do
+                        if not c.debuff and c.facing ~= "back"
+                            and porkify_card_matches_rank(c, extra.target_rank or 2) then
+                            hits = hits + JokerDisplay.calculate_card_triggers(c, scoring_hand)
+                        end
+                    end
+                end
+
+                card.joker_display_values.payout_text = "+$" .. tostring(hits * (extra.dollars or 2))
                 card.joker_display_values.rank_text = porkify_bounty_rank_label(extra.target_rank or 2)
             end
         }

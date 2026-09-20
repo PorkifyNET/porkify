@@ -1,1 +1,1 @@
-return {["show_credit_badges"]=true,}
+return {["content_consumables"]=true,["porkify_theme"]=true,["content_vouchers"]=true,["return_of_the_serpent"]=false,["content_boosters"]=true,["content_secret_hands"]=true,["bypass_unlock_all"]=true,["reveal_secret_hands"]=false,["favorite_outline"]="rainbow",["infinipaul"]=true,["show_credit_badges"]=true,["unlimited_blanks"]=false,["content_jokers"]=true,["content_tags"]=true,["content_blinds"]=true,["content_achievements"]=true,}

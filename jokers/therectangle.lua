@@ -44,24 +44,21 @@ SMODS.Joker{ --The Rectangle
     end,
 
     calculate = function(self, card, context)
-        if context.cardarea == G.jokers and context.joker_main then
+        if context.cardarea == G.jokers and context.before then
             local ph = context.poker_hands or {}
             local has_four_kind = ph["Four of a Kind"] and next(ph["Four of a Kind"])
 
             if has_four_kind and not context.blueprint then
                 card.ability.extra.Xmult = (card.ability.extra.Xmult or 1) + (card.ability.extra.Xmult_gain or 0.4)
 
-                G.E_MANAGER:add_event(Event({
-                    func = function()
-                        card_eval_status_text(
-                            card, 'extra', nil, nil, nil,
-                            { message = "Upgrade!", colour = G.C.MULT }
-                        )
-                        return true
-                    end
-                }))
+                return {
+                    message = "Upgrade!",
+                    colour = G.C.MULT
+                }
             end
+        end
 
+        if context.cardarea == G.jokers and context.joker_main then
             return {
                 Xmult = card.ability.extra.Xmult or 1
             }

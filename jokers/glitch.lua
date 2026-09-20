@@ -66,6 +66,10 @@ SMODS.Joker{ -- Glitch
                         func = function()
                             local created = SMODS.add_card({ set = 'Joker' })
                             if created then
+                                check_for_unlock {
+                                    type = 'porkify_glitch_created',
+                                    porkify_key = created.config.center.key,
+                                }
                                 card:juice_up(0.3, 0.5)
                                 card_eval_status_text(
                                     created,

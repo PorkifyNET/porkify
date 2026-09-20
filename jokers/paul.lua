@@ -1,3 +1,12 @@
+local paul_mod = SMODS.current_mod
+local function infinipaul_enabled()
+    return not (paul_mod and paul_mod.config and paul_mod.config.infinipaul == false)
+end
+local function paul_has_room()
+    return infinipaul_enabled()
+        or (#G.jokers.cards + (G.GAME.joker_buffer or 0) < G.jokers.config.card_limit)
+end
+
 SMODS.Joker{ -- Chicken
     key = "paul",
     config = {
@@ -70,6 +79,10 @@ SMODS.Joker{ -- Chicken
 		)
 
 		return {
+			main_end = not infinipaul_enabled() and {
+                { n = G.UIT.T, config = { text = localize('porkify_paul_must_have_room'),
+                    colour = G.C.UI.TEXT_INACTIVE, scale = 0.32 } }
+            } or nil,
 			vars = {
 				egg_num,   egg_den,
 				hatch_num, hatch_den,
@@ -100,11 +113,11 @@ SMODS.Joker{ -- Chicken
                     ) then
 						G.E_MANAGER:add_event(Event({
 							func = function()
+								if not paul_has_room() then return true end
 								local egg = SMODS.add_card({
 									set = 'Joker',
 									key = 'j_egg'
 								})
-								G.GAME.joker_buffer = 0
 								if egg then
 									card_eval_status_text(
 										egg, 'extra', nil, nil, nil,
@@ -129,11 +142,11 @@ SMODS.Joker{ -- Chicken
                     ) then
 						G.E_MANAGER:add_event(Event({
 							func = function()
+								if not paul_has_room() then return true end
 								local hatch = SMODS.add_card({
 									set = 'Joker',
 									key = 'j_porkify_hatchedegg'
 								})
-								G.GAME.joker_buffer = 0
 								if hatch then
 									card_eval_status_text(
 										hatch, 'extra', nil, nil, nil,
@@ -165,7 +178,10 @@ SMODS.Joker{ -- Chicken
                                 target_joker.getting_sliced = true
                                 G.E_MANAGER:add_event(Event({
                                     func = function()
-                                        target_joker:start_dissolve({ G.C.RED }, nil, 1.6)
+                                        local destroyed = target_joker:start_dissolve({ G.C.RED }, nil, 1.6)
+                                        if destroyed ~= false and target_joker.dissolve ~= nil then
+                                            check_for_unlock { type = 'porkify_paul_died' }
+                                        end
                                         return true
                                     end
                                 }))

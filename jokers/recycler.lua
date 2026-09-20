@@ -2,19 +2,17 @@ SMODS.Joker{ --Recycler
     key = "recycler",
     config = {
         extra = {
-            RecyclerDollars = 0,
-            odds = 4,
-            odds2 = 4
+            chips = 0
         }
     },
     loc_txt = {
         ['name'] = 'Recycler',
         ['text'] = {
-            [1] = 'Every {C:attention}sold{} or {C:red}destroyed{}',
-            [2] = 'card has a {C:green}#2# in #3#{}',
-            [3] = 'chance to add {C:money}$1{} to this',
-            [4] = 'Jokers {C:attention}Payout{}',
-            [5] = '{C:inactive}(Currently{} {C:money}$#1#{}{C:inactive}){}'
+            [1] = 'Gains {C:chips}Chips{} equal to',
+            [2] = '{X:attention,C:white}4X{} the sell value',
+            [3] = 'of every {C:attention}Joker{} and',
+            [4] = '{C:attention}Consumable{} sold',
+            [5] = '{C:inactive}(Currently {C:chips}+#1#{}{C:inactive} Chips){}'
         },
         ['unlock'] = { [1] = 'Sell {C:attention}20{} cards' }
     },
@@ -22,7 +20,7 @@ SMODS.Joker{ --Recycler
     display_size = { w = 71, h = 95 },
     cost = 6,
     rarity = 1,
-    blueprint_compat = false,
+    blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = false,
     unlocked = false,
@@ -32,76 +30,49 @@ SMODS.Joker{ --Recycler
     unlock_condition = { type = 'c_cards_sold', extra = 20 },
 
     loc_vars = function(self, info_queue, card)
-        local n1, d1 = SMODS.get_probability_vars(card, 1, card.ability.extra.odds,  'j_porkify_recycler_sold')
-        return { vars = { card.ability.extra.RecyclerDollars or 0, n1, d1 } }
-    end,
-
-    -- ✅ this is what actually grants money at end of round
-    calc_dollar_bonus = function(self, card)
-        local payout = tonumber(card.ability.extra.RecyclerDollars) or 0
-        if payout > 0 then return payout end
+        local extra = (card and card.ability and card.ability.extra) or self.config.extra
+        return { vars = { extra.chips or 0 } }
     end,
 
     calculate = function(self, card, context)
-        local showed_recycled_message = false
+        local extra = card.ability.extra
 
-        local function add_payout()
-            card.ability.extra.RecyclerDollars = (card.ability.extra.RecyclerDollars or 0) + 1
-            if not showed_recycled_message then
-                showed_recycled_message = true
-                card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil,
-                    { message = "Recycled!", colour = G.C.GREEN })
-            end
-        end
+        if context.selling_card and not context.blueprint and not context.retrigger_joker then
+            local sold_card = context.card or context.other_card or context.sold_card
+            local ability = sold_card and sold_card.ability or {}
+            local center = sold_card and sold_card.config and sold_card.config.center or {}
+            local sold_set = center.set or ability.set
 
-        if context.selling_card then
-            if SMODS.pseudorandom_probability(card, 'group_recycler_sold', 1, card.ability.extra.odds, 'j_porkify_recycler_sold', false) then
-                SMODS.calculate_effect({ func = add_payout }, card)
-            end
-        end
-
-        if context.remove_playing_cards then
-            local destroyed_count = 1
-            if type(context.removed) == "table" then
-                destroyed_count = #context.removed
-            elseif type(context.remove_playing_cards) == "table" then
-                destroyed_count = #context.remove_playing_cards
-            end
-
-            for i = 1, destroyed_count do
-                if SMODS.pseudorandom_probability(card, 'group_recycler_destroyed', 1, card.ability.extra.odds2, 'j_porkify_recycler_destroyed', false) then
-                    SMODS.calculate_effect({ func = add_payout }, card)
+            if sold_card and sold_card ~= card
+                and (sold_set == 'Joker' or ability.consumeable or center.consumeable) then
+                local gain = 4 * (tonumber(sold_card.sell_cost) or 0)
+                if gain > 0 then
+                    extra.chips = (extra.chips or 0) + gain
+                    return {
+                        message = 'Recycled!',
+                        colour = G.C.CHIPS
+                    }
                 end
             end
         end
+
+        if context.joker_main then
+            local chips = extra.chips or 0
+            if chips > 0 then
+                return { chips = chips }
+            end
+        end
     end,
-	
-	joker_display_def = function(JokerDisplay)
-	  return {
-		text = {
-		  { ref_table = "card.joker_display_values", ref_value = "payout_text", colour = G.C.MONEY }
-		},
-        reminder_text = {
-            { text = "(Round)", colour = G.C.GREY }
-        },
-		extra = {
-			{
-                { ref_table = "card.joker_display_values", scale = 0.3, ref_value = "chance_text", colour = G.C.CHANCE }
-            }
-		},
 
-		calc_function = function(card)
-		  local payout = (card.ability.extra and card.ability.extra.RecyclerDollars) or 0
-		  card.joker_display_values.payout_text = "+$" .. tostring(payout)
-
-		  local odds = (card.ability.extra and card.ability.extra.odds) or 4
-		  local n, d = 1, odds
-		  if SMODS and SMODS.get_probability_vars then
-			local nn, dd = SMODS.get_probability_vars(card, 1, odds, "j_porkify_recycler_sold")
-			n, d = nn or n, dd or d
-		  end
-		  card.joker_display_values.chance_text = "(" .. tostring(n) .. " in " .. tostring(d) .. ")"
-		end
-	  }
-	end
+    joker_display_def = function(JokerDisplay)
+        return {
+            text = {
+                { ref_table = "card.joker_display_values", ref_value = "chips_text", colour = G.C.CHIPS }
+            },
+            calc_function = function(card)
+                local extra = (card.ability and card.ability.extra) or {}
+                card.joker_display_values.chips_text = "+" .. tostring(extra.chips or 0)
+            end
+        }
+    end
 }

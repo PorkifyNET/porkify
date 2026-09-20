@@ -90,13 +90,28 @@ PORKIFY_TOO_MANY_BLANKS_HAND = "Too Many Blanks!"
 PORKIFY_TOO_MANY_BLANKS_HAND_KEY = "porkify_too_many_blanks"
 
 local PORKIFY_CONFIG_DEFAULTS = {
-    show_credit_badges = true
+    show_credit_badges = true,
+    porkify_theme = true,
+    reveal_secret_hands = false,
+    favorite_outline = 'none',
+    return_of_the_serpent = false,
+    unlimited_blanks = false,
+    infinipaul = true,
+    bypass_unlock_all = false,
+    content_jokers = true,
+    content_consumables = true,
+    content_vouchers = true,
+    content_boosters = true,
+    content_tags = true,
+    content_blinds = true,
+    content_secret_hands = true,
+    content_achievements = true
 }
 
 local function porkify_copy_defaults()
-    return {
-        show_credit_badges = PORKIFY_CONFIG_DEFAULTS.show_credit_badges
-    }
+    local defaults = {}
+    for key, value in pairs(PORKIFY_CONFIG_DEFAULTS) do defaults[key] = value end
+    return defaults
 end
 
 local function porkify_get_config_path()
@@ -107,8 +122,15 @@ end
 local function porkify_normalize_config(config)
     local normalized = porkify_copy_defaults()
     if type(config) == "table" then
-        if config.show_credit_badges ~= nil then
-            normalized.show_credit_badges = not not config.show_credit_badges
+        for key, value in pairs(PORKIFY_CONFIG_DEFAULTS) do
+            if type(value) == 'boolean' and type(config[key]) == "boolean" then normalized[key] = config[key] end
+        end
+        local modes = { none = true, default = true, rainbow = true,
+            protanopia = true, tritanopia = true, deuteranopia = true }
+        if type(config.favorite_outline) == 'string' and modes[config.favorite_outline] then
+            normalized.favorite_outline = config.favorite_outline
+        elseif config.favorite_outline == nil and config.prominent_favorite == true then
+            normalized.favorite_outline = 'rainbow'
         end
     end
     return normalized
@@ -128,51 +150,38 @@ local function porkify_load_config()
     return porkify_normalize_config(unpacked)
 end
 
+local function porkify_apply_achievement_config()
+    local enabled = PORKIFY_MOD.config.bypass_unlock_all == true
+    for key, achievement in pairs(SMODS.Achievements or {}) do
+        if key:match('^ach_porkify_') then
+            achievement.bypass_all_unlocked = enabled
+        end
+    end
+end
+
 local function porkify_save_config()
     local config = porkify_normalize_config(PORKIFY_MOD and PORKIFY_MOD.config)
     if PORKIFY_MOD then
-        PORKIFY_MOD.config = config
+        for key, value in pairs(config) do PORKIFY_MOD.config[key] = value end
+        if PORKIFY_MOD.apply_porkify_theme then PORKIFY_MOD.apply_porkify_theme() end
+        porkify_apply_achievement_config()
     end
     NFS.write(porkify_get_config_path(), STR_PACK(config))
 end
 
 if PORKIFY_MOD then
+    assert(SMODS.load_file('about.lua'))()(PORKIFY_MOD)
+    assert(SMODS.load_file('credits.lua'))()(PORKIFY_MOD)
     PORKIFY_MOD.config = porkify_load_config()
     PORKIFY_MOD.load_mod_config = function()
         PORKIFY_MOD.config = porkify_load_config()
+        PORKIFY_MOD.apply_porkify_theme()
+        porkify_apply_achievement_config()
     end
     PORKIFY_MOD.save_mod_config = porkify_save_config
-    PORKIFY_MOD.config_tab = function()
-        local config = PORKIFY_MOD.config or porkify_copy_defaults()
-        return {
-            n = G.UIT.ROOT,
-            config = { align = "tm", padding = 0.2, colour = G.C.CLEAR },
-            nodes = {
-                {
-                    n = G.UIT.R,
-                    config = { align = "cm", padding = 0.1 },
-                    nodes = {
-                        create_toggle({
-                            label = "Show credit badges",
-                            ref_table = config,
-                            ref_value = "show_credit_badges",
-                            info = {
-                                "Toggles credit badges, such as Idea and Art.",
-                                "This can help with visual clutter if you have",
-                                "a lot of mods that add credit badges, or if you",
-                                "just prefer a cleaner look.",
-                                "(Food badges are not affected)"
-                            },
-                            active_colour = HEX("ff0095"),
-                            callback = function()
-                                porkify_save_config()
-                            end
-                        })
-                    }
-                }
-            }
-        }
-    end
+    PORKIFY_MOD.apply_porkify_theme()
+    assert(SMODS.load_file('config_ui.lua'))()(PORKIFY_MOD, porkify_save_config, porkify_copy_defaults)
+
 end
 
 SMODS.PokerHand({
@@ -199,6 +208,7 @@ SMODS.PokerHand({
         }
     },
     evaluate = function(parts, hand)
+        if PORKIFY_MOD.config.unlimited_blanks then return {} end
         if booster_obj then
             return {}
         end
@@ -230,6 +240,8 @@ SMODS.PokerHand({
         return self.key
     end
 })
+
+assert(SMODS.load_file("poker_hands.lua"))()
 
 local porkify_game_start_run_ref = Game.start_run
 function Game:start_run(args)
@@ -1217,6 +1229,7 @@ local function porkify_count_highlighted_blank_seals(area)
 end
 
 local function porkify_blank_limit_disabled()
+    if PORKIFY_MOD.config.unlimited_blanks then return true end
     if not G then
         return false
     end
@@ -2856,6 +2869,8 @@ local function porkify_remove_serpent_entry(root)
 end
 
 local function porkify_remove_serpent_from_game()
+    -- Applied at startup: changing the setting takes effect after a restart.
+    if PORKIFY_MOD.config.return_of_the_serpent then return end
     if G then
         porkify_remove_serpent_entry(G.P_BLINDS)
         if G.GAME then
@@ -4111,6 +4126,9 @@ load_enhancements_folder()
 load_seals_folder()
 load_vouchers_folder()
 
+assert(SMODS.load_file("achievements.lua"))()
+assert(SMODS.load_file("content_config.lua"))()(PORKIFY_MOD)
+
 SMODS.current_mod.optional_features = function()
     return {
         cardareas = {} 
@@ -4134,3 +4152,4 @@ if Malverk and type(Malverk.set_defaults) == "function" then
         return malverk_set_defaults(...)
     end
 end
+

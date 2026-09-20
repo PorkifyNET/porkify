@@ -16,20 +16,6 @@ local function porkify_simon_says_suit_label(suit)
     return suit or "Spades"
 end
 
-local function porkify_simon_says_first_scoring_card_matches(context, suit)
-    local scoring_hand = context and (context.scoring_hand or context.full_hand) or {}
-
-    for _, played_card in ipairs(scoring_hand) do
-        if played_card
-            and not played_card.debuff
-        then
-            return played_card.is_suit and played_card:is_suit(suit)
-        end
-    end
-
-    return false
-end
-
 SMODS.Joker{ -- Simon Says
     key = "simonsays",
     config = {
@@ -46,9 +32,9 @@ SMODS.Joker{ -- Simon Says
             [1] = "This Joker gains {C:red}+#2#{} Mult",
             [2] = "if the {C:attention}first scoring card{}",
             [3] = "is a {V:1}#1#{} card",
-            [4] = "Otherwise resets to {C:red}+0{} Mult",
-            [5] = "{s:0.75}Suit changes every hand{}",
-            [6] = "{C:inactive}(Currently {C:red}+#3#{} {C:inactive}Mult){}"
+            -- [4] = "Otherwise resets to {C:red}+0{} Mult",
+            [4] = "{s:0.75}Suit changes every hand{}",
+            [5] = "{C:inactive}(Currently {C:red}+#3#{} {C:inactive}Mult){}"
         }
     },
     pos = { x = 4, y = 9 },
@@ -88,27 +74,28 @@ SMODS.Joker{ -- Simon Says
     calculate = function(self, card, context)
         local extra = card.ability.extra or {}
 
-        if context.before and context.cardarea == G.jokers and not context.blueprint then
-            if porkify_simon_says_first_scoring_card_matches(context, extra.target_suit or "Spades") then
-                extra.mult = (extra.mult or 0) + (extra.mult_gain or 1)
-                card.ability.extra = extra
-                return {
-                    message = "Upgrade!",
-                    colour = G.C.MULT
-                }
-            end
+        if context.before and not context.blueprint then
+            extra.checked_first_card = nil
+        end
 
-            if (extra.mult or 0) > 0 then
-                extra.mult = 0
-                card.ability.extra = extra
-                return {
-                    message = "Reset",
-                    colour = G.C.GREY
-                }
+        if context.individual and context.cardarea == G.play and not context.blueprint
+            and not extra.checked_first_card then
+            local played_card = context.other_card
+            if played_card and not played_card.debuff then
+                extra.checked_first_card = true
+                if played_card.is_suit and played_card:is_suit(extra.target_suit or "Spades") then
+                    extra.mult = (extra.mult or 0) + (extra.mult_gain or 1)
+                    card.ability.extra = extra
+                    return {
+                        message = "Upgrade!",
+                        colour = G.C.MULT
+                    }
+                end
             end
         end
 
-        if context.after and context.cardarea == G.jokers and not context.blueprint then
+        if context.after and not context.blueprint and not context.retrigger_joker then
+            extra.checked_first_card = nil
             extra.roll_index = (extra.roll_index or 0) + 1
             extra.target_suit = porkify_simon_says_pick_suit(extra.roll_index)
             card.ability.extra = extra

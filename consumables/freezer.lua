@@ -30,6 +30,7 @@ SMODS.Consumable {
 
         local j = G.jokers.highlighted[1]
         if not (j and j.ability and j.ability.perishable) then return end
+        local was_expired = j.debuff and j.ability.perish_tally ~= nil and j.ability.perish_tally <= 0
 
         -- Use consumable SFX
         G.E_MANAGER:add_event(Event({
@@ -60,6 +61,8 @@ SMODS.Consumable {
             delay = 0.70,
             func = function()
                 j.ability.perishable = false
+                check_for_unlock { type = 'porkify_joker_sticker_removed' }
+                if was_expired then check_for_unlock { type = 'porkify_freezer_revived' } end
 
                 -- OPTIONAL: if your build uses stickers for this, remove it too
                 -- (safe-guarded so it won't crash if the function doesn't exist)

@@ -3,14 +3,14 @@ SMODS.Joker{ --Beating Heart
     key = "beatingheart",
     config = {
         extra = {
-            xmult0 = 1.5
+            repetitions = 1
         }
     },
     loc_txt = {
         ['name'] = 'Beating Heart',
         ['text'] = {
-            [1] = '{C:hearts}Heart{} cards held in hand',
-            [2] = 'each grant {X:red,C:white}X1.5{} Mult'
+            [1] = 'Retrigger all played',
+            [2] = '{C:hearts}Heart{} cards'
         },
         ['unlock'] = {
             [1] = 'Play every {C:hearts}Heart{} card in your deck'
@@ -25,7 +25,7 @@ SMODS.Joker{ --Beating Heart
         h = 95 * 1
     },
     cost = 6,
-    rarity = 3,
+    rarity = 2,
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -36,44 +36,9 @@ SMODS.Joker{ --Beating Heart
     unlock_condition = { type = 'play_all_hearts' },
     
     calculate = function(self, card, context)
-        if context.individual and context.cardarea == G.hand and not context.end_of_round  then
-            if context.other_card:is_suit("Hearts") then
-                return {
-                    Xmult = 1.5
-                }
-            end
+        if context.repetition and context.cardarea == G.play and context.other_card
+            and context.other_card:is_suit('Hearts') then
+            return { repetitions = 1, message = localize('k_again_ex') }
         end
     end,
-	
-	joker_display_def = function(JokerDisplay)
-	  return {
-		text = {
-		  {
-			border_nodes = {
-			  { text = "X" },
-			  { ref_table = "card.joker_display_values", ref_value = "x_total" }
-			}
-		  }
-		},
-		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
-			{ text = "Hearts", colour = G.C.SUITS["Hearts"] },
-			{ text = ")", colour = G.C.GREY }
-		},
-
-		calc_function = function(card)
-		  local per = (card.ability.extra and card.ability.extra.xmult0) or 1.5
-		  local count = 0
-
-		  for _, c in ipairs(G.hand and G.hand.cards or {}) do
-			if c and c.is_suit and c:is_suit("Hearts") and not c.debuff and c.facing ~= "back" then
-			  count = count + JokerDisplay.calculate_card_triggers(c, nil, true)
-			end
-		  end
-
-		  local total = per ^ count
-		  card.joker_display_values.x_total = total
-		end
-	  }
-	end
 }

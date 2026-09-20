@@ -1,3 +1,25 @@
+local debuffed_hands = {
+    ['Pair'] = true,
+    ['Two Pair'] = true,
+    ['Three of a Kind'] = true,
+    ['Four of a Kind'] = true,
+    ['Five of a Kind'] = true,
+    ['Full House'] = true,
+    ['Flush House'] = true,
+    ['Flush Five'] = true,
+    porkify_three_pair = true,
+    porkify_four_pair = true,
+    porkify_fuller_house = true,
+    porkify_fullest_house = true,
+    porkify_two_by_fours = true,
+    porkify_six_of_a_kind = true,
+    porkify_seven_of_a_kind = true,
+    porkify_eight_of_a_kind = true,
+    porkify_flush_six = true,
+    porkify_flush_seven = true,
+    porkify_flush_eight = true,
+}
+
 SMODS.Blind{
     key = "twins",
     atlas = "CustomBlinds",
@@ -15,10 +37,7 @@ SMODS.Blind{
     },
 
     debuff_hand = function(self, cards, hand, handname, check)
-        if handname == "Pair" or handname == "Two Pair" or handname == "Three of a Kind" or handname == "Four of a Kind" or handname == "Five of a Kind" or handname == "Full House" or handname == "Flush Five"then
-            return true
-        end
-        return false
+        return debuffed_hands[handname] == true
     end,
 
     set_blind = function(self, reset, silent)

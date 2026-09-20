@@ -1,3 +1,15 @@
+local debuffed_hands = {
+    ['Straight'] = true,
+    ['Straight Flush'] = true,
+    ['Royal Flush'] = true,
+    porkify_straighter = true,
+    porkify_straightest = true,
+    porkify_straighterest = true,
+    porkify_straighter_flush = true,
+    porkify_straightest_flush = true,
+    porkify_straighterest_flush = true,
+}
+
 SMODS.Blind{
     key = "prideful",
     atlas = "CustomBlinds",
@@ -15,10 +27,7 @@ SMODS.Blind{
     },
 
     debuff_hand = function(self, cards, hand, handname, check)
-        if handname == "Straight" or handname == "Straight Flush" or handname == "Royal Flush" then
-            return true
-        end
-        return false
+        return debuffed_hands[handname] == true
     end,
 
     set_blind = function(self, reset, silent)

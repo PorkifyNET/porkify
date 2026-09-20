@@ -53,6 +53,7 @@ local function porkify_is_blank_seal(card)
 end
 
 local function porkify_blank_best_hand_index(eval)
+    local porkify_blank_hand_rank_order = G and G.handlist or porkify_blank_hand_rank_order
     if not eval then
         return #porkify_blank_hand_rank_order
     end
@@ -156,6 +157,7 @@ end
 
 local function porkify_blank_make_safe_eval_table(cards)
     local eval = {}
+    local porkify_blank_hand_rank_order = G and G.handlist or porkify_blank_hand_rank_order
 
     for i = 1, #porkify_blank_hand_rank_order do
         eval[porkify_blank_hand_rank_order[i]] = {}
@@ -192,6 +194,7 @@ function Card:get_id()
 end
 
 function evaluate_poker_hand(cards, ...)
+    local porkify_blank_hand_rank_order = G and G.handlist or porkify_blank_hand_rank_order
     local extra_args = { ... }
     local blank_cards = {}
     local total_cards = #(cards or {})

@@ -9,23 +9,24 @@ SMODS.Blind{
     loc_txt = {
         name = "The Tax",
         text = {
-            [1] = "Discarding a hand costs",
-            [2] = "both a Hand and a Discard"
+            [1] = "Cards drawn face down",
+            [2] = "while you have $#1# or more"
         }
     },
 
-    calculate = function(self, card, context)
-        if not context.pre_discard then
-            return
-        end
-
-        if context.blind_disabled or context.blind_defeated or (G and G.GAME and G.GAME.blind and G.GAME.blind.disabled) then
-            return
-        end
-
-        local hands_left = (G.GAME and G.GAME.current_round and G.GAME.current_round.hands_left) or 0
-        if hands_left > 0 then
-            ease_hands_played(-1)
+    loc_vars = function(self)
+        return { vars = { G.GAME.interest_cap or 25 } }
+    end,
+    collection_loc_vars = function(self)
+        return { vars = { 25 } }
+    end,
+    stay_flipped = function(self, area, card)
+        return not G.GAME.blind.disabled and area == G.hand
+            and to_big(G.GAME.dollars) >= to_big(G.GAME.interest_cap or 25)
+    end,
+    disable = function(self)
+        for _, card in ipairs(G.hand.cards or {}) do
+            if card.facing == 'back' then card:flip() end
         end
     end,
 

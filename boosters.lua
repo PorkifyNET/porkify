@@ -41,6 +41,7 @@ local function porkify_fixed_deck_joker_pool()
         if center
             and center.set == "Joker"
             and center.key
+            and center.key ~= 'j_porkify_kitty'
             and center.unlocked
             and not center.no_collection
             and is_standard_joker_rarity

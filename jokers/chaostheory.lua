@@ -11,11 +11,7 @@ SMODS.Joker{ -- Chaos Theory
     loc_txt = {
         ['name'] = 'Chaos Theory',
         ['text'] = {
-            [1] = 'Each card held in hand has a',
-            [2] = '{C:green}#1# in #2#{} chance to trigger',
-            [3] = 'a random {C:attention}bonus{}:',
-            [4] = '{C:blue}+#3#{} Chips, {C:red}+#4#{} Mult,',
-            [5] = '{X:red,C:white}X#5#{} Mult, or {C:money}+$#6#{}'
+            [1] = '{C:FF0095,E:1}???{}'
         }
     },
     pos = { x = 1, y = 9 },

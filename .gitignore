@@ -40,3 +40,11 @@ luac.out
 *.hex
 
 ideas.txt
+
+# Personal Porkify settings (defaults are defined in main.lua)
+/config.lua
+/config.lua.bak
+
+# Balatro run, profile, progress, and settings data, including backups
+*.jkr
+*.jkr.*

@@ -66,6 +66,7 @@ SMODS.Consumable {
             delay = 0.1,
             func = function()
                 j.ability.eternal = false
+                check_for_unlock { type = 'porkify_joker_sticker_removed' }
                 return true
             end
         }))

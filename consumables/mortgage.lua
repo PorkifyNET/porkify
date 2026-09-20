@@ -60,6 +60,7 @@ SMODS.Consumable {
             delay = 0.70,
             func = function()
                 j.ability.rental = false
+                check_for_unlock { type = 'porkify_joker_sticker_removed' }
 
                 -- OPTIONAL: if rental is sticker-based in your build, remove it too
                 if j.remove_sticker then
