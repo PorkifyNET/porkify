@@ -84,7 +84,11 @@ SMODS.Joker{ --67
           { ref_table = "card.joker_display_values", ref_value = "mult_text", colour = G.C.RED, retrigger_type = "mult" }
         },
         reminder_text = {
-            { text = "(6, 7)", colour = G.C.GREY }
+            { text = "(" },
+            { text = '6', colour = G.C.IMPORTANT },
+            { text = ', ' },
+            { text = '7', colour = G.C.IMPORTANT },
+            { text = ')' }
         },
 
         calc_function = function(card)

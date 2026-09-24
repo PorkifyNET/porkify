@@ -65,7 +65,11 @@ SMODS.Joker{ --Game of Life
 		  }
 		},
 		reminder_text = {
-			{ ref_table = "card.joker_display_values", ref_value = "state_text", colour = G.C.GREY }
+			{ text = "(" },
+      { text = "Odd", colour = G.C.IMPORTANT },
+      { text = " + " },
+      { text = "Even", colour = G.C.IMPORTANT },
+      { text = ")" }
 		},
 
 		calc_function = function(card)
@@ -92,7 +96,6 @@ SMODS.Joker{ --Game of Life
 		  end
 
 		  card.joker_display_values.x_mult = x
-		  card.joker_display_values.state_text = has_odd and has_even and "(odd + even)" or "(need odd + even)"
 		end
 	  }
 	end

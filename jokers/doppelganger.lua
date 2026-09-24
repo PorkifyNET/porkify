@@ -1,125 +1,97 @@
-SMODS.Joker{ --Doppelganger
-    key = "doppelganger",
-    config = {
-        extra = { DoppelgangerJokerSlotToCopy = 1 }
-    },
-    loc_txt = {
-        name = "Doppelganger",
-        text = {
-            [1] = "Copy the effects of",
-            [2] = "{C:attention}#1#{}",
-            [3] = "{s:0.75,C:inactive}Joker Slot changes every round{}"
-        },
-        unlock = { [1] = "Sell {C:attention}10{} Jokers" }
-    },
+local function voucher_ready(card)
+    return card and card.ability.porkify_voucher_ready == true
+        and not card.debuff and not card.getting_sliced and not card.destroyed
+end
 
+local function has_discount()
+    for _, card in ipairs(SMODS.find_card('j_porkify_doppelganger')) do
+        if voucher_ready(card) then return true end
+    end
+    return false
+end
+
+local function refresh_voucher_prices(except)
+    for _, other in pairs(G.I and G.I.CARD or {}) do
+        if other ~= except and other.ability and other.ability.set == 'Voucher' then
+            other:set_cost()
+        end
+    end
+end
+
+local function queue_price_refresh()
+    G.E_MANAGER:add_event(Event({func = function()
+        refresh_voucher_prices()
+        return true
+    end}))
+end
+
+SMODS.Joker{
+    key = 'doppelganger',
+    config = {},
+    loc_txt = {
+        name = 'Doppelganger',
+        text = {
+            'Defeat the {C:attention}Boss Blind{}',
+            'to make your next',
+            '{C:attention}Voucher{} {C:green}free{}',
+            '{C:red,E:2}self-destructs{}',
+            '{C:inactive}(#1#){}'
+        },
+        unlock = { 'Sell {C:attention}10{} Jokers' }
+    },
     pos = { x = 0, y = 5 },
     display_size = { w = 71, h = 95 },
     cost = 5,
     rarity = 2,
-    blueprint_compat = true,
-    eternal_compat = true,
+    blueprint_compat = false,
+    eternal_compat = false,
     perishable_compat = true,
     unlocked = false,
     discovered = false,
-    atlas = "CustomJokers",
-    pools = { ["modprefix_porkify_jokers"] = true },
+    atlas = 'CustomJokers',
+    pools = { modprefix_porkify_jokers = true },
     unlock_condition = { type = 'c_jokers_sold', extra = 10 },
-
     credit_badges = {
-        { text = "Art: mrjames246", colour = "59A487" }
-     },
-
+        { text = 'Art: mrjames246', colour = '59A487' }
+    },
     loc_vars = function(self, info_queue, card)
-        local slot = card.ability.extra.DoppelgangerJokerSlotToCopy or 1
-        local jokers = G.jokers and G.jokers.cards
-        local name = localize('k_none')
-
-        local j = jokers and jokers[slot]
-        if j and j.config and j.config.center and j.config.center.key then
-            name = localize({ type = 'name_text', key = j.config.center.key, set = 'Joker' })
-        elseif j and j.ability and j.ability.name then
-            name = j.ability.name
-        elseif j and j.name then
-            name = j.name
-        end
-
-        return { vars = { name } }
+        return { vars = { localize(voucher_ready(card) and 'porkify_voucher_ready' or 'porkify_voucher_waiting') } }
     end,
-
+    add_to_deck = queue_price_refresh,
+    remove_from_deck = queue_price_refresh,
     calculate = function(self, card, context)
-        -- Randomize slot at end of round
-        if context.end_of_round and not context.game_over and context.main_eval and not context.blueprint then
-            local n = (G.jokers and G.jokers.cards and #G.jokers.cards) or 0
-            if n > 0 then
-                card.ability.extra.DoppelgangerJokerSlotToCopy = math.random(1, n)
-            end
-            return { message = "Randomized!" }
-        end
-
-        -- Copy effects during all other eval contexts
-        local slot = card.ability.extra.DoppelgangerJokerSlotToCopy or 1
-        local target_joker = G.jokers and G.jokers.cards and G.jokers.cards[slot]
-
-        -- Nothing to copy / don't copy itself
-        if not target_joker or target_joker == card then return end
-
-        -- Optional: avoid copying Blueprint itself (prevents recursion hell)
-        if target_joker.config and target_joker.config.center and target_joker.config.center.key == "j_blueprint" then
+        if context.blueprint or context.retrigger_joker then return end
+        if context.buying_card and context.card and context.card.ability.set == 'Voucher'
+            and voucher_ready(card) then
+            card.ability.porkify_voucher_ready = false
+            SMODS.destroy_cards({card})
+            refresh_voucher_prices(context.card)
             return
         end
-
-        local ret = SMODS.blueprint_effect(card, target_joker, context)
-        if ret then
-            return ret  -- IMPORTANT: return the effect table, don't call calculate_effect manually
+        if context.end_of_round and context.main_eval and not context.game_over
+            and G.GAME.blind and G.GAME.blind.boss and not voucher_ready(card) then
+            card.ability.porkify_voucher_ready = true
+            refresh_voucher_prices()
+            return { message = localize('porkify_voucher_ready'), colour = G.C.MONEY }
         end
     end,
-	
-	joker_display_def = function(JokerDisplay)
-	  return {
-		-- You can leave main text empty if you only want reminder text
-		text = { 
-			{ text = "Incompatible!", colour = G.C.RED },
-		},
-
-		reminder_text = {
-		  { ref_table = "card.joker_display_values", ref_value = "copy_text", colour = G.C.IMPORTANT }
-		},
-
-		calc_function = function(card)
-		  local slot = (card.ability.extra and card.ability.extra.DoppelgangerJokerSlotToCopy) or 1
-		  local jokers = G and G.jokers and G.jokers.cards
-		  local name = localize('k_none')
-
-		  local j = jokers and jokers[slot]
-		  if j and j.config and j.config.center and j.config.center.key then
-			name = localize({ type = 'name_text', key = j.config.center.key, set = 'Joker' })
-		  elseif j and j.ability and j.ability.name then
-			name = j.ability.name
-		  elseif j and j.name then
-			name = j.name
-		  end
-
-		  if j == card then
-			name = localize('k_none')
-			j = nil
-		  end
-
-		  card.joker_display_values.copy_text = tostring(slot) .. ": " .. tostring(name)
-
-		  -- Let JokerDisplay render the copied joker’s display if possible
-		  local copied_joker, copied_debuff = JokerDisplay.calculate_blueprint_copy(card)
-		  JokerDisplay.copy_display(card, copied_joker, copied_debuff)
-		end,
-
-		-- JD uses this in some setups to know what to "pretend copy" (safe + correct)
-		get_blueprint_joker = function(card)
-		  local slot = (card.ability.extra and card.ability.extra.DoppelgangerJokerSlotToCopy) or 1
-		  local jokers = G and G.jokers and G.jokers.cards
-		  local j = jokers and jokers[slot]
-		  if j == card then return nil end
-		  return j
-		end
-	  }
-	end
+    joker_display_def = function(JokerDisplay)
+        return {
+            text = {
+                { ref_table = 'card.joker_display_values', ref_value = 'voucher_status', colour = G.C.MONEY }
+            },
+            calc_function = function(card)
+                card.joker_display_values.voucher_status = localize(
+                    voucher_ready(card) and 'porkify_voucher_ready' or 'porkify_voucher_waiting')
+            end
+        }
+    end
 }
+
+local set_cost_ref = Card.set_cost
+function Card:set_cost()
+    set_cost_ref(self)
+    if self.ability and self.ability.set == 'Voucher' and has_discount() then
+        self.cost = 0
+    end
+end

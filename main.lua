@@ -96,6 +96,7 @@ local PORKIFY_CONFIG_DEFAULTS = {
     favorite_outline = 'none',
     return_of_the_serpent = false,
     unlimited_blanks = false,
+    cerberus_slayer = false,
     infinipaul = true,
     bypass_unlock_all = false,
     content_jokers = true,
@@ -126,7 +127,9 @@ local function porkify_normalize_config(config)
             if type(value) == 'boolean' and type(config[key]) == "boolean" then normalized[key] = config[key] end
         end
         local modes = { none = true, default = true, rainbow = true,
-            protanopia = true, tritanopia = true, deuteranopia = true }
+            protanopia = true, tritanopia = true, deuteranopia = true,
+            red = true, yellow = true, green = true, blue = true,
+            aqua = true, magenta = true, white = true, black = true }
         if type(config.favorite_outline) == 'string' and modes[config.favorite_outline] then
             normalized.favorite_outline = config.favorite_outline
         elseif config.favorite_outline == nil and config.prominent_favorite == true then
@@ -241,6 +244,8 @@ SMODS.PokerHand({
     end
 })
 
+assert(SMODS.load_file("enhancement_compat.lua"))()
+assert(SMODS.load_file("talisman_compat.lua"))()
 assert(SMODS.load_file("poker_hands.lua"))()
 
 local porkify_game_start_run_ref = Game.start_run
@@ -490,7 +495,7 @@ local function porkify_card_is_protected_from_destruction(card)
         return false
     end
 
-    return porkify_is_resolute_card(card)
+    return (card.ability and card.ability.eternal) or porkify_is_resolute_card(card)
 end
 
 local function porkify_filter_destroyed_cards(cards)
@@ -1084,17 +1089,12 @@ function porkify_install_blank_vanilla_joker_patch()
     if Card and Card.update then
         if Porkify_blank_card_update == nil then
             Porkify_blank_card_update = function(self, dt)
-                local result = Porkify_blank_card_update_ref(self, dt)
-                if self and self.ability and self.ability.name == "Cloud 9" and G and G.playing_cards then
-                    local extra_blanks = 0
-                    for _, playing_card in pairs(G.playing_cards) do
-                        local real_rank = playing_card and playing_card.get_id and playing_card:get_id()
-                        if porkify_is_blank_seal_card(playing_card) and real_rank ~= 9 then
-                            extra_blanks = extra_blanks + 1
-                        end
-                    end
-                    self.ability.nine_tally = (self.ability.nine_tally or 0) + extra_blanks
+                local count_blanks_as_nines = self and self.ability and self.ability.name == "Cloud 9"
+                if count_blanks_as_nines then
+                    PORKIFY_CLOUD9_COUNT_BLANKS = true
                 end
+                local result = Porkify_blank_card_update_ref(self, dt)
+                if count_blanks_as_nines then PORKIFY_CLOUD9_COUNT_BLANKS = nil end
                 return result
             end
         end
@@ -1181,23 +1181,50 @@ function porkify_install_blank_calculate_effect_table_key_patch()
 
     if Porkify_calculate_effect_table_key_mimic == nil then
         Porkify_calculate_effect_table_key_mimic = function(effect_table, key, card, ret)
-            local effect = effect_table[key]
+            local effect = effect_table and effect_table[key]
+
             if key ~= 'smods' and type(effect) == 'table' then
                 local scored_card = effect.scored_card or card
-                local calc = SMODS.calculate_effect(porkify_apply_mimic_popup_proxy(effect, scored_card), scored_card, key == 'edition')
-                for k, v in pairs(calc) do
-                    ret[k] = type(ret[k]) == 'number' and ret[k] + v or v
+                local proxied_effect = porkify_apply_mimic_popup_proxy(
+                    effect,
+                    scored_card
+                )
+
+                -- Only interfere if Mimic actually changed the effect.
+                if proxied_effect ~= effect then
+                    local copied_table = {}
+
+                    for k, v in pairs(effect_table) do
+                        copied_table[k] = v
+                    end
+
+                    copied_table[key] = proxied_effect
+
+                    return Porkify_calculate_effect_table_key_mimic_ref(
+                        copied_table,
+                        key,
+                        card,
+                        ret
+                    )
                 end
-                return
             end
 
-            return Porkify_calculate_effect_table_key_mimic_ref(effect_table, key, card, ret)
+            -- Normal case: let Steamodded handle everything itself.
+            return Porkify_calculate_effect_table_key_mimic_ref(
+                effect_table,
+                key,
+                card,
+                ret
+            )
         end
     end
 
     if SMODS.calculate_effect_table_key ~= Porkify_calculate_effect_table_key_mimic then
-        Porkify_calculate_effect_table_key_mimic_ref = SMODS.calculate_effect_table_key
-        SMODS.calculate_effect_table_key = Porkify_calculate_effect_table_key_mimic
+        Porkify_calculate_effect_table_key_mimic_ref =
+            SMODS.calculate_effect_table_key
+
+        SMODS.calculate_effect_table_key =
+            Porkify_calculate_effect_table_key_mimic
     end
 end
 
@@ -2450,18 +2477,40 @@ porkify_install_safe_can_use_consumeable_patch()
 
 if love and love.update and not Porkify_love_update then
     Porkify_love_update = love.update
+    local porkify_runtime_patch_game = nil
+    local porkify_runtime_patch_retry = 0
+
+    local function porkify_runtime_patches_ready()
+        local funcs = G and G.FUNCS or {}
+        return Card.can_use_consumeable == Porkify_safe_can_use_consumeable
+            and (not funcs.can_buy_and_use or funcs.can_buy_and_use == Porkify_safe_can_buy_and_use)
+            and (not funcs.can_skip_booster or funcs.can_skip_booster == Porkify_safe_can_skip_booster)
+            and (not funcs.can_play or funcs.can_play == Porkify_blank_can_play)
+            and Card.calculate_joker == Porkify_blank_calculate_joker
+    end
+
     love.update = function(dt)
-        porkify_ensure_highlight_tables()
-        porkify_register_too_many_blanks_hand()
-        if porkify_install_draw_priority_patch then
-            porkify_install_draw_priority_patch()
+        local game_changed = porkify_runtime_patch_game ~= (G and G.GAME)
+        if game_changed then
+            porkify_runtime_patch_game = G and G.GAME
+            porkify_runtime_patch_retry = 0
         end
-        porkify_install_safe_can_use_consumeable_patch()
-        porkify_install_safe_can_buy_and_use_patch()
-        porkify_install_safe_can_skip_booster_patch()
-        porkify_install_blank_play_lock_patch()
-        porkify_install_blank_handname_colour_patch()
-        porkify_install_blank_vanilla_joker_patch()
+
+        if game_changed or not porkify_runtime_patches_ready() then
+            porkify_runtime_patch_retry = porkify_runtime_patch_retry - dt
+            if porkify_runtime_patch_retry <= 0 then
+                porkify_runtime_patch_retry = 0.25
+                porkify_ensure_highlight_tables()
+                porkify_register_too_many_blanks_hand()
+                if porkify_install_draw_priority_patch then porkify_install_draw_priority_patch() end
+                porkify_install_safe_can_use_consumeable_patch()
+                porkify_install_safe_can_buy_and_use_patch()
+                porkify_install_safe_can_skip_booster_patch()
+                porkify_install_blank_play_lock_patch()
+                porkify_install_blank_handname_colour_patch()
+                porkify_install_blank_vanilla_joker_patch()
+            end
+        end
         porkify_try_open_fixed_deck_pack()
         return Porkify_love_update(dt)
     end
@@ -4117,6 +4166,7 @@ end
 
 load_rarities_file()
 load_boosters_file()
+assert(SMODS.load_file('consumable_sticker_tools.lua'))()
 load_consumables_folder()
 load_challenges_folder()
 load_blinds_folder()
@@ -4131,6 +4181,7 @@ assert(SMODS.load_file("content_config.lua"))()(PORKIFY_MOD)
 
 SMODS.current_mod.optional_features = function()
     return {
+        quantum_enhancements = true,
         cardareas = {} 
     }
 end

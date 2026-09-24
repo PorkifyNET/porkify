@@ -1,5 +1,19 @@
 return function(mod, save, defaults)
-    local outline_modes = { 'none', 'default', 'rainbow', 'protanopia', 'tritanopia', 'deuteranopia' }
+    local tooltip_revision = 0
+    G.FUNCS.porkify_object_tooltip = function(element)
+        element.config.h_popup_config.parent = element
+        if element.config.porkify_tooltip_revision ~= tooltip_revision then
+            element.config.h_popup = element.config.porkify_build_tooltip()
+            element.config.porkify_tooltip_revision = tooltip_revision
+            if element.children and element.children.h_popup then
+                element.children.h_popup:remove()
+                element.children.h_popup = nil
+                if element.states.hover.is then element:hover() end
+            end
+        end
+    end
+    local outline_modes = { 'none', 'default', 'rainbow', 'protanopia', 'tritanopia', 'deuteranopia',
+        'red', 'yellow', 'green', 'blue', 'aqua', 'magenta', 'white', 'black' }
     G.FUNCS.porkify_favorite_outline = function(args)
         local mode = outline_modes[args.cycle_config.current_option]
         if mode then mod.config.favorite_outline = mode; save() end
@@ -58,15 +72,89 @@ return function(mod, save, defaults)
                 { n = G.UIT.T, config = { text = label, scale = 0.36, colour = HEX('ff8fce') } }
             } }
         end
-        local function toggle(label, key, info, reopen)
-            return { n = G.UIT.R, config = { align = 'cm', padding = 0.04 }, nodes = {
-                create_toggle { label = label, ref_table = mod.config, ref_value = key,
-                    scale = 0.7, label_scale = 0.34, info = info, active_colour = HEX('ff0095'),
-                    callback = function()
-                        save()
-                        if reopen or startup[key] ~= nil then refresh() end
-                    end }
+        local object_names = {
+            { 'The Serpent', 'Blind', 'bl_serpent', { 3 } },
+            { 'Blank Seals', 'Other', 'porkify_blank_seal' },
+            { 'Cerberus', 'Joker', 'j_porkify_cerberus' },
+            { 'Paul', 'Joker', 'j_porkify_paul' },
+        }
+        local function object_popup(object)
+            local set, key, vars = object[2], object[3], object[4] or {}
+            local descriptions = G.localization and G.localization.descriptions[set]
+            if not descriptions or not descriptions[key] then return end
+            local result = {}
+            local center = G.P_CENTERS[key]
+            if set == 'Joker' and center and center.loc_vars then
+                result = center:loc_vars({}, nil) or {}
+                vars = result.vars or vars
+            elseif set == 'Other' and key == 'porkify_blank_seal' then
+                local seal = G.P_SEALS and G.P_SEALS.porkify_blank
+                if seal and seal.loc_vars then result = seal:loc_vars({}, nil) or {} end
+            end
+            key, set, vars = result.key or key, result.set or set, result.vars or vars
+            local rows = {}
+            localize { type = 'descriptions', set = set, key = key, nodes = rows, vars = vars }
+            if result.main_end then rows[#rows + 1] = result.main_end end
+            return { n = G.UIT.ROOT, config = { align = 'cm', colour = G.C.CLEAR }, nodes = {
+                info_tip_from_rows(rows, localize { type = 'name_text', set = set, key = key })
             } }
+        end
+        local function link_object_names(node)
+            if node.n == G.UIT.T and type(node.config.text) == 'string' then
+                local text, parts, pos = node.config.text, {}, 1
+                local linked = false
+                while pos <= #text do
+                    local first, last, match
+                    for _, object in ipairs(object_names) do
+                        local start_at, end_at = text:find(object[1], pos, true)
+                        if start_at and (not first or start_at < first) then
+                            first, last, match = start_at, end_at, object
+                        end
+                    end
+                    local function piece(value, object)
+                        local config = {}
+                        for k, v in pairs(node.config) do config[k] = v end
+                        config.text = value
+                        if object then
+                            config.h_popup = object_popup(object)
+                            if config.h_popup then
+                                config.porkify_build_tooltip = function() return object_popup(object) end
+                                config.porkify_tooltip_revision = tooltip_revision
+                                config.hover, config.force_focus = true, true
+                                config.collideable = true
+                                config.func = 'porkify_object_tooltip'
+                                config.colour = G.C.IMPORTANT
+                                config.h_popup_config = { align = 'tm', offset = { x = 0, y = -0.1 } }
+                                linked = true
+                            end
+                        end
+                        parts[#parts + 1] = { n = G.UIT.T, config = config }
+                    end
+                    if not first then piece(text:sub(pos)); break end
+                    if first > pos then piece(text:sub(pos, first - 1)) end
+                    piece(text:sub(first, last), match)
+                    pos = last + 1
+                end
+                if linked then
+                    node.n, node.config, node.nodes = G.UIT.R, { align = 'cm', padding = 0 }, parts
+                end
+                return
+            end
+            for _, child in ipairs(node.nodes or {}) do link_object_names(child) end
+        end
+        local function toggle(label, key, info, reopen)
+            local control = create_toggle { label = label, ref_table = mod.config, ref_value = key,
+                scale = 0.7, label_scale = 0.34, info = info, active_colour = HEX('ff0095'),
+                callback = function()
+                    save()
+                    tooltip_revision = tooltip_revision + 1
+                    if reopen or startup[key] ~= nil then refresh() end
+                end }
+            -- create_toggle places its description below the label/checkbox row.
+            if info and control.nodes and control.nodes[2] then
+                link_object_names(control.nodes[2])
+            end
+            return { n = G.UIT.R, config = { align = 'cm', padding = 0.04 }, nodes = { control } }
         end
         local function general()
         local outline_index = 1
@@ -82,7 +170,8 @@ return function(mod, save, defaults)
                 'Show undiscovered Porkify hands in Run Info.', 'Does not unlock hands or change gameplay.' }),
             { n = G.UIT.R, config = { align = 'cm' }, nodes = {
                 create_option_cycle { label = 'Favorite outline',
-                    options = { 'None', 'Default', 'Rainbow', 'Protanopia', 'Tritanopia', 'Deuteranopia' },
+                    options = { 'None', 'Default', 'Rainbow', 'Protanopia', 'Tritanopia', 'Deuteranopia',
+                        'Red', 'Yellow', 'Green', 'Blue', 'Aqua', 'Magenta', 'White', 'Black' },
                     current_option = outline_index, opt_callback = 'porkify_favorite_outline',
                     w = 4.5, h = 0.4, text_scale = 0.3, colour = HEX('8f205f') }
             } },
@@ -93,21 +182,35 @@ return function(mod, save, defaults)
         } }
         end
         local function experimental()
+            local left = {
+                toggle('Return of the Serpent', 'return_of_the_serpent', {
+                    'Restore The Serpent Boss Blind.',
+                    'Requires a game restart.' }),
+                toggle('Unlimited Blanks', 'unlimited_blanks', {
+                    'Allow more than 2 played Blank Seals.',
+                    'Applies immediately; can be very slow.' }),
+                toggle('Cerberus Slayer', 'cerberus_slayer', {
+                    'Remove Cerberus from random pools.',
+                    'Applies now; existing copies stay.' }),
+            }
+            local right = {
+                toggle('Infinipaul', 'infinipaul', {
+                    'Paul can create Jokers without room.',
+                    'Applies now; Paul still uses a slot.' }),
+                toggle('Bypass "Unlock All"', 'bypass_unlock_all', {
+                    'Allow Porkify achievements on',
+                    'Unlock All profiles. Other achievements',
+                    'and unlock conditions are unchanged.' }),
+            }
             return { n = G.UIT.ROOT, config = { align = 'tm', padding = 0.06, colour = G.C.CLEAR }, nodes = {
                 { n = G.UIT.R, config = { align = 'cm', padding = 0.1 }, nodes = {
                     { n = G.UIT.T, config = { text = 'May cause slowdowns or crashes.',
                         scale = 0.3, colour = G.C.RED } }
                 } },
-                toggle('Return of the Serpent', 'return_of_the_serpent', {
-                    'Restore The Serpent Boss Blind.', 'Restart the game after changing this setting.' }),
-                toggle('Unlimited Blanks', 'unlimited_blanks', {
-                    'Allow more than 2 Blank Seals in a played hand.', 'Applies immediately; more Blanks can be very slow.' }),
-                toggle('Infinipaul', 'infinipaul', {
-                    'Let Paul create Eggs and Hatched Eggs with no room.',
-                    'Applies immediately. Paul still occupies a Joker slot.' }),
-                toggle('Bypass "Unlock All" Achievement Restrictions', 'bypass_unlock_all', {
-                    'Allow Porkify achievements on Unlock All profiles.',
-                    'Other achievements and unlock conditions are unchanged.' }),
+                { n = G.UIT.R, config = { align = 'tm', padding = 0.15 }, nodes = {
+                    { n = G.UIT.C, config = { align = 'tm', minw = 4.6 }, nodes = left },
+                    { n = G.UIT.C, config = { align = 'tm', minw = 4.6 }, nodes = right }
+                } }
             } }
         end
         local function content()
@@ -204,7 +307,9 @@ return function(mod, save, defaults)
     local outline_frame
     local outline_colours = {
         default = HEX('ff0095'), protanopia = HEX('0072b2'),
-        tritanopia = HEX('d55e00'), deuteranopia = HEX('f0e442')
+        tritanopia = HEX('d55e00'), deuteranopia = HEX('f0e442'),
+        red = HEX('ff0000'), yellow = HEX('ffff00'), green = HEX('00ff00'), blue = HEX('0000ff'),
+        aqua = HEX('00ffff'), magenta = HEX('ff00ff'), white = HEX('ffffff'), black = HEX('000000')
     }
     local function paint_outline(canvas, colour)
         love.graphics.push('all')

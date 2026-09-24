@@ -11,7 +11,7 @@ SMODS.Joker{ --Summoning Circle
         ['text'] = {
             [1] = 'Every played {C:attention}6{} has a',
             [2] = '{C:green}#1# in #2#{} chance to create',
-            [3] = 'a random {C:purple}Porkify{} card',
+            [3] = 'a random {C:porkify}Porkify{} card',
             [4] = '{C:inactive}(Must have room){}'
         },
         ['unlock'] = {
@@ -91,6 +91,11 @@ SMODS.Joker{ --Summoning Circle
 	  return {
 		text = {
 		  { ref_table = "card.joker_display_values", scale = 0.3, ref_value = "odds_text", colour = G.C.GREEN }
+        },
+        reminder_text = {
+            { text = '(' },
+            { text = '6', colour = G.C.IMPORTANT },
+            { text = ')' }
         },
 
 		calc_function = function(card)

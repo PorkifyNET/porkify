@@ -74,6 +74,14 @@ local function create_lower_rank_copy(source_card, target_rank)
     return copy
 end
 
+local function ready_to_shake(card)
+    if not (G and G.GAME and G.hand and G.jokers and card.area == G.jokers
+        and not card.debuff and not card.getting_sliced and not card.destroyed
+        and not card.removed and G.STATE == G.STATES.SELECTING_HAND) then return false end
+    local round = G.GAME.current_round or {}
+    return round.hands_played == 0 and not card.ability.extra.triggered_this_round
+end
+
 SMODS.Joker{ -- Fission Joker
     key = "fissionjoker",
     config = {
@@ -117,6 +125,16 @@ SMODS.Joker{ -- Fission Joker
         card.ability.extra.triggered_this_round = false
     end,
 
+    update = function(self, card, dt)
+        if not card.porkify_ready_juice and ready_to_shake(card) then
+            card.porkify_ready_juice = true
+            juice_card_until(card, function()
+                if ready_to_shake(card) then return true end
+                card.porkify_ready_juice = nil
+                return false
+            end, true)
+        end
+    end,
     calculate = function(self, card, context)
         if context.setting_blind and not context.blueprint then
             card.ability.extra.triggered_this_round = false
@@ -175,5 +193,25 @@ SMODS.Joker{ -- Fission Joker
                 end
             }
         end
+    end,
+    joker_display_def = function(JokerDisplay)
+        return {
+            reminder_text = {
+                { text = '(' },
+                { ref_table = 'card.joker_display_values', ref_value = 'active_text' },
+                { text = ')' }
+            },
+            calc_function = function(card)
+                card.joker_display_values.is_active = G.GAME.current_round.hands_played == 0
+                card.joker_display_values.active_text = localize('jdis_' ..
+                    (card.joker_display_values.is_active and 'active' or 'inactive'))
+            end,
+            style_function = function(card, text, reminder_text, extra)
+                if reminder_text and reminder_text.children and reminder_text.children[2] then
+                    reminder_text.children[2].config.colour = card.joker_display_values.is_active and G.C.GREEN
+                        or G.C.UI.TEXT_INACTIVE
+                end
+            end
+        }
     end
 }

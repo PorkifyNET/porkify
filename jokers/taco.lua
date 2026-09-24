@@ -9,7 +9,7 @@ SMODS.Joker{ --Taco
         ['name'] = 'Taco',
         ['text'] = {
             [1] = 'Every {C:green}Shop{} has {C:attention}1{}',
-            [2] = 'additional Booster Pack'
+            [2] = 'additional {C:attention}Booster Pack{}'
         },
         ['unlock'] = {
             [1] = 'Discover {C:attention}15{} Blinds'

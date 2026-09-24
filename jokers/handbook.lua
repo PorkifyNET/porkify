@@ -76,7 +76,7 @@ SMODS.Joker{ --Handbook
 		  { ref_table = "card.joker_display_values", ref_value = "mult_text", colour = G.C.RED }
 		},
 		reminder_text = {
-			{ ref_table = "card.joker_display_values", ref_value = "state_text", colour = G.C.GREY }
+			{ ref_table = "card.joker_display_values", ref_value = "state_text" }
 		},
 
 		calc_function = function(card)

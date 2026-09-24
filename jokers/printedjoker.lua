@@ -1,16 +1,21 @@
+local function printed_chips(card, include_current)
+    local hands = G and G.GAME and G.GAME.hands_played or 0
+    return (hands + (include_current and 1 or 0)) * (card.ability.extra.chips_per_hand or 4)
+end
+
 
 SMODS.Joker{ --Printed Joker
     key = "printedjoker",
     config = {
         extra = {
-            PrintedJokerChips = 0
+            chips_per_hand = 3
         }
     },
     loc_txt = {
         ['name'] = 'Printed Joker',
         ['text'] = {
-            [1] = '{C:blue}+1{} Chips for every',
-            [2] = 'card played',
+            [1] = '{C:chips}+#2#{} Chips per',
+            [2] = 'played {C:blue}hand{} this run',
             [3] = '{C:inactive}(Currently{} {C:blue}+#1#{} {C:inactive}Chips){}'
         },
         ['unlock'] = {
@@ -42,17 +47,13 @@ SMODS.Joker{ --Printed Joker
     
     loc_vars = function(self, info_queue, card)
         
-        return {vars = {card.ability.extra.PrintedJokerChips}}
+        return {vars = {printed_chips(card), card.ability.extra.chips_per_hand or 3}}
     end,
     
     calculate = function(self, card, context)
-        if context.individual and context.cardarea == G.play and not context.blueprint then
-            card.ability.extra.PrintedJokerChips = (card.ability.extra.PrintedJokerChips) + 1
-        end
-        if context.cardarea == G.jokers and context.joker_main  then
-            return {
-                chips = card.ability.extra.PrintedJokerChips
-            }
+        if context.cardarea == G.jokers and context.joker_main then
+            -- Balatro increments hands_played only after the current hand finishes.
+            return { chips = printed_chips(card, true) }
         end
     end,
 	
@@ -63,7 +64,7 @@ SMODS.Joker{ --Printed Joker
 		},
 
 		calc_function = function(card)
-		  local chips = (card.ability.extra and card.ability.extra.PrintedJokerChips) or 0
+		  local chips = printed_chips(card)
 		  card.joker_display_values.chips_text = "+" .. tostring(chips)
 		end
 	  }

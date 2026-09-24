@@ -74,9 +74,9 @@ SMODS.Joker{ -- Juice Box
                 }
             },
             reminder_text = {
-                { text = "(", colour = G.C.GREY },
+                { text = "(" },
                 { text = "Diamonds", colour = G.C.SUITS["Diamonds"] },
-                { text = ")", colour = G.C.GREY }
+                { text = ")" }
             },
 
             calc_function = function(card)

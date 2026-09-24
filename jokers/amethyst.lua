@@ -82,9 +82,9 @@ SMODS.Joker{ --Amethyst
 		  }
 		},
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
 			{ text = "Steel", colour = G.C.SECONDARY_SET["Enhanced"] },
-			{ text = ")", colour = G.C.GREY },
+			{ text = ")" },
 		},
 
 		calc_function = function(card)

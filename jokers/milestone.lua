@@ -38,7 +38,8 @@ SMODS.Joker{ -- Milestone
             [1] = 'Every {C:attention}#2#th{} card scored',
             [2] = 'gains a random {C:enhanced}Enhancement{},',
             [3] = '{C:edition}Edition{} or {C:gold}Seal{}',
-            [4] = '{C:inactive}(#1#/#2#){}'
+            [4] = 'before scoring',
+            [5] = '{C:inactive}(#1#/#2#){}'
         }
     },
     pos = { x = 7, y = 8 },
@@ -61,49 +62,48 @@ SMODS.Joker{ -- Milestone
     end,
 
     calculate = function(self, card, context)
-        if not (context.individual and context.cardarea == G.play and context.other_card and not context.blueprint) then
-            return
-        end
+        if not context.before or context.blueprint or context.retrigger_joker then return end
 
-        local extra = card.ability.extra or {}
-        local needed = extra.cards_needed or 10
-        extra.scored_cards = (extra.scored_cards or 0) + 1
-
-        if extra.scored_cards % needed ~= 0 then
-            return
-        end
-
-        local target = context.other_card
         return {
             func = function()
-                local roll = pseudorandom(pseudoseed("porkify_milestone_roll"))
+                local extra = card.ability.extra
+                local needed = extra.cards_needed or 10
+                for _, target in ipairs(context.scoring_hand or {}) do
+                    if not target.debuff and not target.destroyed and not target.shattered
+                        and not target.getting_sliced and not target.removed then
+                        extra.scored_cards = (extra.scored_cards or 0) + 1
+                        if extra.scored_cards % needed == 0 then
+                            local roll = pseudorandom(pseudoseed("porkify_milestone_roll"))
 
-                if roll < 1 / 3 then
-                    local enhancement_key = Porkify_pick_random_enhancement_key and Porkify_pick_random_enhancement_key() or nil
-                    if enhancement_key and G.P_CENTERS and G.P_CENTERS[enhancement_key] and target.set_ability then
-                        target:set_ability(G.P_CENTERS[enhancement_key], nil, true)
-                    end
-                elseif roll < 2 / 3 then
-                    local edition_key = porkify_pick_random_playing_card_edition_key()
-                    if edition_key and target.set_edition then
-                        target:set_edition(edition_key, true)
-                    end
-                else
-                    local seal = porkify_pick_random_seal_name()
-                    if seal and target.set_seal then
-                        target:set_seal(seal, nil, true)
+                            if roll < 1 / 3 then
+                                local enhancement_key = Porkify_pick_random_enhancement_key and Porkify_pick_random_enhancement_key() or nil
+                                if enhancement_key and G.P_CENTERS and G.P_CENTERS[enhancement_key] and target.set_ability then
+                                    target:set_ability(G.P_CENTERS[enhancement_key], nil, true)
+                                end
+                            elseif roll < 2 / 3 then
+                                local edition_key = porkify_pick_random_playing_card_edition_key()
+                                if edition_key and target.set_edition then
+                                    target:set_edition(edition_key, true)
+                                end
+                            else
+                                local seal = porkify_pick_random_seal_name()
+                                if seal and target.set_seal then
+                                    target:set_seal(seal, nil, true)
+                                end
+                            end
+
+                            card:juice_up(0.3, 0.5)
+                            card_eval_status_text(
+                                target,
+                                'extra',
+                                nil,
+                                nil,
+                                nil,
+                                { message = "Milestone!", colour = G.C.ORANGE }
+                            )
+                        end
                     end
                 end
-
-                card:juice_up(0.3, 0.5)
-                card_eval_status_text(
-                    target,
-                    'extra',
-                    nil,
-                    nil,
-                    nil,
-                    { message = "Milestone!", colour = G.C.ORANGE }
-                )
                 return true
             end
         }
@@ -112,7 +112,7 @@ SMODS.Joker{ -- Milestone
     joker_display_def = function(JokerDisplay)
         return {
             text = {
-                { ref_table = "card.joker_display_values", ref_value = "progress_text", colour = G.C.GREY }
+                { ref_table = "card.joker_display_values", ref_value = "progress_text" }
             },
 
             calc_function = function(card)

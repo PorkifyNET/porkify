@@ -72,9 +72,9 @@ SMODS.Joker{ -- Bulwark
 	joker_display_def = function(JokerDisplay)
 	  return {
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY},
+			{ text = "("},
 			{ text = "Stone", colour = G.C.SECONDARY_SET["Enhanced"]},
-			{ text = ")", colour = G.C.GREY}
+			{ text = ")"}
 		}
 	  }
 	end

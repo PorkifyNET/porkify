@@ -6,7 +6,7 @@ SMODS.Consumable {
         name = 'Excalibur',
         text = {
             [1] = 'Remove {C:purple}Eternal{} from',
-            [2] = '{C:attention}1{} selected {C:attention}Joker{}'
+            [2] = '{C:attention}1{} selected {C:attention}card{}'
         }
     },
     cost = 3,
@@ -15,6 +15,10 @@ SMODS.Consumable {
     hidden = false,
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
+
+    update = function(self, card, dt)
+        Porkify_update_sticker_tool_selection()
+    end,
 
     credit_badges = {
         { text = "Art: munstudios", colour = "00E59B" }
@@ -30,9 +34,7 @@ SMODS.Consumable {
 
     use = function(self, card, area, copier)
         local used_card = copier or card
-        if not (G.jokers and to_big(#G.jokers.highlighted) == to_big(1)) then return end
-
-        local j = G.jokers.highlighted[1]
+        local j, target_area = Porkify_get_sticker_tool_target(card)
         if not (j.ability and j.ability.eternal) then return end
 
         -- use sfx/juice on the consumable
@@ -66,7 +68,9 @@ SMODS.Consumable {
             delay = 0.1,
             func = function()
                 j.ability.eternal = false
-                check_for_unlock { type = 'porkify_joker_sticker_removed' }
+                if target_area == G.jokers then
+                    check_for_unlock { type = 'porkify_joker_sticker_removed' }
+                end
                 return true
             end
         }))
@@ -87,7 +91,7 @@ SMODS.Consumable {
             trigger = 'after',
             delay = 0.2,
             func = function()
-                G.jokers:unhighlight_all()
+                Porkify_clear_sticker_tool_selection()
                 return true
             end
         }))
@@ -96,11 +100,7 @@ SMODS.Consumable {
     end,
 
     can_use = function(self, card)
-        return (
-            G.jokers and
-            to_big(#G.jokers.highlighted) == to_big(1) and
-            G.jokers.highlighted[1].ability and
-            G.jokers.highlighted[1].ability.eternal
-        )
+        local target = Porkify_get_sticker_tool_target(card)
+        return target and target.ability and target.ability.eternal or false
     end
 }

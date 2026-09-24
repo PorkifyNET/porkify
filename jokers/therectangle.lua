@@ -75,6 +75,11 @@ SMODS.Joker{ --The Rectangle
 			}
 		  },
 		},
+        reminder_text = {
+            { text = '(' },
+            { text = 'Four of a Kind', colour = G.C.IMPORTANT },
+            { text = ')' }
+        },
 
 		calc_function = function(card)
 		  local xm = (card.ability and card.ability.extra and card.ability.extra.Xmult) or 1

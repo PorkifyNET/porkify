@@ -84,9 +84,9 @@ SMODS.Joker{ -- Toilet
 		  }
 		},
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
 			{ text = "Flush", colour = G.C.IMPORTANT },
-			{ text = ")", colour = G.C.GREY }
+			{ text = ")" }
 		},
 
 		calc_function = function(card)

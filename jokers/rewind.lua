@@ -13,7 +13,7 @@ SMODS.Joker{ --Rewind
         ['text'] = {
             [1] = 'Prevents Death and sets you',
 			[2] = 'back to the start of the {C:attention}Ante{}',
-			[3] = '{C:red,E:1}Self-Destructs{}'
+			[3] = '{C:red,E:1}Self-destructs{}'
         },
         ['unlock'] = {
             [1] = 'Lose {C:attention}3{} runs'

@@ -67,7 +67,7 @@ SMODS.Joker{ --Hatsune Joku
                 }
             },
             reminder_text = {
-                { text = "(3, 9)", colour = G.C.GREY }
+                { text = "(3, 9)" }
             },
 
             calc_function = function(card)

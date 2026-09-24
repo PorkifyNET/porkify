@@ -72,9 +72,9 @@ SMODS.Joker{ -- Farmland
 		  { ref_table = "card.joker_display_values", ref_value = "chips_text", colour = G.C.BLUE }
 		},
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
 			{ text = "Jacks", colour = G.C.IMPORTANT },
-			{ text = ")", colour = G.C.GREY }
+			{ text = ")" }
 		},
 
 		calc_function = function(card)

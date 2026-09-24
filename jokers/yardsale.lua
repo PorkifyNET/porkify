@@ -1,16 +1,28 @@
+local function porkify_yardsale_refresh_prices()
+    G.E_MANAGER:add_event(Event({func = function()
+        for _, pack in ipairs(G.shop_booster and G.shop_booster.cards or {}) do
+            pack:set_cost()
+        end
+        return true
+    end}))
+end
+
 SMODS.Joker{ -- Yard Sale
     key = "yardsale",
     config = {
         extra = {
-            sold_needed = 3,
-            tag_key = "tag_juggle"
+            pending_discount = 0,
+            active_discount = 0,
+            gain = 1
         }
     },
     loc_txt = {
         ['name'] = 'Yard Sale',
         ['text'] = {
-            [1] = 'Every {C:attention}#1#{} sold cards,',
-            [2] = 'create a {C:gold}Juggle Tag{}'
+            [1] = '{C:attention}Booster Packs{} are',
+            [2] = '{C:money}$#1#{} off next {C:green}shop{}',
+            [3] = 'Increases by {C:money}$#2#{} per',
+            [4] = '{C:tarot}consumable{} sold'
         },
         ['unlock'] = {
             [1] = 'Sell {C:attention}25{} cards'
@@ -24,11 +36,11 @@ SMODS.Joker{ -- Yard Sale
         w = 71,
         h = 95
     },
-    cost = 4,
-    rarity = 1,
+    cost = 8,
+    rarity = 2,
     blueprint_compat = false,
     eternal_compat = true,
-    perishable_compat = false,
+    perishable_compat = true,
     unlocked = false,
     discovered = false,
     atlas = 'CustomJokers',
@@ -41,68 +53,57 @@ SMODS.Joker{ -- Yard Sale
 
     loc_vars = function(self, info_queue, card)
         local extra = (card and card.ability and card.ability.extra) or self.config.extra
-        local info_queue_0 = (G.P_TAGS and G.P_TAGS[extra.tag_key or "tag_juggle"]) or (G.P_CENTERS and G.P_CENTERS[extra.tag_key or "tag_juggle"])
-        if info_queue_0 then
-            info_queue[#info_queue + 1] = info_queue_0
-        end
-        return { vars = { extra.sold_needed or 4 } }
+        return { vars = { extra.pending_discount or 0, extra.gain or 1, extra.active_discount or 0 } }
     end,
-
+    add_to_deck = function() porkify_yardsale_refresh_prices() end,
+    remove_from_deck = function() porkify_yardsale_refresh_prices() end,
     calculate = function(self, card, context)
-        if context.selling_card and not context.blueprint and G and G.GAME then
-            G.GAME.current_round = G.GAME.current_round or {}
-            G.GAME.current_round.porkify_yardsale_sold_cards =
-                (G.GAME.current_round.porkify_yardsale_sold_cards or 0) + 1
-
-            local sold_cards = G.GAME.current_round.porkify_yardsale_sold_cards or 0
-            local sold_needed = card.ability.extra.sold_needed or 3
-            if sold_cards >= sold_needed then
-                G.GAME.current_round.porkify_yardsale_sold_cards = sold_cards - sold_needed
-                return {
-                    func = function()
-                        local tag = Tag(card.ability.extra.tag_key or "tag_juggle")
-                        tag:set_ability()
-                        add_tag(tag)
-
-                        card_eval_status_text(
-                            card,
-                            'extra',
-                            nil,
-                            nil,
-                            nil,
-                            { message = "Created Tag!", colour = G.C.GOLD }
-                        )
-                        play_sound('holo1', 1.2 + math.random() * 0.1, 0.4)
-                        return true
-                    end
-                }
+        if context.blueprint or context.retrigger_joker then return end
+        local extra = card.ability.extra
+        if context.starting_shop then
+            extra.active_discount = extra.pending_discount or 0
+            extra.pending_discount = 0
+            porkify_yardsale_refresh_prices()
+            if extra.active_discount > 0 then
+                return { message = localize('porkify_discount_ex'), colour = G.C.MONEY }
+            end
+        elseif context.ending_shop then
+            extra.active_discount = 0
+            porkify_yardsale_refresh_prices()
+        elseif context.selling_card and context.card then
+            local sold = context.card
+            local center = sold.config and sold.config.center or {}
+            if (sold.ability and sold.ability.consumeable) or center.consumeable then
+                extra.pending_discount = (extra.pending_discount or 0) + (extra.gain or 1)
+                return { message = localize('k_upgrade_ex'), colour = G.C.MONEY }
             end
         end
     end,
-
     joker_display_def = function(JokerDisplay)
         return {
-            -- text = {
-            --     { ref_table = "card.joker_display_values", ref_value = "tag_text", colour = G.C.GOLD }
-            -- },
+            text = {{ ref_table = 'card.joker_display_values', ref_value = 'discount_text', colour = G.C.MONEY }},
             reminder_text = {
-                { ref_table = "card.joker_display_values", ref_value = "progress_text", colour = G.C.GREY }
+                { text = '(' },
+                { text = 'Booster Packs', colour = G.C.IMPORTANT },
+                { text = ')' }
             },
-
             calc_function = function(card)
-                local extra = (card.ability and card.ability.extra) or {}
-                local sold_needed = extra.sold_needed or 3
-                local sold_cards = (G and G.GAME and G.GAME.current_round and G.GAME.current_round.porkify_yardsale_sold_cards) or 0
-
-                card.joker_display_values.tag_text = "Juggle Tag"
-
-                if sold_cards >= sold_needed then
-                    card.joker_display_values.progress_text = "Ready"
-                else
-                    card.joker_display_values.progress_text =
-                        tostring("(" .. math.min(sold_cards, sold_needed) .. "/" .. tostring(sold_needed) .. ")")
-                end
+                local extra = card.ability.extra
+                card.joker_display_values.discount_text = '-$' .. tostring(extra.pending_discount or 0)
             end
         }
     end
 }
+
+local set_cost_ref = Card.set_cost
+function Card:set_cost()
+    set_cost_ref(self)
+    if not (self.ability and self.ability.set == 'Booster') then return end
+    local discount = 0
+    for _, joker in ipairs(SMODS.find_card('j_porkify_yardsale')) do
+        if not joker.debuff and not joker.getting_sliced and not joker.destroyed and not joker.removed then
+            discount = discount + (joker.ability.extra.active_discount or 0)
+        end
+    end
+    self.cost = math.max(0, self.cost - discount)
+end

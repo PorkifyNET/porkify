@@ -6,6 +6,19 @@ end
 
 -- Each row specifies whether the scoring hand is a straight, flush, or pair-family hand.
 local cases = {
+    { 'porkify_double_trouble', false, false, true },
+    { 'porkify_four_plus_two', false, false, true },
+    { 'porkify_boarding_house', false, false, true },
+    { 'porkify_five_plus_two', false, false, true },
+    { 'porkify_apartment_block', false, false, true },
+    { 'porkify_mansion', false, false, true },
+    { 'porkify_six_plus_two', false, false, true },
+    { 'porkify_flush_three_pair', false, true, true },
+    { 'porkify_flush_four_pair', false, true, true },
+    { 'porkify_flush_fuller_house', false, true, true },
+    { 'porkify_flush_fullest_house', false, true, true },
+    { 'porkify_flush_two_by_fours', false, true, true },
+
     { 'High Card', false, false, false },
     { 'Pair', false, false, true },
     { 'Two Pair', false, false, true },

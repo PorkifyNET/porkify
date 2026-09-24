@@ -204,7 +204,7 @@ SMODS.Joker{ --Mallard
                 { ref_table = "card.joker_display_values", ref_value = "chips_text", colour = G.C.BLUE }
             },
             -- reminder_text = {
-            --     { ref_table = "card.joker_display_values", ref_value = "status_text", colour = G.C.GREY }
+            --     { ref_table = "card.joker_display_values", ref_value = "status_text" }
             -- },
 
             calc_function = function(card)

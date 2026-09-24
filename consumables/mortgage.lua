@@ -6,7 +6,7 @@ SMODS.Consumable {
         name = 'Mortgage',
         text = {
             [1] = 'Remove {C:gold}Rental{} from',
-            [2] = '{C:attention}1{} selected {C:attention}Joker{}'
+            [2] = '{C:attention}1{} selected {C:attention}card{}'
         }
     },
     cost = 3,
@@ -15,6 +15,10 @@ SMODS.Consumable {
     hidden = false,
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
+
+    update = function(self, card, dt)
+        Porkify_update_sticker_tool_selection()
+    end,
 
     loc_vars = function(self, info_queue, card)
         local info_queue_0 = (G.P_STICKERS and G.P_STICKERS["rental"]) or (G.P_CENTERS and G.P_CENTERS["rental"])
@@ -26,9 +30,7 @@ SMODS.Consumable {
 
     use = function(self, card, area, copier)
         local used_card = copier or card
-        if not (G.jokers and G.jokers.highlighted and #G.jokers.highlighted == 1) then return end
-
-        local j = G.jokers.highlighted[1]
+        local j, target_area = Porkify_get_sticker_tool_target(card)
         if not (j and j.ability and j.ability.rental) then return end
 
         -- SFX / juice on use
@@ -60,7 +62,9 @@ SMODS.Consumable {
             delay = 0.70,
             func = function()
                 j.ability.rental = false
-                check_for_unlock { type = 'porkify_joker_sticker_removed' }
+                if target_area == G.jokers then
+                    check_for_unlock { type = 'porkify_joker_sticker_removed' }
+                end
 
                 -- OPTIONAL: if rental is sticker-based in your build, remove it too
                 if j.remove_sticker then
@@ -81,16 +85,14 @@ SMODS.Consumable {
                 j:flip()
                 play_sound('tarot2', 1.0, 0.6)
                 j:juice_up(0.3, 0.3)
-                G.jokers:unhighlight_all()
+                Porkify_clear_sticker_tool_selection()
                 return true
             end
         }))
     end,
 
     can_use = function(self, card)
-        return (G.jokers and G.jokers.highlighted and #G.jokers.highlighted == 1
-            and G.jokers.highlighted[1]
-            and G.jokers.highlighted[1].ability
-            and G.jokers.highlighted[1].ability.rental) == true
+        local target = Porkify_get_sticker_tool_target(card)
+        return (target and target.ability and target.ability.rental) == true
     end
 }

@@ -35,7 +35,7 @@ SMODS.Edition {
         local base = edition.base_xmult or cfg.base_xmult or 5
         local penalty = edition.ante_penalty or cfg.ante_penalty or 0.5
         local ante = math.max(0, (G.GAME.round_resets.ante or 1) - 1)
-        return {vars = {base - (ante * penalty)}}
+        return {vars = {math.max(0, base - (ante * penalty))}}
     end,
     get_weight = function(self)
         return G.GAME.edition_rate * self.weight
@@ -48,9 +48,9 @@ SMODS.Edition {
             local base = edition.base_xmult or cfg.base_xmult or 5
             local penalty = edition.ante_penalty or cfg.ante_penalty or 0.5
             local ante = math.max(0, (G.GAME.round_resets.ante or 1) - 1)
-            return {
-                x_mult = math.max(1, base - (ante * penalty))
-            }
+            local mult = math.max(0, base - (ante * penalty))
+            check_for_unlock { type = 'porkify_ionized_trigger', x_mult = mult }
+            return { x_mult = mult }
         end
     end
 }

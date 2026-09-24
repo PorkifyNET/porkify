@@ -93,9 +93,9 @@ SMODS.Joker{ -- Same Song
                 { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY }
             },
             reminder_text = {
-                { text = "(", colour = G.C.GREY },
+                { text = "(" },
                 { ref_table = "card.joker_display_values", ref_value = "last_hand_text", colour = G.C.IMPORTANT },
-                { text = ")", colour = G.C.GREY }
+                { text = ")" }
             },
 
             calc_function = function(card)

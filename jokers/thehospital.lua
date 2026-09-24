@@ -12,7 +12,8 @@ SMODS.Joker{ --The Hospital
             [2] = 'body-themed {C:purple}Boss Blinds{}',
             [3] = '{C:inactive}(The Arm, The Eye, The Mouth,{}',
             [4] = '{C:inactive}The Head, The Tooth,{}',
-            [5] = '{C:inactive}The Finger, Crimson Heart){}'
+            [5] = '{C:inactive}The Finger, Crimson Heart,{}',
+            [6] = '{C:inactive}The Virus){}'
         },
         ['unlock'] = {
             [1] = 'Discover {C:attention}20{} Blinds'
@@ -53,7 +54,8 @@ SMODS.Joker{ --The Hospital
                 bl_tooth = true,
                 bl_finger = true,
                 bl_final_heart = true,
-                bl_porkify_finger = true
+                bl_porkify_finger = true,
+                bl_porkify_virus = true
             }
 
             if blind_key and hospital_blinds[blind_key] then

@@ -1,6 +1,9 @@
 return {
     misc = {
         dictionary = {
+            porkify_discount_ex = 'Discount!',
+            porkify_voucher_ready = 'Ready!',
+            porkify_voucher_waiting = 'Defeat Boss Blind',
             porkify_paul_must_have_room = '(Must have room)',
             porkify_about_tagline = 'More Jokers. Bigger hands. A little chaos.',
             porkify_about_welcome = 'Welcome to Porkify!',
@@ -30,9 +33,29 @@ return {
             porkify_about_bye_monster = 'Powered by white Monsters!',
             porkify_about_bye_art_issue = 'All poorly drawn art by me probably.',
             porkify_about_bye_job = 'I should get a job.',
+            porkify_about_bye_theme = "This mod really doesn't have a consistent theme.",
+            porkify_about_bye_development = 'Still in development!',
+            porkify_about_bye_musician_yes = 'Musician approved!',
+            porkify_about_bye_gm = 'Are you in the Game Masters?',
+            porkify_about_bye_war = 'War?',
+            porkify_about_bye_piggian = 'Made in the Piggian Empire!',
         }
     },
 	descriptions = {
+        Other = {
+            porkify_perishable_consumable = {
+                name = 'Perishable',
+                text = {'Debuffed at the end', 'of the {C:attention}round{}'}
+            },
+            porkify_rental_playing = {
+                name = 'Rental',
+                text = {'Lose {C:money}$3{} if held', 'in hand at end', 'of round'}
+            },
+            porkify_blank_seal_unlimited = {
+                name = 'Blank Seal',
+                text = { 'Can be used', 'as any {C:attention}rank{}' }
+            }
+        },
 		Mod = {
 			porkify = {
 				name = "Porkify",

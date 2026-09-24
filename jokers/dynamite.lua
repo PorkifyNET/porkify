@@ -49,7 +49,7 @@ SMODS.Joker{ --Dynamite
         ['text'] = {
             [1] = 'After {C:attention}10{} played hands,',
             [2] = 'give {X:blue,C:white}X#2#{} Chips and {X:red,C:white}X#3#{} Mult,',
-            [3] = '{C:red,E:1}Self-Destructs{}',
+            [3] = '{C:red,E:1}Self-destructs{}',
             [4] = '{C:inactive}(#1# remaining){}'
         },
         ['unlock'] = {
@@ -149,7 +149,7 @@ SMODS.Joker{ --Dynamite
                 }
             },
             reminder_text = {
-                { ref_table = "card.joker_display_values", ref_value = "remaining_text", colour = G.C.GREY }
+                { ref_table = "card.joker_display_values", ref_value = "remaining_text" }
             },
             style_function = function(card, text, reminder_text, extra)
                 if text and text.children and text.children[1] then

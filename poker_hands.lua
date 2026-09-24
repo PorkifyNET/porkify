@@ -1,9 +1,25 @@
 -- Secret hands use the usual contained-hand rules: unrelated kickers do not score.
 -- Bulwark and Yes deliberately require the entire played hand to qualify.
 PORKIFY_SECRET_HANDS = {}
-local function rank_groups(hand, sizes)
+local rank_group_cache = setmetatable({}, {__mode = 'k'})
+
+local function cached_rank_groups(hand)
+    local signature = {}
+    for i, card in ipairs(hand) do
+        signature[i] = tostring(card:get_id()) .. ':' .. (card.debuff and '1' or '0')
+    end
+    signature = table.concat(signature, '|')
+    local cached = rank_group_cache[hand]
+    if cached and cached.signature == signature then return cached.groups end
+
     local groups = get_X_same(2, hand, true)
     table.sort(groups, function(a, b) return #a > #b end)
+    rank_group_cache[hand] = {signature = signature, groups = groups}
+    return groups
+end
+
+local function rank_groups(hand, sizes)
+    local groups = cached_rank_groups(hand)
     if #groups < #sizes then return {} end
 
     local scoring = {}
@@ -120,6 +136,43 @@ register('fullest_house', 'Fullest House', 160, 10, 50, 4,
     { '2 Three of a Kinds and a pair,', 'each of a different rank' },
     example({ 'K', 'K', 'K', '9', '9', '9', '4', '4' }),
     function(hand) return rank_groups(hand, { 3, 3, 2 }) end)
+
+-- Mixed rank groups, and same-suit versions of the expanded vanilla hands.
+local grouped_hands = {
+    { 'double_trouble', 'Double Trouble', { 3, 3 }, 95, 7, 30, 3 },
+    { 'four_plus_two', 'Four Plus Two', { 4, 2 }, 100, 8, 35, 3 },
+    { 'boarding_house', 'Boarding House', { 4, 3 }, 130, 9, 40, 3 },
+    { 'five_plus_two', 'Five Plus Two', { 5, 2 }, 155, 10, 45, 3 },
+    { 'apartment_block', 'Apartment Block', { 4, 2, 2 }, 170, 11, 50, 4 },
+    { 'mansion', 'Mansion', { 5, 3 }, 210, 12, 55, 4 },
+    { 'six_plus_two', 'Six Plus Two', { 6, 2 }, 250, 13, 60, 4 },
+    { 'flush_three_pair', 'Flush Three Pair', { 2, 2, 2 }, 140, 10, 40, 3 },
+    { 'flush_four_pair', 'Flush Four Pair', { 2, 2, 2, 2 }, 230, 14, 55, 4 },
+    { 'flush_fuller_house', 'Flush Fuller House', { 3, 2, 2 }, 240, 15, 60, 4 },
+    { 'flush_fullest_house', 'Flush Fullest House', { 3, 3, 2 }, 320, 18, 70, 5 },
+    { 'flush_two_by_fours', 'Flush Two By Fours', { 4, 4 }, 370, 20, 80, 5 },
+}
+for _, spec in ipairs(grouped_hands) do
+    local key, name, sizes = spec[1], spec[2], spec[3]
+    local flush = key:sub(1, 6) == 'flush_'
+    local ranks, groups = {}, {}
+    local example_ranks = { 'K', '9', '4', '2' }
+    local group_names = { [2] = 'a Pair', [3] = 'Three of a Kind', [4] = 'Four of a Kind',
+        [5] = 'Five of a Kind', [6] = 'Six of a Kind' }
+    for i, size in ipairs(sizes) do
+        groups[#groups + 1] = group_names[size]
+        for j = 1, size do ranks[#ranks + 1] = example_ranks[i] end
+    end
+    local description = { table.concat(groups, ' + '), 'Each group has a different rank' }
+    if flush then description[#description + 1] = 'All sharing the same suit' end
+    register(key, name, spec[4], spec[5], spec[6], spec[7], description, example(ranks, flush),
+        function(hand)
+            if flush then
+                return suited(hand, function(cards) return rank_groups(cards, sizes) end)
+            end
+            return rank_groups(hand, sizes)
+        end)
+end
 
 local kind_names = { 'Six', 'Seven', 'Eight' }
 local kind_keys = { 'six', 'seven', 'eight' }

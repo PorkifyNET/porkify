@@ -8,6 +8,10 @@ return function(mod)
     }
     local add_to_pool = SMODS.add_to_pool
     SMODS.add_to_pool = function(object, ...)
+        -- This experimental option is live; content-category toggles require a restart.
+        if object and object.key == 'j_porkify_cerberus' and mod.config.cerberus_slayer then
+            return false, {}
+        end
         local prefix = object and type(object.key) == 'string' and object.key:match('^(%w+)_porkify_')
         local category = prefix and categories[prefix]
         if category and enabled['content_' .. category] == false then

@@ -4,6 +4,15 @@ local function porkify_scrapyard_round_key()
     return tostring(ante) .. ":" .. tostring(round)
 end
 
+local function ready_to_shake(card)
+    if not (G and G.GAME and G.hand and G.jokers and card.area == G.jokers
+        and not card.debuff and not card.getting_sliced and not card.destroyed
+        and not card.removed and G.STATE == G.STATES.SELECTING_HAND) then return false end
+    local round = G.GAME.current_round or {}
+    return round.discards_used == 0 and (round.discards_left or 0) > 0
+        and card.ability.extra.last_round_key ~= porkify_scrapyard_round_key()
+end
+
 SMODS.Joker{ -- Shipwreck
     key = "shipwreck",
     config = {
@@ -35,6 +44,16 @@ SMODS.Joker{ -- Shipwreck
         { text = "Art: FlyingSausage", colour = "D70159" }
      },
 
+    update = function(self, card, dt)
+        if not card.porkify_ready_juice and ready_to_shake(card) then
+            card.porkify_ready_juice = true
+            juice_card_until(card, function()
+                if ready_to_shake(card) then return true end
+                card.porkify_ready_juice = nil
+                return false
+            end, true)
+        end
+    end,
     calculate = function(self, card, context)
         if not (context.pre_discard and not context.blueprint and G and G.GAME and G.hand) then
             return
@@ -88,6 +107,26 @@ SMODS.Joker{ -- Shipwreck
                 end
 
                 return true
+            end
+        }
+    end,
+    joker_display_def = function(JokerDisplay)
+        return {
+            text = {
+                { text = '+' },
+                { ref_table = 'card.joker_display_values', ref_value = 'count', retrigger_type = 'mult' }
+            },
+            calc_function = function(card)
+                card.joker_display_values.count = #(G.hand and G.hand.highlighted or {})
+                card.joker_display_values.active = G.GAME.current_round.discards_used == 0
+            end,
+            style_function = function(card, text, reminder_text, extra)
+                if text and text.children[1] and text.children[2] then
+                    local colour = card.joker_display_values.active and G.C.SECONDARY_SET.Enhanced
+                        or G.C.UI.TEXT_INACTIVE
+                    text.children[1].config.colour = colour
+                    text.children[2].config.colour = colour
+                end
             end
         }
     end

@@ -43,8 +43,8 @@ SMODS.Joker{ --9-Carats
         w = 71 * 1, 
         h = 95 * 1
     },
-    cost = 5,
-    rarity = 2,
+    cost = 9,
+    rarity = 3,
     blueprint_compat = true,
     eternal_compat = true,
     perishable_compat = true,
@@ -90,9 +90,9 @@ SMODS.Joker{ --9-Carats
 		  { ref_table = "card.joker_display_values", ref_value = "mult_text", colour = G.C.RED, retrigger_type = "mult" }
 		},
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
             { text = "7, 9, Ace", colour = G.C.IMPORTANT },
-            { text = ")", colour = G.C.GREY },
+            { text = ")" },
 		},
 
 		calc_function = function(card)

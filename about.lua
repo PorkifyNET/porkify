@@ -18,6 +18,12 @@ return function(mod)
         'porkify_about_bye_monster',
         'porkify_about_bye_art_issue',
         'porkify_about_bye_job',
+        'porkify_about_bye_theme',
+        'porkify_about_bye_development',
+        'porkify_about_bye_musician_yes',
+        'porkify_about_bye_gm',
+        'porkify_about_bye_war',
+        'porkify_about_bye_piggian',
     }
     local pink = HEX('ff0095')
     local panel_colour = HEX('24202e')

@@ -13,7 +13,7 @@ SMODS.Consumable {
         text = {
             [1] = 'Immediately {C:green}win{} current {C:attention}Blind{}',
             [2] = 'Lose {C:money}$#1#{} when used',
-            [3] = '{C:inactive,s:0.75}(Cannot be used on Final Bosses){}'
+            [3] = '{C:inactive,s:0.75}(Cannot be used on Showdown Blinds){}'
         }
     },
     cost = 3,

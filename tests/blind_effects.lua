@@ -53,7 +53,7 @@ for key, sticker in pairs({ landlord = 'rental', virus = 'perishable', stapler =
     G.jokers.cards = { first, second }
     probability = false
     blinds[key]:press_play()
-    expect(not not first.ability[sticker] == (key == 'landlord'), key .. ' failed-roll behavior')
+    expect(not first.ability[sticker], key .. ' failed-roll behavior')
     probability = true
     blinds[key]:press_play()
     expect(first.ability[sticker] == true, key .. ' applies sticker')

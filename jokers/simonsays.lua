@@ -117,9 +117,9 @@ SMODS.Joker{ -- Simon Says
                 { ref_table = "card.joker_display_values", ref_value = "mult_text", colour = G.C.RED }
             },
             reminder_text = {
-                { text = "(", colour = G.C.GREY },
+                { text = "(" },
                 { ref_table = "card.joker_display_values", ref_value = "suit_text", colour = G.C.IMPORTANT },
-                { text = ")", colour = G.C.GREY }
+                { text = ")" }
             },
 
             style_function = function(card, text, reminder_text, extra)

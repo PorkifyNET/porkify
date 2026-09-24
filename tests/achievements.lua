@@ -74,7 +74,7 @@ for _, def in pairs(definitions) do
     count = count + 1
     assert(type(def.loc_txt.description) == 'string' and def.hidden_name == false)
 end
-assert(count == 36)
+assert(count == 49)
 local function reset()
     earned = {}
     G.STAGE = G.STAGES.RUN
@@ -106,6 +106,7 @@ end
 local function play(cards)
     check_for_unlock { type = 'hand_contents', cards = cards }
 end
+assert(loadfile(TEST_ROOT .. '/tests/new_achievements.lua'))(definitions, reset, own, expect, joker, playing, drain)
 reset()
 own('j_porkify_porky')
 expect('porkylive', true)
@@ -360,6 +361,7 @@ function to_big(value) return value end
 function Card:juice_up() end
 function Card:flip() end
 G.C = { RED = {}, GREEN = {} }
+dofile(TEST_ROOT .. '/consumable_sticker_tools.lua')
 dofile(TEST_ROOT .. '/jokers/paul.lua')
 dofile(TEST_ROOT .. '/jokers/glitch.lua')
 for _, protected in ipairs({ true, false }) do

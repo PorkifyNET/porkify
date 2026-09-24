@@ -61,9 +61,9 @@ SMODS.Joker{ --Bailout
 		  { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY, retrigger_type = "mult" }
 		},
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
 			{ text = "Aces", colour = G.C.IMPORTANT },
-			{ text = ")", colour = G.C.GREY }
+			{ text = ")" }
 		},
 
 		calc_function = function(card)

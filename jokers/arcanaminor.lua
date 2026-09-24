@@ -95,9 +95,9 @@ SMODS.Joker{ --Arcana Minor
 			  { ref_table = "G.GAME.current_round.ArcanaMinorSuit_card", ref_value = "suit" }
 			},
 			reminder_text = {
-				{ text = "(", colour = G.C.GREY },
+				{ text = "(" },
 				{ text = "Face Cards", colour = G.C.IMPORTANT },
-				{ text = ")", colour = G.C.GREY }
+				{ text = ")" }
 			},
 		
 			style_function = function(card, text, reminder_text, extra)

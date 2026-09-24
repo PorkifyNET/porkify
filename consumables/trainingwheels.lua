@@ -5,8 +5,7 @@ SMODS.Consumable {
     loc_txt = {
         name = 'Training Wheels',
         text = {
-            [1] = '{C:attention}Halves{} score requirement',
-            [2] = 'for current {C:attention}Blind{}'
+            [1] = '{B:blind,C:white}X0.5{} Blind Size'
         }
     },
     cost = 3,
@@ -26,17 +25,15 @@ SMODS.Consumable {
             func = function()
                 if not (G.GAME and G.GAME.blind and G.GAME.blind.in_blind) then return true end
 
-                card_eval_status_text(
-                    used_card,
-                    'extra',
-                    nil, nil, nil,
-                    { message = "Halved Blind Size", colour = G.C.GREEN }
-                )
+                Porkify_scale_current_blind(0.5)
 
-                G.GAME.blind.chips = math.floor(G.GAME.blind.chips / 2)
-                G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
+                play_sound("xblindsize")
 
-                if G.HUD_blind then G.HUD_blind:recalculate() end
+                card_eval_status_text(card, "extra", nil, nil, nil, {
+                    message = "X0.5 Blind Size",
+                    colour = G.C.BLACK
+                })
+
                 return true
             end
         }))

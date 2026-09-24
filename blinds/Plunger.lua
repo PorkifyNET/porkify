@@ -1,4 +1,10 @@
 local debuffed_hands = {
+    porkify_flush_three_pair = true,
+    porkify_flush_four_pair = true,
+    porkify_flush_fuller_house = true,
+    porkify_flush_fullest_house = true,
+    porkify_flush_two_by_fours = true,
+
     ['Flush'] = true,
     ['Straight Flush'] = true,
     ['Royal Flush'] = true,

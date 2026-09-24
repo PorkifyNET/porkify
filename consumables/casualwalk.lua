@@ -72,10 +72,9 @@ SMODS.Consumable {
             },
             {
                 apply = function(c)
-                    c.ability.perma_mult = (c.ability.perma_mult or 0) + 2
-                    c.ability.perma_p_dollars = (c.ability.perma_p_dollars or 0) + 2
+                    c.ability.perma_p_dollars = (c.ability.perma_p_dollars or 0) + 3
                 end,
-                message = "+2 Mult, +$2",
+                message = "+$3",
                 colour = G.C.MONEY
             },
             {
@@ -84,6 +83,76 @@ SMODS.Consumable {
                 end,
                 message = "X1.5 Chips",
                 colour = G.C.CHIPS
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_h_x_chips = (c.ability.perma_h_x_chips or 0) + 0.25
+                end,
+                message = "X1.25 Chips when Held",
+                colour = G.C.CHIPS
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_score = (c.ability.perma_score or 1) + 1500
+                end,
+                message = "+1500 Score",
+                colour = G.C.PURPLE
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_x_score = (c.ability.perma_x_score or 1) + 0.1
+                end,
+                message = "+10% Score",
+                colour = G.C.PURPLE
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_h_score = (c.ability.perma_h_score or 0) + 1000
+                end,
+                message = "+1000 Score when Held",
+                colour = G.C.PURPLE
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_h_x_score = (c.ability.perma_h_x_score or 0) + 0.05
+                end,
+                message = "+5% Score when Held",
+                colour = G.C.PURPLE
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_blind_size = (c.ability.perma_blind_size or 1) - 750
+                end,
+                message = "-750 Blind Size",
+                colour = G.C.DYN_UI.DARK
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_x_blind_size = (c.ability.perma_x_blind_size or 1) - 0.05
+                end,
+                message = "-5% Blind Size",
+                colour = G.C.DYN_UI.DARK
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_h_blind_size = (c.ability.perma_h_blind_size or 1) - 500
+                end,
+                message = "-500 Blind Size when Held",
+                colour = G.C.DYN_UI.DARK
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_h_x_blind_size = (c.ability.perma_h_x_blind_size or 1) - 0.02
+                end,
+                message = "-2% Blind Size when Held",
+                colour = G.C.DYN_UI.DARK
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_repetitions = (c.ability.perma_repetitions or 0) + 1
+                end,
+                message = "+1 Retrigger",
+                colour = G.C.IMPORTANT
             }
         }
 

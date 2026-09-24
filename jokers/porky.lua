@@ -6,8 +6,8 @@ SMODS.Joker{ --Porky
     loc_txt = {
         ['name'] = 'Porky',
         ['text'] = {
-            [1] = 'When a {C:attention}Blind{} is selected,',
-            [2] = 'create a random {C:purple}Porkify{} card',
+            [1] = 'Create a {C:porkify}Porkify{} card',
+            [2] = 'when {C:attention}Blind{} is selected',
             [3] = '{C:inactive}(Must have room){}'
         },
         ['unlock'] = {

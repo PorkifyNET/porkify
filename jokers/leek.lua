@@ -70,11 +70,11 @@ SMODS.Joker{ --Leek
                 }
             },
             reminder_text = {
-                { text = "(", colour = G.C.GREY },
+                { text = "(" },
                 { text = "Clubs", colour = G.C.SUITS["Clubs"] },
-                { text = ",", colour = G.C.GREY },
+                { text = "," },
                 { text = "Diamonds", colour = G.C.SUITS["Diamonds"] },
-                { text = ")", colour = G.C.GREY }
+                { text = ")" }
             },
 
             calc_function = function(card)

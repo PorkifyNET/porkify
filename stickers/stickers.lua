@@ -134,9 +134,14 @@ SMODS.Sticker{
         name = "Bulky",
         label = "Bulky",
         text = {
-            "Uses {C:attention}2{} Joker Slots"
+            "Uses {C:attention}2{} #1#"
         }
     },
+    loc_vars = function(self, info_queue, card)
+        local set = card and card.ability and card.ability.set
+        return {vars = {(set == 'Default' or set == 'Enhanced') and 'Hand Size'
+            or (card and card.ability and card.ability.consumeable and 'Consumable Slots') or 'Joker Slots'}}
+    end,
     config = {
         extra_slots_used = 1
     },

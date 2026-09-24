@@ -11,7 +11,7 @@ SMODS.Joker{ -- Patience / Loading
         ['text'] = {
             [1] = 'Sell this Joker to gain a',
             [2] = '{C:attention}#1#{}',
-            [3] = '{C:inactive}(Joker changes every Hand){}'
+            [3] = '{C:inactive}(Joker changes every hand){}'
         },
         ['unlock'] = {
             [1] = 'Sell {C:attention}15{} cards'

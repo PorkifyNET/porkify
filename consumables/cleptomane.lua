@@ -36,6 +36,7 @@ SMODS.Consumable {
                 local dollar_value = target_dollars - current_dollars
                 card_eval_status_text(used_card, 'extra', nil, nil, nil, {message = "+"..tostring((G.hand and G.hand.config.card_limit or 0)).." $", colour = G.C.RED})
                 ease_dollars(dollar_value, true)
+                check_for_unlock { type = 'porkify_cleptomane_paid', dollars = dollar_value }
                 return true
             end
         }))

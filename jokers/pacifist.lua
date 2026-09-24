@@ -56,14 +56,10 @@ SMODS.Joker{ --Pacifist
 			}
 		  },
 		},
-		reminder_text = {
-			{ ref_table = "card.joker_display_values", ref_value = "status_text", colour = G.C.GREY }
-		},
 
 		calc_function = function(card)
 		  local is_boss = (G and G.GAME and G.GAME.blind and G.GAME.blind.boss) or false
 		  card.joker_display_values.mult_text = is_boss and "1" or "2"
-		  card.joker_display_values.status_text = is_boss and "OFF (Boss)" or "ON"
 		end
 	  }
 	end

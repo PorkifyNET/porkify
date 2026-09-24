@@ -63,7 +63,7 @@ SMODS.Joker{ --Grandma
                 { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY, retrigger_type = "mult" }
             },
             reminder_text = {
-                { text = "(8, 9, 10, A)", colour = G.C.GREY }
+                { text = "(8, 9, 10, A)" }
             },
 
             calc_function = function(card)

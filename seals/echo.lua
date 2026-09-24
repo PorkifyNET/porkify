@@ -50,6 +50,7 @@ SMODS.Seal {
             end
 
             if retriggers > 0 then
+                if retriggers == max_retriggers then check_for_unlock { type = 'porkify_echo_max' } end
                 return {
                     repetitions = retriggers,
                     message = "Echo!"

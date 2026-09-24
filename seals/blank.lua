@@ -1,3 +1,4 @@
+local blank_mod = SMODS.current_mod
 SMODS.Seal {
     key = "blank",
     atlas = "CustomSeals",
@@ -15,6 +16,11 @@ SMODS.Seal {
             [4] = "{C:inactive,s:0.75}per Hand){}"
         }
     },
+    loc_vars = function(self, info_queue, card)
+        if blank_mod and blank_mod.config and blank_mod.config.unlimited_blanks then
+            return { key = 'porkify_blank_seal_unlimited' }
+        end
+    end,
     credit_badges = {
         { text = "Art: doggfly", colour = "59A487" }
     }
@@ -180,6 +186,9 @@ local function porkify_blank_limit_is_disabled()
 end
 
 function Card:get_id()
+    if rawget(_G, "PORKIFY_CLOUD9_COUNT_BLANKS") and porkify_is_blank_seal(self) then
+        return 9
+    end
     if porkify_blank_eval_depth > 0 and porkify_blank_eval_map and porkify_blank_eval_map[self] then
         return porkify_blank_eval_map[self]
     end
@@ -193,7 +202,7 @@ function Card:get_id()
     return porkify_blank_card_get_id_ref(self)
 end
 
-function evaluate_poker_hand(cards, ...)
+local function porkify_blank_evaluate_uncached(cards, ...)
     local porkify_blank_hand_rank_order = G and G.handlist or porkify_blank_hand_rank_order
     local extra_args = { ... }
     local blank_cards = {}
@@ -220,7 +229,9 @@ function evaluate_poker_hand(cards, ...)
         local function try_assignments(i)
             if i > #blank_cards then
                 porkify_blank_eval_depth = porkify_blank_eval_depth + 1
+                PORKIFY_BLANK_EVAL_ACTIVE = true
                 local results = { pcall(porkify_blank_evaluate_poker_hand_ref, cards, unpack(extra_args)) }
+                PORKIFY_BLANK_EVAL_ACTIVE = nil
                 porkify_blank_eval_depth = math.max(porkify_blank_eval_depth - 1, 0)
 
                 local ok = table.remove(results, 1)
@@ -260,7 +271,9 @@ function evaluate_poker_hand(cards, ...)
 
     local function evaluate_current_assignment()
         porkify_blank_eval_depth = porkify_blank_eval_depth + 1
+        PORKIFY_BLANK_EVAL_ACTIVE = true
         local results = { pcall(porkify_blank_evaluate_poker_hand_ref, cards, unpack(extra_args)) }
+        PORKIFY_BLANK_EVAL_ACTIVE = nil
         porkify_blank_eval_depth = math.max(porkify_blank_eval_depth - 1, 0)
 
         local ok = table.remove(results, 1)
@@ -498,4 +511,47 @@ function evaluate_poker_hand(cards, ...)
 
     porkify_blank_eval_map = nil
     return porkify_blank_evaluate_poker_hand_ref(cards, unpack(extra_args))
+end
+
+local porkify_blank_cache_key = nil
+local porkify_blank_cache_result = nil
+
+local function porkify_blank_pack(...)
+    return {n = select('#', ...), ...}
+end
+
+local function porkify_blank_signature(cards)
+    local parts = {}
+    for i, card in ipairs(cards or {}) do
+        local base = card.base or {}
+        local center = card.config and card.config.center or {}
+        parts[#parts + 1] = table.concat({
+            tostring(card), tostring(base.id or base.value), tostring(base.suit),
+            tostring(card.seal or (card.ability and card.ability.seal)),
+            tostring(center.key), card.debuff and '1' or '0'
+        }, ':')
+    end
+    for _, joker in ipairs(G and G.jokers and G.jokers.cards or {}) do
+        local center = joker.config and joker.config.center or {}
+        parts[#parts + 1] = 'j:' .. tostring(center.key) .. ':' .. (joker.debuff and '1' or '0')
+    end
+    parts[#parts + 1] = porkify_blank_limit_is_disabled() and 'unlimited' or 'limited'
+    return table.concat(parts, '|')
+end
+
+function evaluate_poker_hand(cards, ...)
+    if select('#', ...) ~= 0 then return porkify_blank_evaluate_uncached(cards, ...) end
+    local has_blank = false
+    for _, card in ipairs(cards or {}) do
+        if porkify_is_blank_seal(card) then has_blank = true; break end
+    end
+    if not has_blank then return porkify_blank_evaluate_uncached(cards) end
+
+    local key = porkify_blank_signature(cards)
+    if key == porkify_blank_cache_key and porkify_blank_cache_result then
+        return unpack(porkify_blank_cache_result, 1, porkify_blank_cache_result.n)
+    end
+    local result = porkify_blank_pack(porkify_blank_evaluate_uncached(cards))
+    porkify_blank_cache_key, porkify_blank_cache_result = key, result
+    return unpack(result, 1, result.n)
 end

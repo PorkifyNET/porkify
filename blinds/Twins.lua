@@ -1,4 +1,17 @@
 local debuffed_hands = {
+    porkify_double_trouble = true,
+    porkify_four_plus_two = true,
+    porkify_boarding_house = true,
+    porkify_five_plus_two = true,
+    porkify_apartment_block = true,
+    porkify_mansion = true,
+    porkify_six_plus_two = true,
+    porkify_flush_three_pair = true,
+    porkify_flush_four_pair = true,
+    porkify_flush_fuller_house = true,
+    porkify_flush_fullest_house = true,
+    porkify_flush_two_by_fours = true,
+
     ['Pair'] = true,
     ['Two Pair'] = true,
     ['Three of a Kind'] = true,

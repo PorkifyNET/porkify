@@ -10,7 +10,8 @@ SMODS.Joker{ --:3
         ['name'] = ':3',
         ['text'] = {
             [1] = 'Every played {C:attention}3{}',
-            [2] = 'grants {X:red,C:white}X3{} Mult'
+            [2] = 'grants {X:red,C:white}X3{} Mult',
+            [3] = 'when scored'
         },
         ['unlock'] = {
             [1] = 'Play a {C:attention}Three of a Kind{} consisting of {C:attention}3{} {C:attention}3s{}'

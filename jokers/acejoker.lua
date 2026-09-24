@@ -68,9 +68,9 @@ SMODS.Joker{ -- Ace Joker
 		  }
 		},
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
 			{ text = "Ace of Spades", colour = lighten(G.C.SUITS["Spades"], 0.35) },
-			{ text = ")", colour = G.C.GREY }
+			{ text = ")" }
 		},
 
 		calc_function = function(card)

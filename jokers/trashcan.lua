@@ -70,7 +70,7 @@ SMODS.Joker{ --Trash Can
                 { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY }
             },
             reminder_text = {
-                { text = "(Round)", colour = G.C.GREY }
+                { text = "(Round)" }
             },
 
             calc_function = function(card)

@@ -100,16 +100,10 @@ SMODS.Joker{ -- Memory
             text = {
                 { ref_table = "card.joker_display_values", ref_value = "chips_text", colour = G.C.BLUE }
             },
-            reminder_text = {
-                { text = "(", colour = G.C.GREY },
-                { ref_table = "card.joker_display_values", ref_value = "status_text", colour = G.C.IMPORTANT },
-                { text = ")", colour = G.C.GREY }
-            },
 
             calc_function = function(card)
                 local extra = (card.ability and card.ability.extra) or {}
                 card.joker_display_values.chips_text = "+" .. tostring(extra.chips or 0)
-                card.joker_display_values.status_text = "Need Pair"
             end
         }
     end

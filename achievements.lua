@@ -121,7 +121,7 @@ local function register(id, name, description, condition)
             and SMODS.current_mod.config.bypass_unlock_all == true or false,
         loc_txt = { name = name, description = description },
         unlock_condition = function(self, args)
-            return in_run() and condition(args) or false
+            return (in_run() or id == 'supporter') and condition(args) or false
         end,
     }
 end
@@ -294,6 +294,69 @@ register('soviet_red', 'Soviet Red is the new Black', 'Have only Hearts in your 
     return has_heart
 end)
 
+register('ghost_busters', 'Ghost Busters', 'Destroy a Phantom Joker', function(args)
+    return args.type == 'porkify_destroyed' and args.porkify_key == 'j_porkify_phantom'
+end)
+register('through_your_teeth', "I'll put it through your teeth!", 'Technoblade Reference', function(args)
+    return args.type == 'porkify_pickaxe_mimic'
+end)
+register('heartless', 'Heartless', 'Sell or destroy a Kitty Joker', function(args)
+    return (args.type == 'porkify_sold' or args.type == 'porkify_destroyed') and args.porkify_key == 'j_porkify_kitty'
+end)
+register('the_ally', 'The Ally', 'Represent the LGBTQ+ community', function(args)
+    for _, id in ipairs({ 'j_porkify_acejoker', 'j_porkify_pridebanner', 'j_porkify_prideful_joker', 'j_porkify_transjoker' }) do
+        if not owns(args, id) then return false end
+    end
+    local consumables = {}
+    for _, card in ipairs(G.consumeables and G.consumeables.cards or {}) do
+        if key(card) and not card.getting_sliced and not card.removed then consumables[key(card)] = true end
+    end
+    return consumables.c_porkify_estrogen and consumables.c_porkify_testosterone and consumables.c_porkify_rainbow
+end)
+register('supporter', 'Supporter', 'Check out the Credits screen. Like, really check it out', function(args)
+    local profile = G.PROFILES and G.SETTINGS and G.PROFILES[G.SETTINGS.profile]
+    local clicks = profile and profile.porkify_credits_clicked or {}
+    return args.type == 'porkify_credits_clicked' and clicks.bluesky and clicks.twitter and clicks.github
+end)
+register('thats_illegal', "That's Illegal", 'Have more than 0 Consumable Slots on Jimbo Deck', function(args)
+    return not starting_run and deck_key() == 'b_porkify_jimbo_deck' and G.consumeables
+        and to_big(G.consumeables.config.card_limit) > to_big(0)
+end)
+register('rip_off', 'What a Rip-off!', 'Skip a Void Voucher Pack', function(args)
+    return args.type == 'porkify_skip_void'
+end)
+register('it_echoes', 'It Echoes in here', 'Have an Echo Seal retrigger its maximum number of times', function(args)
+    return args.type == 'porkify_echo_max'
+end)
+register('see_a_doctor', 'Maybe see a doctor', 'Own 5 Jokers with Cramped stickers at once', function(args)
+    local count = 0
+    for _, card in ipairs(G.jokers and G.jokers.cards or {}) do
+        if not card.getting_sliced and not card.removed and card.ability
+            and (card.ability.cramped or card.ability.porkify_cramped) then count = count + 1 end
+    end
+    return count >= 5
+end)
+register('weimar_republic', 'Weimar Republic', 'Trigger a Gilded card with Money Tree and at least $100', function(args)
+    return args.type == 'porkify_gilded_trigger' and G.GAME.used_vouchers.v_money_tree
+        and to_big(args.dollars or 0) >= to_big(100)
+end)
+register('meltdown', 'Meltdown', 'Have an Ionized card give less than X1 Mult', function(args)
+    return args.type == 'porkify_ionized_trigger' and to_big(args.x_mult) < to_big(1)
+end)
+register('collector', 'Collector', 'Hold Steel, Gold, Emerald and Diamond cards at the same time', function(args)
+    for _, enhancement in ipairs({ 'm_steel', 'm_gold', 'm_porkify_emerald', 'm_porkify_diamond' }) do
+        local found = false
+        for _, card in ipairs(G.hand and G.hand.cards or {}) do
+            if SMODS.has_enhancement(card, enhancement) then found = true; break end
+        end
+        if not found then return false end
+    end
+    return true
+end)
+register('twenty_is_twenty', '$20 is $20', 'Have Cleptomane pay out $20 or more', function(args)
+    return args.type == 'porkify_cleptomane_paid' and to_big(args.dollars) >= to_big(20)
+end)
+
 local function is_grow_up_hand(cards)
     local ranked = {}
     for i, card in ipairs(cards) do
@@ -360,6 +423,9 @@ end
 local calculate_context_ref = SMODS.calculate_context
 function SMODS.calculate_context(context, ...)
     if in_run() then
+        if context.skipping_booster and context.booster and context.booster.key == 'p_porkify_void_voucher_pack' then
+            check_for_unlock { type = 'porkify_skip_void' }
+        end
         if context.open_booster then
             local id = key(context.card)
             if porkify_key(id) then G.GAME.porkify_content_used = true end
@@ -378,6 +444,7 @@ function SMODS.calculate_context(context, ...)
                 for i, card in ipairs(cards) do pending_discard[i] = card end
             end
         elseif context.selling_card then
+            if context.card then context.card.porkify_being_sold = true end
             check_for_unlock { type = 'porkify_sold', porkify_key = key(context.card) }
         elseif context.using_consumeable then
             check_for_unlock { type = 'porkify_consumable', porkify_key = key(context.consumeable) }
@@ -400,7 +467,10 @@ end
 local emplace_ref = CardArea.emplace
 function CardArea:emplace(card, ...)
     local result = emplace_ref(self, card, ...)
-    if in_run() and owned_card(card) then track_card(card) end
+    if in_run() and owned_card(card) then
+        track_card(card)
+        check_for_unlock { type = 'porkify_inventory_changed' }
+    end
     return result
 end
 
@@ -455,15 +525,20 @@ end
 for _, method in ipairs({ 'start_dissolve', 'shatter' }) do
     local original = Card[method]
     Card[method] = function(self, ...)
-        local eligible = in_run() and key(self) == 'j_porkify__3'
-            and (self.added_to_deck or self.area == G.jokers) and self.dissolve == nil
+        local id = key(self)
+        local eligible = in_run() and not starting_run and not G.in_delete_run
+            and (id == 'j_porkify__3' or id == 'j_porkify_phantom' or id == 'j_porkify_kitty')
+            and not self.porkify_being_sold and not self.porkify_destruction_checked
+            and (self.added_to_deck or self.area == G.jokers)
+            and (self.dissolve == nil or self.dissolve == 0)
         local favorite = favorite_destruction(self) and self.dissolve == nil
         local result = original(self, ...)
         if favorite and result ~= false and self.dissolve ~= nil then
             check_for_unlock { type = 'porkify_favorite_destroyed' }
         end
         if eligible and result ~= false and self.dissolve ~= nil then
-            check_for_unlock { type = 'porkify_destroyed', porkify_key = 'j_porkify__3' }
+            self.porkify_destruction_checked = true
+            check_for_unlock { type = 'porkify_destroyed', porkify_key = id }
         end
         return result
     end
@@ -471,13 +546,17 @@ end
 
 local pinch_and_remove_ref = SMODS.pinch_and_remove
 function SMODS.pinch_and_remove(card, ...)
-    local eligible = in_run() and key(card) == 'j_porkify__3'
+    local id = key(card)
+    local eligible = in_run() and not starting_run and not G.in_delete_run
+        and (id == 'j_porkify__3' or id == 'j_porkify_phantom' or id == 'j_porkify_kitty')
+        and not card.porkify_being_sold and not card.porkify_destruction_checked
         and (card.added_to_deck or card.area == G.jokers)
     local favorite = favorite_destruction(card)
     local result = pinch_and_remove_ref(card, ...)
     if favorite and result then check_for_unlock { type = 'porkify_favorite_destroyed' } end
     if eligible and result then
-        check_for_unlock { type = 'porkify_destroyed', porkify_key = 'j_porkify__3' }
+        card.porkify_destruction_checked = true
+        check_for_unlock { type = 'porkify_destroyed', porkify_key = id }
     end
     return result
 end

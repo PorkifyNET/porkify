@@ -45,6 +45,6 @@ local function register_sticker_boss(key, name, sticker, colour, row, chance)
     }
 end
 
-register_sticker_boss('landlord', 'The Landlord', 'Rental', 'BAA46A', 19, false)
+register_sticker_boss('landlord', 'The Landlord', 'Rental', 'BAA46A', 19, true)
 register_sticker_boss('virus', 'The Virus', 'Perishable', '75AB65', 20, true)
 register_sticker_boss('stapler', 'The Stapler', 'Eternal', '8471B5', 21, true)

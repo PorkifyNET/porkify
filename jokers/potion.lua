@@ -123,9 +123,9 @@ SMODS.Joker{ -- Potion
                 { ref_table = "card.joker_display_values", ref_value = "odds_text", colour = G.C.GREEN, scale = 0.3 }
             },
             reminder_text = {
-                { text = "(", colour = G.C.GREY },
+                { text = "(" },
                 { text = "Glass", colour = G.C.SECONDARY_SET["Enhanced"] },
-                { text = ")", colour = G.C.GREY },
+                { text = ")" },
             },
 
             calc_function = function(card)

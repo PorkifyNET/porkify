@@ -41,4 +41,15 @@ SMODS.Joker{ --Beating Heart
             return { repetitions = 1, message = localize('k_again_ex') }
         end
     end,
+    joker_display_def = function(JokerDisplay)
+        return {
+            retrigger_function = function(playing_card, scoring_hand, held_in_hand, joker_card)
+                if held_in_hand or playing_card.debuff or not playing_card:is_suit('Hearts')
+                    or not JokerDisplay.in_scoring(playing_card, scoring_hand) then
+                    return 0
+                end
+                return JokerDisplay.calculate_joker_triggers(joker_card)
+            end
+        }
+    end,
 }

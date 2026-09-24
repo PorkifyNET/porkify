@@ -5,14 +5,24 @@ return function(mod)
         twitter = 'https://x.com/PorkyLIVE_',
         github = 'https://github.com/PorkifyNET/porkify',
     }
+    local function open_credit_link(name)
+        love.system.openURL(links[name])
+        local profile = G.PROFILES and G.SETTINGS and G.PROFILES[G.SETTINGS.profile]
+        if profile then
+            profile.porkify_credits_clicked = profile.porkify_credits_clicked or {}
+            profile.porkify_credits_clicked[name] = true
+            check_for_unlock { type = 'porkify_credits_clicked' }
+            G:save_progress()
+        end
+    end
     G.FUNCS.porkify_credits_bluesky = function()
-        love.system.openURL(links.bluesky)
+        open_credit_link('bluesky')
     end
     G.FUNCS.porkify_credits_twitter = function()
-        if links.twitter then love.system.openURL(links.twitter) end
+        open_credit_link('twitter')
     end
     G.FUNCS.porkify_credits_github = function()
-        if links.github then love.system.openURL(links.github) end
+        open_credit_link('github')
     end
     G.FUNCS.porkify_credits_page = function(args)
         page = args.cycle_config.current_option

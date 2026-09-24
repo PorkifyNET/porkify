@@ -3,14 +3,14 @@ SMODS.Joker{ --Camera
     key = "camera",
     config = {
         extra = {
-            chips0 = 100
+            chips0 = 70
         }
     },
     loc_txt = {
         ['name'] = 'Camera',
         ['text'] = {
             [1] = 'First played {C:attention}face{} card',
-            [2] = 'grants {C:blue}+100{} Chips when',
+            [2] = 'grants {C:blue}+70{} Chips when',
             [3] = 'scored'
         },
         ['unlock'] = {
@@ -48,7 +48,7 @@ SMODS.Joker{ --Camera
                 return false
             end)() then
                 return {
-                    chips = 100
+                    chips = 70
                 }
             end
         end
@@ -60,14 +60,14 @@ SMODS.Joker{ --Camera
 		  { ref_table = "card.joker_display_values", ref_value = "chips", retrigger_type = "mult", colour = G.C.BLUE }
 		},
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
 			{ text = "Face Cards", colour = G.C.IMPORTANT },
-			{ text = ")", colour = G.C.GREY }
+			{ text = ")" }
 		},
 
 		calc_function = function(card)
 		  local chips = 0
-		  local base = (card.ability.extra and card.ability.extra.chips0) or 100
+		  local base = (card.ability.extra and card.ability.extra.chips0) or 70
 
 		  local text, _, scoring_hand = JokerDisplay.evaluate_hand()
 		  if text ~= "Unknown" and scoring_hand then

@@ -40,7 +40,7 @@ SMODS.Joker{ --Cerberus
 	joker_display_def = function(JokerDisplay)
 	  return {
 		reminder_text = {
-			{ text = "(J, Q, K)", colour = G.C.GREY }
+			{ text = "(J, Q, K)" }
 		}
 	  }
 	end
@@ -89,7 +89,7 @@ local function porkify_best_hand_index(eval)
     return #porkify_hand_rank_order
 end
 
-function evaluate_poker_hand(cards, ...)
+local function porkify_cerberus_evaluate_uncached(cards, ...)
     local extra_args = { ... }
     if next(SMODS.find_card("j_porkify_cerberus")) then
         local face_cards = {}
@@ -143,4 +143,40 @@ function evaluate_poker_hand(cards, ...)
     end
 
     return porkify_evaluate_poker_hand_ref(cards, unpack(extra_args))
+end
+
+local porkify_cerberus_cache_key = nil
+local porkify_cerberus_cache_result = nil
+
+local function porkify_cerberus_pack(...)
+    return {n = select('#', ...), ...}
+end
+
+local function porkify_cerberus_signature(cards)
+    local parts = {}
+    for _, card in ipairs(cards or {}) do
+        local base = card.base or {}
+        local center = card.config and card.config.center or {}
+        parts[#parts + 1] = table.concat({tostring(card), tostring(base.id or base.value),
+            tostring(base.suit), tostring(card.seal), tostring(center.key), card.debuff and '1' or '0'}, ':')
+    end
+    for _, joker in ipairs(G and G.jokers and G.jokers.cards or {}) do
+        local center = joker.config and joker.config.center or {}
+        parts[#parts + 1] = 'j:' .. tostring(center.key) .. ':' .. (joker.debuff and '1' or '0')
+    end
+    return table.concat(parts, '|')
+end
+
+function evaluate_poker_hand(cards, ...)
+    if select('#', ...) ~= 0 or rawget(_G, 'PORKIFY_BLANK_EVAL_ACTIVE')
+        or not next(SMODS.find_card("j_porkify_cerberus")) then
+        return porkify_cerberus_evaluate_uncached(cards, ...)
+    end
+    local key = porkify_cerberus_signature(cards)
+    if key == porkify_cerberus_cache_key and porkify_cerberus_cache_result then
+        return unpack(porkify_cerberus_cache_result, 1, porkify_cerberus_cache_result.n)
+    end
+    local result = porkify_cerberus_pack(porkify_cerberus_evaluate_uncached(cards))
+    porkify_cerberus_cache_key, porkify_cerberus_cache_result = key, result
+    return unpack(result, 1, result.n)
 end

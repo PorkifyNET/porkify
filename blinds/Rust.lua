@@ -15,7 +15,7 @@ SMODS.Blind{
     },
 
     recalc_debuff = function(self, card, from_blind)
-        if not card then
+        if not card or not SMODS.is_playing_card(card) then
             return false
         end
         local center = card.config and card.config.center
@@ -25,7 +25,13 @@ SMODS.Blind{
         end
         if SMODS and SMODS.get_enhancements then
             local enhancements = SMODS.get_enhancements(card) or {}
-            return next(enhancements) ~= nil
+            for key in pairs(enhancements) do
+                local enhancement = G.P_CENTERS[key]
+                if enhancement and enhancement.set == 'Enhanced' then
+                    return true
+                end
+            end
+            return false
         end
         return card.config and card.config.center and card.config.center.set == 'Enhanced'
     end,

@@ -6,8 +6,8 @@ SMODS.Joker{ -- Lucky Number 7s
     loc_txt = {
         ['name'] = 'Lucky Number 7s',
         ['text'] = {
-            [1] = 'Every played {C:attention}7{} grants',
-            [2] = '{C:red}+7{} Mult and {C:money}$3{}'
+            [1] = 'Every played {C:attention}7{} is',
+            [2] = 'considered a {C:enhanced}Lucky Card{}'
         },
         ['unlock'] = {
             [1] = 'Play a {C:attention}Three of a Kind{}',
@@ -24,7 +24,7 @@ SMODS.Joker{ -- Lucky Number 7s
     },
     cost = 7,
     rarity = 1,
-    blueprint_compat = true,
+    blueprint_compat = false,
     eternal_compat = true,
     perishable_compat = true,
     unlocked = false,
@@ -54,49 +54,21 @@ SMODS.Joker{ -- Lucky Number 7s
     end,
     
     loc_vars = function(self, info_queue, card)
-        -- no extra vars needed, but kept for consistency
+        info_queue[#info_queue + 1] = G.P_CENTERS.m_lucky
         return { vars = {} }
     end,
-    
     calculate = function(self, card, context)
-        -- Individual card scoring context for played cards
-        if context.individual and context.cardarea == G.play then
-            local c = context.other_card
-            if porkify_card_matches_rank(c, 7) then
-                return {
-                    mult = 7,
-                    dollars = 3
-                }
-            end
+        if not context.check_enhancement or context.blueprint then return end
+        local target = context.other_card
+        if not target or not G.play or target.area ~= G.play then return end
+        -- Do not call get_id/has_no_rank here: they query enhancements again.
+        local center = target.config and target.config.center
+        local blank = porkify_is_blank_seal_card and porkify_is_blank_seal_card(target)
+        if blank or (target.base and target.base.id == 7 and center and not center.no_rank) then
+            return { m_lucky = true }
         end
     end,
-	
-	joker_display_def = function(JokerDisplay)
-	  return {
-		text = {
-		  { ref_table = "card.joker_display_values", ref_value = "mult_text", colour = G.C.RED, retrigger_type = "mult" },
-		  { text = " " },
-		  { ref_table = "card.joker_display_values", ref_value = "money_text", colour = G.C.MONEY, retrigger_type = "mult" }
-		},
-		reminder_text = {
-			{ text = "(7)", colour = G.C.GREY }
-		},
-
-		calc_function = function(card)
-		  local sevens = 0
-
-		  local text, _, scoring_hand = JokerDisplay.evaluate_hand()
-		  if text ~= "Unknown" and scoring_hand then
-			for _, c in pairs(scoring_hand) do
-			  if porkify_card_matches_rank(c, 7) and not c.debuff and c.facing ~= 'back' then
-				sevens = sevens + JokerDisplay.calculate_card_triggers(c, scoring_hand)
-			  end
-			end
-		  end
-
-		  card.joker_display_values.mult_text  = "+" .. tostring(sevens * 7)
-		  card.joker_display_values.money_text = "+$" .. tostring(sevens * 3)
-		end
-	  }
-	end
+    joker_display_def = function(JokerDisplay)
+        return { reminder_text = {{ text = '(7)' }} }
+    end
 }

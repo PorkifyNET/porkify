@@ -62,9 +62,9 @@ SMODS.Joker{ --Pyramid
 	joker_display_def = function(JokerDisplay)
 	  return {
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
 			{ text = "3, 4, 5", colour = G.C.IMPORTANT },
-			{ text = ")", colour = G.C.GREY },
+			{ text = ")" },
 		},
 	  }
 	end

@@ -105,9 +105,9 @@ SMODS.Joker{ --Apple Tree
 		  { ref_table = "card.joker_display_values", ref_value = "hand_size_text", colour = G.C.IMPORTANT }
 		},
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
 			{ ref_table = "card.joker_display_values", ref_value = "progress_text", colour = G.C.SUITS["Hearts"] },
-			{ text = ")", colour = G.C.GREY }
+			{ text = ")" }
 		},
 
 		calc_function = function(card)

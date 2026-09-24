@@ -60,6 +60,7 @@ SMODS.Edition {
             return {
                 
                 func = function()
+                    check_for_unlock { type = 'porkify_gilded_trigger', dollars = G.GAME.dollars }
                     local interest = calculate_gilded_interest()
                     if to_big(interest) > to_big(0) then
                         ease_dollars(interest)

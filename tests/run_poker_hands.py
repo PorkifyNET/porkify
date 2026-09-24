@@ -33,6 +33,7 @@ def run(source, name, execute=True):
 
 try:
     for filename in ("main.lua", "poker_hands.lua", "seals/blank.lua", "achievements.lua",
+                     "consumable_sticker_tools.lua",
                      "jokers/paul.lua", "jokers/glitch.lua", "consumables/excalibur.lua",
                      "consumables/freezer.lua", "consumables/mortgage.lua"):
         run((ROOT / filename).read_text(encoding="utf-8"), filename, False)
@@ -48,5 +49,10 @@ try:
     run((ROOT / "tests/blind_hands.lua").read_text(encoding="utf-8"), "Boss Blind hand tests")
     run((ROOT / "tests/kitty_tungsten.lua").read_text(encoding="utf-8"), "Kitty and Tungsten Cube tests")
     run((ROOT / "tests/blind_effects.lua").read_text(encoding="utf-8"), "Boss Blind effect tests")
+    utils = (ROOT.parent / "Steamodded/src/utils.lua").read_text(encoding="utf-8")
+    destroy_helper = "function SMODS.destroy_cards(" + utils.split("function SMODS.destroy_cards(", 1)[1].split("\n-- Hand Limit API", 1)[0]
+    run(destroy_helper + "\nTEST_destroy_cards = SMODS.destroy_cards", "Steamodded destruction helper")
+    run((ROOT / "tests/jester_pickaxe.lua").read_text(encoding="utf-8"), "Jester and Pickaxe tests")
+    run((ROOT / "tests/phantom.lua").read_text(encoding="utf-8"), "Phantom tests")
 finally:
     lua.lua_close(state)

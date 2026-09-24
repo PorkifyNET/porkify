@@ -6,8 +6,8 @@ SMODS.Joker{ -- Chance
     loc_txt = {
         ['name'] = 'Chance',
         ['text'] = {
-            [1] = 'When a {C:attention}Blind{} is selected,',
-            [2] = 'create a random {C:tarot}Consumable{}',
+            [1] = 'Create random {C:tarot}Consumable{}',
+            [2] = 'when {C:attention}Blind{} is selected',
             [3] = '{C:inactive}(Must have room){}'
         }
     },

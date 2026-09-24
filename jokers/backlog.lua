@@ -86,7 +86,7 @@ SMODS.Joker{ -- Backlog
                 { ref_table = "card.joker_display_values", size = 0.3, ref_value = "stored_text", colour = G.C.RED }
             },
             -- reminder_text = {
-            --     { ref_table = "card.joker_display_values", ref_value = "cap_text", colour = G.C.GREY }
+            --     { ref_table = "card.joker_display_values", ref_value = "cap_text" }
             -- },
 
             calc_function = function(card)

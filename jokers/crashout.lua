@@ -79,9 +79,9 @@ SMODS.Joker{ --Crashout
 		  }
 		},
 		reminder_text = {
-			{ text = "(", colour = G.C.GREY },
+			{ text = "(" },
 			{ text = "Spectral", colour = G.C.SECONDARY_SET.Spectral },
-			{ text = ")", colour = G.C.GREY }
+			{ text = ")" }
 		},
 		style_function = function(card, text, reminder_text, extra)
 		  if text and text.children and text.children[1] then
