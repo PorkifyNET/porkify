@@ -91,6 +91,8 @@ PORKIFY_TOO_MANY_BLANKS_HAND_KEY = "porkify_too_many_blanks"
 
 local PORKIFY_CONFIG_DEFAULTS = {
     show_credit_badges = true,
+    show_ai_art_badges = true,
+    show_category_badges = true,
     porkify_theme = true,
     reveal_secret_hands = false,
     favorite_outline = 'none',
@@ -1572,6 +1574,28 @@ local function porkify_show_credit_badges()
     return not not config.show_credit_badges
 end
 
+local function porkify_show_ai_art_badges()
+    local config = PORKIFY_MOD and PORKIFY_MOD.config
+    if type(config) ~= "table" then
+        return PORKIFY_CONFIG_DEFAULTS.show_ai_art_badges
+    end
+    if config.show_ai_art_badges == nil then
+        return PORKIFY_CONFIG_DEFAULTS.show_ai_art_badges
+    end
+    return not not config.show_ai_art_badges
+end
+
+local function porkify_show_category_badges()
+    local config = PORKIFY_MOD and PORKIFY_MOD.config
+    if type(config) ~= "table" then
+        return PORKIFY_CONFIG_DEFAULTS.show_category_badges
+    end
+    if config.show_category_badges == nil then
+        return PORKIFY_CONFIG_DEFAULTS.show_category_badges
+    end
+    return not not config.show_category_badges
+end
+
 local function porkify_is_credit_badge_text(text)
     if type(text) ~= "string" then
         return false
@@ -1612,7 +1636,9 @@ local function porkify_apply_credit_badges(obj, badges)
 end
 
 local function porkify_apply_food_badge(obj, badges)
-    if type(obj) ~= "table" or type(badges) ~= "table" then
+    if type(obj) ~= "table"
+        or type(badges) ~= "table"
+        or not porkify_show_category_badges() then
         return
     end
 
@@ -1636,6 +1662,22 @@ local function porkify_apply_food_badge(obj, badges)
     )
 end
 
+local function porkify_apply_ai_art_badge(obj, badges)
+    if type(obj) ~= "table"
+        or type(badges) ~= "table"
+        or not obj.ai_art_badge
+        or not porkify_show_ai_art_badges() then
+        return
+    end
+
+    badges[#badges + 1] = create_badge(
+        "AI Art",
+        HEX("6B7280"),
+        G.C.WHITE,
+        0.9
+    )
+end
+
 function Porkify_attach_credit_badges(obj)
     if type(obj) ~= "table" or obj.porkify_badges_wrapped then
         return obj
@@ -1652,6 +1694,7 @@ function Porkify_attach_credit_badges(obj)
             original_set_badges(self, card, badges)
         end
         porkify_apply_food_badge(self, badges)
+        porkify_apply_ai_art_badge(self, badges)
         porkify_apply_credit_badges(self, badges)
     end
     obj.porkify_badges_wrapped = true
@@ -2942,33 +2985,24 @@ end
 
 if SMODS and SMODS.get_probability_vars and not Porkify_get_probability_vars then
     Porkify_get_probability_vars = SMODS.get_probability_vars
-    SMODS.get_probability_vars = function(card, numerator, denominator, identifier)
+    SMODS.get_probability_vars = function(card, numerator, denominator, identifier, from_roll, no_mod)
+        local modified_numerator, modified_denominator = Porkify_get_probability_vars(
+            card,
+            numerator,
+            denominator,
+            identifier,
+            from_roll,
+            no_mod
+        )
         local current_round = G and G.GAME and G.GAME.current_round
-        if current_round
-            and current_round.porkify_dice_probability_active then
-            local guaranteed = math.max(tonumber(numerator) or 1, 1)
-            return guaranteed, guaranteed
-        end
-        local n, d = Porkify_get_probability_vars(card, numerator, denominator, identifier)
         if porkify_active_blind_is("toll") and not porkify_is_resolute_card(card) then
-            return 0, d
+            return 0, modified_denominator
         end
-        return n, d
-    end
-end
-
-if SMODS and SMODS.pseudorandom_probability and not Porkify_pseudorandom_probability then
-    Porkify_pseudorandom_probability = SMODS.pseudorandom_probability
-    SMODS.pseudorandom_probability = function(card, seed, numerator, denominator, identifier, trigger)
-        local current_round = G and G.GAME and G.GAME.current_round
-        if current_round
-            and current_round.porkify_dice_probability_active then
-            return true
+        local green_seal_bonus = current_round and current_round.porkify_green_seal_probability_bonus or 0
+        if not no_mod and green_seal_bonus > 0 then
+            return math.min(modified_numerator + green_seal_bonus, modified_denominator), modified_denominator
         end
-        if porkify_active_blind_is("toll") and not porkify_is_resolute_card(card) then
-            return false
-        end
-        return Porkify_pseudorandom_probability(card, seed, numerator, denominator, identifier, trigger)
+        return modified_numerator, modified_denominator
     end
 end
 
@@ -3840,19 +3874,44 @@ local function porkify_held_pride_multiplier_count(card)
     return porkify_count_played_pride_seals()
 end
 
-local function porkify_scoring_hand_has_dice_seal(context)
+local function porkify_count_scoring_green_seals(context)
     local scoring_hand = context and (context.scoring_hand or context.full_hand)
     if type(scoring_hand) ~= "table" then
-        return false
+        return 0
     end
 
+    local count = 0
     for _, played_card in ipairs(scoring_hand) do
         if played_card and not played_card.debuff and porkify_is_dice_seal(played_card) then
-            return true
+            count = count + 1
         end
     end
 
-    return false
+    return count
+end
+
+if SMODS and type(SMODS.calculate_context) == "function" and not Porkify_calculate_context_green_seal then
+    Porkify_calculate_context_green_seal = SMODS.calculate_context
+    SMODS.calculate_context = function(context, ...)
+        if context and context.before and G and G.GAME then
+            G.GAME.current_round = G.GAME.current_round or {}
+            local green_seal_count = porkify_count_scoring_green_seals(context)
+            G.GAME.current_round.porkify_green_seal_probability_bonus =
+                green_seal_count > 0 and green_seal_count or nil
+        end
+
+        local result = Porkify_calculate_context_green_seal(context, ...)
+
+        if context
+            and (context.after or context.end_of_round or context.setting_blind or context.hand_drawn)
+            and G
+            and G.GAME
+            and G.GAME.current_round then
+            G.GAME.current_round.porkify_green_seal_probability_bonus = nil
+        end
+
+        return result
+    end
 end
 
 if type(draw_card) == "function" and not Porkify_draw_card_glitched then
@@ -3907,16 +3966,6 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
     function eval_card(card, context)
         local resolved_card, resolved_context = porkify_resolve_mimic_replay(card, context)
 
-        if G and G.GAME then
-            G.GAME.current_round = G.GAME.current_round or {}
-            if resolved_context
-                and resolved_context.before
-                and resolved_context.cardarea == G.jokers
-                and porkify_scoring_hand_has_dice_seal(resolved_context) then
-                G.GAME.current_round.porkify_dice_probability_active = true
-            end
-        end
-
         local eff, post = Porkify_eval_card_pride(resolved_card, resolved_context)
 
         if G and G.GAME then
@@ -3943,7 +3992,6 @@ if type(eval_card) == "function" and not Porkify_eval_card_pride then
                 or resolved_context.setting_blind
                 or resolved_context.hand_drawn
             ) then
-                G.GAME.current_round.porkify_dice_probability_active = nil
                 porkify_clear_mimic_replays()
             end
         end

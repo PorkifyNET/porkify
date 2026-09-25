@@ -37,9 +37,23 @@ SMODS.Consumable {
             },
             {
                 apply = function(c)
+                    c.ability.perma_h_bonus = (c.ability.perma_h_bonus or 0) + 15
+                end,
+                message = "+15 Chips when Held",
+                colour = G.C.CHIPS
+            },
+            {
+                apply = function(c)
                     c.ability.perma_mult = (c.ability.perma_mult or 0) + 4
                 end,
                 message = "+4 Mult",
+                colour = G.C.MULT
+            },
+            {
+                apply = function(c)
+                    c.ability.perma_h_mult = (c.ability.perma_h_mult or 0) + 2
+                end,
+                message = "+2 Mult when Held",
                 colour = G.C.MULT
             },
             {

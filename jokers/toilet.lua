@@ -1,17 +1,34 @@
+local function porkify_toilet_contains_flush(cards)
+    if type(cards) ~= "table" or #cards < 5 then
+        return false
+    end
+
+    local poker_hands = evaluate_poker_hand(cards) or {}
+    for _, hand_name in ipairs({ "Flush", "Straight Flush", "Flush House", "Flush Five" }) do
+        local matches = poker_hands[hand_name]
+        if type(matches) == "table" and next(matches) then
+            return true
+        end
+    end
+
+    return false
+end
+
 SMODS.Joker{ -- Toilet
     key = "toilet",
     config = {
         extra = {
-            Xmult = 1
+            Xmult = 1,
+            Xmult_gain = 0.25
         }
     },
     loc_txt = {
         ['name'] = 'Toilet',
         ['text'] = {
-            [1] = 'This Joker gains {X:mult,C:white}X0.1{} Mult',
-            [2] = 'every time a played hand',
-			[3] = 'contains a {C:attention}Flush{}',
-			[4] = '{C:inactive}(Currently{} {X:mult,C:white}X#1#{} {C:inactive}Mult){}'
+            [1] = 'This Joker gains {X:mult,C:white}X#1#{} Mult',
+            [2] = 'every time a {C:red}discarded{} hand',
+            [3] = 'contains a {C:attention}Flush{}',
+            [4] = '{C:inactive}(Currently{} {X:mult,C:white}X#2#{} {C:inactive}Mult){}'
         },
         ['unlock'] = {
             [1] = 'Play a {C:attention}Flush{}'
@@ -37,38 +54,27 @@ SMODS.Joker{ -- Toilet
     unlock_condition = { type = 'hand', extra = 'Flush' },
 
     loc_vars = function(self, info_queue, card)
-        -- Show current Xmult with 1 decimal place
-        local xm = card.ability.extra.Xmult or 1.0
-        local shown = xm
-        return { vars = { shown } }
+        local extra = (card and card.ability and card.ability.extra) or self.config.extra
+        return { vars = { extra.Xmult_gain or 0.25, extra.Xmult or 1 } }
     end,
 
     calculate = function(self, card, context)
-        if context.cardarea == G.jokers and context.joker_main then
-            local ph = context.poker_hands or {}
-			
-            -- Check if this scored hand is flush-like
-            local is_flush_like =
-                (ph.Flush and next(ph.Flush)) or
-                (ph["Straight Flush"] and next(ph["Straight Flush"])) or
-                (ph["Flush Five"] and next(ph["Flush Five"]))
+        if context.pre_discard and not context.blueprint then
+            local discarded_cards = (G and G.hand and G.hand.highlighted) or {}
+            if porkify_toilet_contains_flush(discarded_cards) then
+                local extra = card.ability.extra
+                extra.Xmult = (extra.Xmult or 1) + (extra.Xmult_gain or 0.25)
 
-            if is_flush_like and not context.blueprint then
-                card.ability.extra.Xmult = (card.ability.extra.Xmult or 1.0) + 0.1
-				
-				G.E_MANAGER:add_event(Event({
-                    func = function()
-                        card_eval_status_text(
-                            card, 'extra', nil, nil, nil,
-                            { message = "Flushed!", colour = G.C.CHIPS }
-                        )
-                        return true
-                    end
-                }))
+                return {
+                    message = "Upgrade!",
+                    colour = G.C.MULT
+                }
             end
+        end
 
+        if context.cardarea == G.jokers and context.joker_main then
             return {
-                Xmult = card.ability.extra.Xmult or 1.0
+                Xmult = card.ability.extra.Xmult or 1
             }
         end
     end,

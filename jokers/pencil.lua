@@ -10,7 +10,7 @@ SMODS.Joker{ --Pencil
         ['name'] = 'Pencil',
         ['text'] = {
             [1] = '{C:red}+1{} Mult per unused',
-            [2] = '{C:attention}discard{} this run',
+            [2] = '{C:red}discard{} this run',
             [3] = '{C:inactive}(Currently{} {C:red}+#1#{} {C:inactive}Mult){}'
         },
         ['unlock'] = {

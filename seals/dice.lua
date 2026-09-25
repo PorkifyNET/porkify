@@ -6,11 +6,12 @@ SMODS.Seal {
     discovered = false,
     unlocked = true,
     loc_txt = {
-        name = "Dice Seal",
-        label = "Dice Seal",
+        name = "Green Seal",
+        label = "Green Seal",
         text = {
-            [1] = "All {C:green}probabilities{} {C:attention}succeed{}",
-            [2] = "for this {C:blue}hand{} when scored"
+            [1] = "Adds {C:green}+1{} to all probability",
+            [2] = "numerators for this {C:blue}hand{}",
+            [3] = "when scored"
         }
     },
 
@@ -19,12 +20,9 @@ SMODS.Seal {
     },
 
     calculate = function(self, card, context)
-        if context.main_scoring and context.cardarea == G.play and G and G.GAME then
-            G.GAME.current_round = G.GAME.current_round or {}
-            G.GAME.current_round.porkify_dice_probability_active = true
-
+        if context.main_scoring and context.cardarea == G.play then
             return {
-                message = "Loaded!",
+                message = "+1 Odds!",
                 colour = G.C.CHANCE
             }
         end

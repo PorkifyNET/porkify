@@ -15,10 +15,10 @@ SMODS.Seal {
         name = "Echo Seal",
         label = "Echo Seal",
         text = {
-            [1] = "{C:green}1 in 2{} chance to {C:attention}retrigger{},",
-            [2] = "then keep rolling until",
-            [3] = "it fails",
-            [4] = "{C:inactive}(Up to #1# additional triggers){}"
+            [1] = "{C:green}1 in 2{} chance to",
+            [2] = "{C:attention}retrigger{} when scored,",
+            [3] = "rerolling on success",
+            [4] = "{C:inactive}(Maximum of #1# retriggers){}"
         }
     },
 

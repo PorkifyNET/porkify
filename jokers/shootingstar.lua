@@ -39,19 +39,16 @@ SMODS.Joker{ -- Shooting Star
     key = "shootingstar",
     config = {
         extra = {
-            target_rank = "Ace",
-            mult = 0,
-            mult_gain = 2
+            target_rank = "Ace"
         }
     },
     loc_txt = {
         ['name'] = 'Shooting Star',
         ['text'] = {
-            [1] = 'This Joker gains {C:red}+#2#{} Mult',
-            [2] = 'every time a played {C:attention}#1#{}',
-            [3] = 'is scored',
-            [4] = '{s:0.75}Rank changes every round{}',
-            [5] = '{C:inactive}(Currently{} {C:red}+#3#{} {C:inactive}Mult){}'
+            [1] = 'Create a {C:planet}Planet{} card if',
+            [2] = 'played hand contains a {C:attention}#1#{}',
+            [3] = '{s:0.75}Rank changes every round{}',
+            [4] = '{C:inactive}(Must have room){}'
         }
     },
     pos = { x = 2, y = 8 },
@@ -60,7 +57,7 @@ SMODS.Joker{ -- Shooting Star
     rarity = 1,
     blueprint_compat = true,
     eternal_compat = true,
-    perishable_compat = false,
+    perishable_compat = true,
     unlocked = true,
     discovered = false,
     atlas = 'CustomJokers',
@@ -71,8 +68,7 @@ SMODS.Joker{ -- Shooting Star
      },
 
     loc_vars = function(self, info_queue, card)
-        local extra = (card and card.ability and card.ability.extra) or self.config.extra
-        return { vars = { porkify_shooting_star_target_rank(card), extra.mult_gain or 2, extra.mult or 0 } }
+        return { vars = { porkify_shooting_star_target_rank(card) } }
     end,
 
     set_ability = function(self, card, initial)
@@ -96,28 +92,46 @@ SMODS.Joker{ -- Shooting Star
             }
         end
 
-        if context.individual and context.cardarea == G.play and context.other_card then
+        if context.before and context.cardarea == G.jokers then
             local target_rank = porkify_shooting_star_target_rank(card)
+            local has_target_rank = false
 
-            if porkify_card_matches_rank(context.other_card, target_rank) and not context.blueprint then
+            for _, played_card in ipairs(context.full_hand or {}) do
+                if porkify_card_matches_rank(played_card, target_rank) then
+                    has_target_rank = true
+                    break
+                end
+            end
+
+            if has_target_rank
+                and G.consumeables
+                and G.consumeables.cards
+                and G.consumeables.config
+                and #G.consumeables.cards < (G.consumeables.config.card_limit or 0) then
                 return {
                     func = function()
-                        local extra = card.ability.extra or {}
-                        extra.mult = (extra.mult or 0) + (extra.mult_gain or 2)
-                        card.ability.extra = extra
-                        return true
-                    end,
-                    message = "Upgrade!",
-                    colour = G.C.MULT
-                }
-            end
-        end
+                        if not (G.consumeables
+                            and G.consumeables.cards
+                            and G.consumeables.config
+                            and #G.consumeables.cards < (G.consumeables.config.card_limit or 0)) then
+                            return true
+                        end
 
-        if context.cardarea == G.jokers and context.joker_main then
-            local extra = card.ability.extra or {}
-            if (extra.mult or 0) > 0 then
-                return {
-                    mult = extra.mult
+                        local planet = SMODS.add_card({
+                            set = 'Planet',
+                            area = G.consumeables
+                        })
+
+                        if planet then
+                            card_eval_status_text(
+                                planet, 'extra', nil, nil, nil,
+                                { message = localize('k_plus_planet'), colour = G.C.PLANET }
+                            )
+                            card:juice_up(0.3, 0.5)
+                        end
+
+                        return true
+                    end
                 }
             end
         end
@@ -126,7 +140,7 @@ SMODS.Joker{ -- Shooting Star
     joker_display_def = function(JokerDisplay)
         return {
             text = {
-                { ref_table = "card.joker_display_values", ref_value = "mult_text", colour = G.C.RED }
+                { ref_table = "card.joker_display_values", ref_value = "add_planet", colour = G.C.SECONDARY_SET["Planet"] }
             },
             reminder_text = {
                 { text = "(" },
@@ -135,9 +149,38 @@ SMODS.Joker{ -- Shooting Star
             },
 
             calc_function = function(card)
-                local extra = (card.ability and card.ability.extra) or {}
+                local has_target_rank = false
+                local evaluated_cards = {}
+
+                if G and G.hand and G.hand.highlighted and #G.hand.highlighted > 0 then
+                    evaluated_cards = G.hand.highlighted
+                elseif G and G.play and G.play.cards and #G.play.cards > 0 then
+                    evaluated_cards = G.play.cards
+                else
+                    local _, _, scoring_hand = JokerDisplay.evaluate_hand()
+                    evaluated_cards = scoring_hand or {}
+                end
+
+                if card and card.ability and card.ability.extra then
+                    local target_rank = porkify_shooting_star_target_rank(card)
+                    for _, played_card in ipairs(evaluated_cards) do
+                        if porkify_card_matches_rank(played_card, target_rank) then
+                            has_target_rank = true
+                            break
+                        end
+                    end
+                end
+
+                local has_consumable_room = G
+                    and G.consumeables
+                    and G.consumeables.cards
+                    and G.consumeables.config
+                    and #G.consumeables.cards < (G.consumeables.config.card_limit or 0)
+
+                card.joker_display_values.add_planet =
+                    has_target_rank and "+1" or "+0"
+
                 card.joker_display_values.rank_text = porkify_shooting_star_target_rank(card)
-                card.joker_display_values.mult_text = "+" .. tostring(extra.mult or 0)
             end
         }
     end

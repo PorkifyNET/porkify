@@ -164,7 +164,9 @@ return function(mod, save, defaults)
         local settings = {
             heading('Appearance'),
             toggle('Porkify menu theme', 'porkify_theme', { 'Turn off to use standard menu colours.' }, true),
-            toggle('Show credit badges', 'show_credit_badges', { 'Show art and idea credits. Food badges stay visible.' }),
+            toggle('Show credit badges', 'show_credit_badges', { 'Show art and idea credits. Other badge settings are unaffected.' }),
+            toggle('Show AI art badges', 'show_ai_art_badges', { 'Disclose cards that use AI-generated artwork.' }),
+            toggle('Show category badges', 'show_category_badges', { 'Show gameplay categories such as Food.' }),
             heading('Convenience'),
             toggle('Reveal secret hand descriptions', 'reveal_secret_hands', {
                 'Show undiscovered Porkify hands in Run Info.', 'Does not unlock hands or change gameplay.' }),
@@ -250,7 +252,7 @@ return function(mod, save, defaults)
                 end }
         end
         local nodes = {
-            create_tabs { snap_to_nav = true, colour = HEX('8f205f'), tabs = {
+            create_tabs { snap_to_nav = true, colour = HEX('8f205f'), tab_w = 17, tab_alignment = 'cm', tabs = {
                 tab('General', general), tab('Content', content), tab('Experimental', experimental)
             } }
         }

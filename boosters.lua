@@ -8,12 +8,6 @@ local function porkify_booster_display_counts(self, card)
     choose = choose + (modifiers.booster_choice_mod or 0)
     extra = extra + (modifiers.booster_size_mod or 0)
 
-    if self.kind == 'Porkify'
-        and G and G.GAME and G.GAME.used_vouchers
-        and G.GAME.used_vouchers.v_porkify_gluttony then
-        extra = extra + 1
-    end
-
     if choose < 1 then choose = 1 end
     if extra < 1 then extra = 1 end
 

@@ -141,7 +141,7 @@ end)
 register('big_bang', 'The Big Bang', 'Reach Ante 0', function(args)
     return G.GAME.round_resets and G.GAME.round_resets.ante == 0
 end)
-register('mis_input', 'Mis-input', 'Play a Glass or Mirror card alongside another card with a Dice Seal', function(args)
+register('mis_input', 'Mis-input', 'Play a Glass or Mirror card alongside another card with a Green Seal', function(args)
     return args.type == 'hand_contents' and args.porkify_mis_input
 end)
 register('see_you_again', 'See You Again', 'Have a Paul Joker die', function(args)

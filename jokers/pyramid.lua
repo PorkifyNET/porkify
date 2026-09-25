@@ -8,9 +8,9 @@ SMODS.Joker{ --Pyramid
     loc_txt = {
         ['name'] = 'Pyramid',
         ['text'] = {
-            [1] = 'Every played {C:attention}3{}, {C:attention}4{},',
-            [2] = 'and {C:attention}5{} becomes a',
-            [3] = '{C:attention}Wild Card{} when scored'
+            [1] = 'Every played {C:attention}face card{}',
+            [2] = 'becomes an {C:enhanced}Ancient{} card',
+            [3] = 'when scored'
         },
         ['unlock'] = {
             [1] = 'Play {C:attention}150{} cards'
@@ -36,11 +36,11 @@ SMODS.Joker{ --Pyramid
     unlock_condition = { type = 'c_cards_played', extra = 150 },
 
     loc_vars = function(self, info_queue, card)
-        local info_queue_0 = G.P_CENTERS["m_wild"]
-        if info_queue_0 then
-            info_queue[#info_queue + 1] = info_queue_0
+        local ancient_center = G.P_CENTERS["m_porkify_ancient"]
+        if ancient_center then
+            info_queue[#info_queue + 1] = ancient_center
         else
-            error("JOKERFORGE: Invalid key in infoQueues. \"m_wild\" isn't a valid Object key, Did you misspell it or forgot a modprefix?")
+            error("PORKIFY: Missing Ancient enhancement center \"m_porkify_ancient\"")
         end
         return { vars = {} }
     end,
@@ -48,12 +48,12 @@ SMODS.Joker{ --Pyramid
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play and not context.blueprint then
             local scored_card = context.other_card
-            local id = scored_card:get_id()
             local current_key = scored_card.config and scored_card.config.center and scored_card.config.center.key
-            if porkify_card_matches_rank(scored_card, { 3, 4, 5 }) and current_key ~= "m_wild" then
-                scored_card:set_ability(G.P_CENTERS.m_wild)
+            if porkify_card_is_face_or_blank(scored_card) and current_key ~= "m_porkify_ancient" then
+                scored_card:set_ability(G.P_CENTERS.m_porkify_ancient, nil, true)
                 return {
-                    message = "Card Modified!"
+                    message = "Ancient!",
+                    colour = G.C.SECONDARY_SET.Enhanced
                 }
             end
         end
@@ -63,7 +63,7 @@ SMODS.Joker{ --Pyramid
 	  return {
 		reminder_text = {
 			{ text = "(" },
-			{ text = "3, 4, 5", colour = G.C.IMPORTANT },
+			{ text = "Face Cards", colour = G.C.IMPORTANT },
 			{ text = ")" },
 		},
 	  }

@@ -5,11 +5,11 @@ SMODS.Consumable {
     loc_txt = {
         name = 'Surgery',
         text = {
-            [1] = 'Select {C:attention}3{} cards',
-            [2] = 'Put the {C:attention}rank{} of the',
-            [3] = 'middle card and the {C:attention}suit{}',
-            [4] = 'of the right card onto the left,',
-            [5] = 'then {C:red}destroy{} the other 2'
+            [1] = 'Combine {C:attention}3{} selected cards:',
+            [2] = 'the left card gains the {C:attention}rank{}',
+            [3] = 'of the middle card and the {C:attention}suit{}',
+            [4] = 'of the right card, then {C:red}destroy{}',
+            [5] = 'the other 2 cards'
         }
     },
     cost = 3,

@@ -1,13 +1,3 @@
-local function get_jackpot_targets(used_card)
-    local targets = {}
-    for _, c in ipairs((G.consumeables and G.consumeables.cards) or {}) do
-        if c ~= used_card then
-            targets[#targets + 1] = c
-        end
-    end
-    return targets
-end
-
 SMODS.Consumable {
     key = 'jackpot',
     set = 'porkify',
@@ -15,12 +5,11 @@ SMODS.Consumable {
     loc_txt = {
         name = 'Jackpot',
         text = {
-            [1] = 'Add a random {C:dark_edition}Edition{}',
-            [2] = 'to a random owned',
-            [3] = '{C:attention}Consumable{}',
-            [4] = '{C:inactive}(Must have another consumable){}'
+            [1] = 'Add a {C:attention}Green Seal{} to',
+            [2] = '{C:attention}1{} selected card'
         }
     },
+    config = { min_highlighted = 1, max_highlighted = 1 },
     cost = 3,
     unlocked = true,
     discovered = false,
@@ -28,48 +17,64 @@ SMODS.Consumable {
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
 
+    loc_vars = function(self, info_queue, card)
+        local green_seal = G.P_SEALS and (G.P_SEALS['porkify_dice'] or G.P_SEALS['dice'])
+        if green_seal then
+            info_queue[#info_queue + 1] = green_seal
+        end
+        return { vars = {} }
+    end,
+
     use = function(self, card, area, copier)
         local used_card = copier or card
-        local targets = get_jackpot_targets(used_card)
-        if #targets == 0 then
-            return
-        end
+        if not (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) == to_big(1)) then return end
 
-        local target = pseudorandom_element(targets, pseudoseed('c_porkify_jackpot_target'))
-        local edition_key = SMODS.poll_edition({
-            key = 'c_porkify_jackpot_edition',
-            guaranteed = true
-        })
-
-        if not target or not edition_key then
-            card_eval_status_text(
-                used_card,
-                'extra',
-                nil, nil, nil,
-                { message = "No luck", colour = G.C.RED }
-            )
-            return
-        end
+        local target = G.hand.highlighted[1]
 
         G.E_MANAGER:add_event(Event({
             trigger = 'after',
             delay = 0.4,
             func = function()
-                target:set_edition(edition_key, true)
-                target:juice_up(0.3, 0.5)
-                card_eval_status_text(
-                    used_card,
-                    'extra',
-                    nil, nil, nil,
-                    { message = "Jackpot!", colour = G.C.GREEN }
-                )
+                play_sound('tarot1')
+                used_card:juice_up(0.3, 0.5)
                 return true
             end
         }))
-        delay(0.6)
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.15,
+            func = function()
+                target:flip()
+                play_sound('card1', 1.0)
+                target:juice_up(0.3, 0.3)
+                return true
+            end
+        }))
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.35,
+            func = function()
+                target:set_seal('porkify_dice', nil, true)
+                return true
+            end
+        }))
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.55,
+            func = function()
+                target:flip()
+                play_sound('tarot2', 1.0, 0.6)
+                target:juice_up(0.3, 0.3)
+                G.hand:unhighlight_all()
+                return true
+            end
+        }))
     end,
 
     can_use = function(self, card)
-        return #get_jackpot_targets(card) > 0
+        return (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) == to_big(1)) == true
     end
 }

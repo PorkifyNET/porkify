@@ -36,13 +36,42 @@ return function()
                 { n = G.UIT.T, config = { text = text, scale = 0.24, colour = G.C.UI.TEXT_LIGHT } }
             } }
         end
-        local rows = { label('Hover to preview') }
-        if chosen_key then
-            rows[#rows + 1] = sample(G.P_CENTERS[chosen_key], G.P_CARDS.empty)
-            rows[#rows + 1] = label('Art / Idea credits')
+        local previews = {}
+        local function preview(center, front, preview_label, favorite)
+            if not center then return end
+            previews[#previews + 1] = {
+                n = G.UIT.C,
+                config = { align = 'cm', padding = 0.04 },
+                nodes = {
+                    sample(center, front, favorite),
+                    label(preview_label)
+                }
+            }
         end
-        rows[#rows + 1] = sample(G.P_CENTERS.c_base, G.P_CARDS.H_A, true)
-        rows[#rows + 1] = label('Favorite indicator')
+
+        if chosen_key then
+            preview(G.P_CENTERS[chosen_key], G.P_CARDS.empty, 'Art / Idea credits')
+        end
+
+        local ai_art_center = G.P_CENTERS.c_porkify_anvil
+        if not ai_art_center then
+            for _, center in pairs(G.P_CENTERS) do
+                if center.ai_art_badge then
+                    ai_art_center = center
+                    break
+                end
+            end
+        end
+
+        preview(ai_art_center, G.P_CARDS.empty, 'AI art disclosure')
+        preview(G.P_CENTERS.j_egg, G.P_CARDS.empty, 'Category: Food')
+        preview(G.P_CENTERS.c_base, G.P_CARDS.H_A, 'Favorite indicator', true)
+
+        local rows = { label('Hover to preview') }
+        for _, preview_node in ipairs(previews) do
+            rows[#rows + 1] = preview_node
+        end
+
         return { n = G.UIT.C, config = { align = 'cm', padding = 0.05 }, nodes = rows }
     end
 end

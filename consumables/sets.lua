@@ -5,6 +5,7 @@ SMODS.ConsumableType {
     collection_rows = { 5, 5 },
     shop_rate = 0,
     cards = {
+        ['c_porkify_anvil'] = true,
         ['c_porkify_arachnid'] = true,
         ['c_porkify_asteroid'] = true,
         ['c_porkify_bingo'] = true,
@@ -16,6 +17,7 @@ SMODS.ConsumableType {
         ['c_porkify_cleanupcrew'] = true,
         ['c_porkify_connectthedots'] = true,
         ['c_porkify_conjoined'] = true,
+        ['c_porkify_console'] = true,
         ['c_porkify_delegation'] = true,
         ['c_porkify_diamondhands'] = true,
         ['c_porkify_doubleornothing'] = true,
@@ -36,6 +38,7 @@ SMODS.ConsumableType {
         ['c_porkify_mirror'] = true,
         ['c_porkify_mortgage'] = true,
         ['c_porkify_paperball'] = true,
+        ['c_porkify_pharaoh'] = true,
         ['c_porkify_primate'] = true,
         ['c_porkify_prideparade'] = true,
         ['c_porkify_proletariat'] = true,

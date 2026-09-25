@@ -9,8 +9,8 @@ SMODS.Seal {
         name = "Pride Seal",
         label = "Pride Seal",
         text = {
-            [1] = "{X:red,C:white}X1{} Mult for each {C:attention}Pride{}",
-            [2] = "{C:attention}Seal{} played this hand",
+            [1] = "Gives {X:red,C:white}X1{} Mult, plus {X:red,C:white}X1{}",
+            [2] = "for each scored {C:attention}Pride Seal{}",
             [3] = "{C:inactive}(Must be held in hand){}"
         }
     },

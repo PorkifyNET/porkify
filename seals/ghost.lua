@@ -10,30 +10,9 @@ local function porkify_get_remaining_ghost_slots()
     return math.max(0, limit - #G.consumeables.cards - reserved)
 end
 
-local function porkify_get_ghost_card_key(card)
-    return card and (card.unique_val or card.sort_id or tostring(card))
-end
-
-local function porkify_get_random_consumable_copy_target()
-    local consumeables = G and G.consumeables and G.consumeables.cards
-    if not consumeables or #consumeables == 0 then
-        return nil
-    end
-
-    local valid = {}
-    for _, c in ipairs(consumeables) do
-        local center = c and c.config and c.config.center
-        local set = (c and c.ability and c.ability.set) or (center and center.set)
-        if center and center.key and set then
-            valid[#valid + 1] = c
-        end
-    end
-
-    if #valid == 0 then
-        return nil
-    end
-
-    return pseudorandom_element(valid, pseudoseed("porkify_ghost_seal"))
+local function porkify_is_ghost_seal(card)
+    local seal = card and (card.seal or (card.ability and card.ability.seal))
+    return seal == "porkify_ghost" or seal == "ghost"
 end
 
 SMODS.Seal {
@@ -47,96 +26,76 @@ SMODS.Seal {
         name = "Ghost Seal",
         label = "Ghost Seal",
         text = {
-            [1] = "Create a {C:attention}copy{} of a random",
-            [2] = "{C:tarot}consumable{} in your possession",
-            [3] = "when held at end of round",
+            [1] = "Create a random",
+            [2] = "{C:spectral}Spectral{} card when this",
+            [3] = "card is {C:red}destroyed{}",
             [4] = "{C:inactive}(Must have room){}"
         }
     },
 
     credit_badges = {
         { text = "Art: Astro", colour = "59A487" }
-     },
-
-    calculate = function(self, card, context)
-        if context.end_of_round and context.main_eval and not context.blueprint and G and G.GAME then
-            G.GAME.current_round = G.GAME.current_round or {}
-            G.GAME.current_round.porkify_ghost_reserved_consumables = 0
-            G.GAME.current_round.porkify_ghost_triggered_cards = {}
-        end
-
-        if context.end_of_round
-            and context.cardarea == G.hand
-            and not context.repetition
-            and (
-                context.individual
-                or context.main_eval
-                or (not context.individual and not context.main_eval)
-            ) then
-            G.GAME.current_round = G.GAME.current_round or {}
-            G.GAME.current_round.porkify_ghost_triggered_cards =
-                G.GAME.current_round.porkify_ghost_triggered_cards or {}
-
-            local card_key = porkify_get_ghost_card_key(card)
-            if card_key and G.GAME.current_round.porkify_ghost_triggered_cards[card_key] then
-                return
-            end
-
-            if porkify_get_remaining_ghost_slots() <= 0 then
-                return
-            end
-
-            local target = porkify_get_random_consumable_copy_target()
-            local center = target and target.config and target.config.center
-            local set = (target and target.ability and target.ability.set) or (center and center.set)
-            local key = center and center.key
-
-            if not (set and key) then
-                return
-            end
-
-            if card_key then
-                G.GAME.current_round.porkify_ghost_triggered_cards[card_key] = true
-            end
-
-            G.GAME.current_round.porkify_ghost_reserved_consumables =
-                (G.GAME.current_round.porkify_ghost_reserved_consumables or 0) + 1
-
-            return {
-                func = function()
-                    local current_round = G and G.GAME and G.GAME.current_round
-                    if current_round then
-                        current_round.porkify_ghost_reserved_consumables =
-                            math.max(0, (current_round.porkify_ghost_reserved_consumables or 1) - 1)
-                    end
-
-                    if not (G and G.consumeables and G.consumeables.cards and G.consumeables.config) then
-                        return true
-                    end
-
-                    if #G.consumeables.cards >= (G.consumeables.config.card_limit or 0) then
-                        return true
-                    end
-
-                    local created = SMODS.add_card({
-                        set = set,
-                        key = key
-                    })
-
-                    if created then
-                        card_eval_status_text(
-                            card,
-                            "extra",
-                            nil,
-                            nil,
-                            nil,
-                            { message = "Ghosted!", colour = G.C.SECONDARY_SET.Spectral }
-                        )
-                    end
-
-                    return true
-                end
-            }
-        end
-    end
+    }
 }
+
+local function porkify_queue_ghost_spectral(card)
+    if not (card and not card.debuff and porkify_is_ghost_seal(card)) then
+        return
+    end
+    if card.porkify_ghost_spectral_queued or porkify_get_remaining_ghost_slots() <= 0 then
+        return
+    end
+
+    G.GAME.current_round = G.GAME.current_round or {}
+    card.porkify_ghost_spectral_queued = true
+    G.GAME.current_round.porkify_ghost_reserved_consumables =
+        (G.GAME.current_round.porkify_ghost_reserved_consumables or 0) + 1
+
+    G.E_MANAGER:add_event(Event({
+        trigger = "after",
+        delay = 0.2,
+        func = function()
+            local current_round = G and G.GAME and G.GAME.current_round
+            if current_round then
+                current_round.porkify_ghost_reserved_consumables =
+                    math.max(0, (current_round.porkify_ghost_reserved_consumables or 1) - 1)
+            end
+
+            if not (G and G.consumeables and G.consumeables.cards and G.consumeables.config) then
+                return true
+            end
+            if #G.consumeables.cards >= (G.consumeables.config.card_limit or 0) then
+                return true
+            end
+
+            local created = SMODS.add_card({ set = "Spectral", area = G.consumeables })
+            if created then
+                card_eval_status_text(
+                    created,
+                    "extra",
+                    nil,
+                    nil,
+                    nil,
+                    { message = localize("k_plus_spectral"), colour = G.C.SECONDARY_SET.Spectral }
+                )
+            end
+
+            return true
+        end
+    }))
+end
+
+if SMODS and type(SMODS.calculate_context) == "function" and not Porkify_calculate_context_ghost_seal then
+    Porkify_calculate_context_ghost_seal = SMODS.calculate_context
+    SMODS.calculate_context = function(context, ...)
+        local result = Porkify_calculate_context_ghost_seal(context, ...)
+
+        if context and context.remove_playing_cards and type(context.removed) == "table" then
+            for _, removed_card in ipairs(context.removed) do
+                porkify_queue_ghost_spectral(removed_card)
+            end
+        end
+
+        return result
+    end
+end
