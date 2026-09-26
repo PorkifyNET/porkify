@@ -39,11 +39,12 @@ SMODS.Joker{
                         if center
                             and center.set == "Joker"
                             and center.key
-                            and not (G.GAME.banned_keys and G.GAME.banned_keys[center.key])
+                            and Porkify_pool_object_is_available(center, "porkify_orchard_spawn")
                         then
                             pool[#pool+1] = center.key
                         end
                     end
+                    table.sort(pool)
                     if #pool == 0 then return true end
 
                     -- pick one

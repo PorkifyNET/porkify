@@ -21,6 +21,7 @@ local function porkify_shooting_star_available_ranks()
         return SHOOTING_STAR_RANKS
     end
 
+    table.sort(pool)
     return pool
 end
 

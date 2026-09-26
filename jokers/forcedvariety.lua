@@ -61,6 +61,7 @@ SMODS.Joker{
                     ForbiddenHand_hands[#ForbiddenHand_hands + 1] = handname
                 end
             end
+            table.sort(ForbiddenHand_hands)
             if ForbiddenHand_hands[1] then
                 G.GAME.current_round.ForbiddenHand_hand = pseudorandom_element(ForbiddenHand_hands, pseudoseed('ForbiddenHand' .. G.GAME.round_resets.ante))
             end

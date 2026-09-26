@@ -36,10 +36,12 @@ SMODS.Back {
                         and not center.no_collection
                         and not is_ruleset
                         and not is_legendary
+                        and Porkify_pool_object_is_available(center, "porkify_metal_deck")
                     then
                         possible[#possible + 1] = center.key
                     end
                 end
+                table.sort(possible)
 
                 if #possible > 0 then
                     local joker_key = pseudorandom_element(possible, pseudoseed('porkify_metal_deck_joker'))

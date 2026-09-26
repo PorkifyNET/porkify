@@ -64,16 +64,20 @@ SMODS.Consumable {
 			if G.P_CENTER_POOLS and (G.P_CENTER_POOLS.Enhanced or G.P_CENTER_POOLS.Enhancement) then
 				local p = G.P_CENTER_POOLS.Enhanced or G.P_CENTER_POOLS.Enhancement
 				for _, v in pairs(p) do
-					if v and v.key then pool[#pool+1] = v.key end
+					if v and v.key and Porkify_pool_object_is_available(v, "porkify_sacrifice_enh") then
+						pool[#pool+1] = v.key
+					end
 				end
 			else
 				for k, v in pairs(G.P_CENTERS or {}) do
-					if v and (v.set == 'Enhanced' or v.set == 'Enhancement') then
+					if v and (v.set == 'Enhanced' or v.set == 'Enhancement')
+						and Porkify_pool_object_is_available(v, "porkify_sacrifice_enh") then
 						pool[#pool+1] = k
 					end
 				end
 			end
 			if #pool == 0 then return nil end
+			table.sort(pool)
 			return pseudorandom_element(pool, "porkify_sacrifice_enh")
 		end
 

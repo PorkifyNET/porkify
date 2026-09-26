@@ -10,8 +10,16 @@ SMODS.Blind {
         blind.effect.porkify_error_rolled = true
         local percent = pseudorandom('porkify_error_requirement', 10, 200)
         blind.effect.porkify_error_percent = percent
-        local minimum, maximum = math.ceil(blind.chips * 0.1), math.floor(blind.chips * 2)
-        blind.chips = math.max(1, math.max(minimum, math.min(maximum, math.floor(blind.chips * percent / 100 + 0.5))))
+        local original_chips = to_big(blind.chips or 1)
+        local minimum = math.ceil(original_chips * to_big(0.1))
+        local maximum = math.floor(original_chips * to_big(2))
+        local adjusted = math.floor(
+            original_chips * to_big(percent) / to_big(100) + to_big(0.5)
+        )
+        if adjusted < minimum then adjusted = minimum end
+        if adjusted > maximum then adjusted = maximum end
+        if adjusted < to_big(1) then adjusted = to_big(1) end
+        blind.chips = adjusted
         blind.chip_text = number_format(blind.chips)
         -- Whole-dollar payouts stay inside the percentage bounds; zero rewards stay zero.
         local low, high = math.ceil(blind.dollars * 0.1), math.floor(blind.dollars * 2)

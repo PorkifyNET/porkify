@@ -40,11 +40,13 @@ local function porkify_fixed_deck_joker_pool()
             and not center.no_collection
             and is_standard_joker_rarity
             and not is_ruleset
+            and Porkify_pool_object_is_available(center, "porkify_fixed_deck_pack")
         then
             pool[#pool + 1] = center.key
         end
     end
 
+    table.sort(pool)
     return pool
 end
 

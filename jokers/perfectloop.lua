@@ -50,8 +50,12 @@ SMODS.Joker{ -- Perfect Loop
                     possible[#possible + 1] = handname
                 end
             end
+            table.sort(possible)
             if #possible > 0 then
-                G.GAME.PerfectLoopPokerHand_hand = pseudorandom_element(possible)
+                G.GAME.PerfectLoopPokerHand_hand = pseudorandom_element(
+                    possible,
+                    pseudoseed('porkify_perfect_loop_initial')
+                )
             else
                 G.GAME.PerfectLoopPokerHand_hand = 'High Card'
             end
@@ -72,8 +76,12 @@ SMODS.Joker{ -- Perfect Loop
                     possible[#possible + 1] = handname
                 end
             end
+            table.sort(possible)
             if #possible > 0 then
-                G.GAME.PerfectLoopPokerHand_hand = pseudorandom_element(possible)
+                G.GAME.PerfectLoopPokerHand_hand = pseudorandom_element(
+                    possible,
+                    pseudoseed('porkify_perfect_loop_next')
+                )
             end
         end
 

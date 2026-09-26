@@ -138,28 +138,32 @@ SMODS.Consumable {
                     c.ability.perma_blind_size = (c.ability.perma_blind_size or 1) - 750
                 end,
                 message = "-750 Blind Size",
-                colour = G.C.DYN_UI.DARK
+                colour = G.C.DYN_UI.DARK,
+                multiplayer_unsafe = true
             },
             {
                 apply = function(c)
                     c.ability.perma_x_blind_size = (c.ability.perma_x_blind_size or 1) - 0.05
                 end,
                 message = "-5% Blind Size",
-                colour = G.C.DYN_UI.DARK
+                colour = G.C.DYN_UI.DARK,
+                multiplayer_unsafe = true
             },
             {
                 apply = function(c)
                     c.ability.perma_h_blind_size = (c.ability.perma_h_blind_size or 1) - 500
                 end,
                 message = "-500 Blind Size when Held",
-                colour = G.C.DYN_UI.DARK
+                colour = G.C.DYN_UI.DARK,
+                multiplayer_unsafe = true
             },
             {
                 apply = function(c)
                     c.ability.perma_h_x_blind_size = (c.ability.perma_h_x_blind_size or 1) - 0.02
                 end,
                 message = "-2% Blind Size when Held",
-                colour = G.C.DYN_UI.DARK
+                colour = G.C.DYN_UI.DARK,
+                multiplayer_unsafe = true
             },
             {
                 apply = function(c)
@@ -169,6 +173,27 @@ SMODS.Consumable {
                 colour = G.C.IMPORTANT
             }
         }
+
+        -- A Nemesis Blind uses the opponent's live score as its target. Card
+        -- bonuses that mutate G.GAME.blind.chips corrupt that moving target,
+        -- so keep Casual Walk's ordinary score/economy bonuses in MP matches.
+        local in_multiplayer_match = false
+        if type(MP) == "table" then
+            if type(MP.is_mp_or_ghost) == "function" then
+                in_multiplayer_match = not not MP.is_mp_or_ghost()
+            else
+                in_multiplayer_match = type(MP.LOBBY) == "table" and MP.LOBBY.code ~= nil
+            end
+        end
+        if in_multiplayer_match then
+            local safe_buffs = {}
+            for _, buff in ipairs(buffs) do
+                if not buff.multiplayer_unsafe then
+                    safe_buffs[#safe_buffs + 1] = buff
+                end
+            end
+            buffs = safe_buffs
+        end
 
         local chosen_buff = pseudorandom_element(buffs, pseudoseed('porkify_casualwalk'))
 

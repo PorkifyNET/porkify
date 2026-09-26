@@ -21,6 +21,7 @@ local function porkify_pick_random_seal_name()
         }
     end
 
+    table.sort(seals)
     return pseudorandom_element(seals, pseudoseed("porkify_milestone_seal"))
 end
 

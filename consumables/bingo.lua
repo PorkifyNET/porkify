@@ -38,7 +38,21 @@ SMODS.Consumable {
 		)
 
 		if hit then
-			local voucher_key = pseudorandom_element(G.P_CENTER_POOLS.Voucher, "7b517a8b").key
+			local voucher_pool = {}
+			for _, center in pairs(G.P_CENTER_POOLS.Voucher or {}) do
+				if center and center.key
+					and Porkify_pool_object_is_available(center, "porkify_bingo") then
+					voucher_pool[#voucher_pool + 1] = center
+				end
+			end
+			table.sort(voucher_pool, function(a, b) return tostring(a.key) < tostring(b.key) end)
+			if #voucher_pool == 0 then
+				card_eval_status_text(used_card, 'extra', nil, nil, nil,
+					{ message = "No eligible Voucher", colour = G.C.RED })
+				return
+			end
+
+			local voucher_key = pseudorandom_element(voucher_pool, "7b517a8b").key
 			local voucher_card = SMODS.create_card{ area = G.play, key = voucher_key }
 
 			voucher_card:start_materialize()

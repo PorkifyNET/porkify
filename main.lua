@@ -249,6 +249,7 @@ SMODS.PokerHand({
 assert(SMODS.load_file("enhancement_compat.lua"))()
 assert(SMODS.load_file("talisman_compat.lua"))()
 assert(SMODS.load_file("poker_hands.lua"))()
+assert(SMODS.load_file("pool_compat.lua"))()
 
 local porkify_game_start_run_ref = Game.start_run
 function Game:start_run(args)
@@ -1055,7 +1056,10 @@ function porkify_install_blank_vanilla_joker_patch()
             end
         end
 
-        if Card.is_face ~= Porkify_blank_is_face then
+        -- Install each chained hook only once. Other mods may wrap this function
+        -- later and keep our hook in their saved call chain. Re-wrapping here
+        -- would make that chain point back to us and recurse forever.
+        if Porkify_blank_is_face_ref == nil then
             Porkify_blank_is_face_ref = Card.is_face
             Card.is_face = Porkify_blank_is_face
         end
@@ -1082,7 +1086,7 @@ function porkify_install_blank_vanilla_joker_patch()
             end
         end
 
-        if Card.calculate_joker ~= Porkify_blank_calculate_joker then
+        if Porkify_blank_calculate_joker_ref == nil then
             Porkify_blank_calculate_joker_ref = Card.calculate_joker
             Card.calculate_joker = Porkify_blank_calculate_joker
         end
@@ -1101,7 +1105,7 @@ function porkify_install_blank_vanilla_joker_patch()
             end
         end
 
-        if Card.update ~= Porkify_blank_card_update then
+        if Porkify_blank_card_update_ref == nil then
             Porkify_blank_card_update_ref = Card.update
             Card.update = Porkify_blank_card_update
         end
@@ -1413,7 +1417,7 @@ function porkify_install_blank_play_lock_patch()
         end
     end
 
-    if G.FUNCS.can_play and G.FUNCS.can_play ~= Porkify_blank_can_play then
+    if G.FUNCS.can_play and Porkify_can_play == nil then
         Porkify_can_play = G.FUNCS.can_play
         G.FUNCS.can_play = Porkify_blank_can_play
     end
@@ -1435,7 +1439,7 @@ function porkify_install_blank_play_lock_patch()
         end
     end
 
-    if G.FUNCS.play_cards_from_highlighted and G.FUNCS.play_cards_from_highlighted ~= Porkify_blank_play_cards_from_highlighted then
+    if G.FUNCS.play_cards_from_highlighted and Porkify_play_cards_from_highlighted == nil then
         Porkify_play_cards_from_highlighted = G.FUNCS.play_cards_from_highlighted
         G.FUNCS.play_cards_from_highlighted = Porkify_blank_play_cards_from_highlighted
     end
@@ -1475,7 +1479,7 @@ function porkify_install_blank_handname_colour_patch()
         end
     end
 
-    if update_hand_text ~= Porkify_update_hand_text_with_blank_colour then
+    if Porkify_update_hand_text_ref == nil then
         Porkify_update_hand_text_ref = update_hand_text
         update_hand_text = Porkify_update_hand_text_with_blank_colour
     end
@@ -1488,7 +1492,7 @@ function porkify_install_blank_handname_colour_patch()
         end
     end
 
-    if G and G.FUNCS and G.FUNCS.hand_text_UI_set and G.FUNCS.hand_text_UI_set ~= Porkify_hand_text_UI_set_with_blank_colour then
+    if G and G.FUNCS and G.FUNCS.hand_text_UI_set and Porkify_hand_text_UI_set_ref == nil then
         Porkify_hand_text_UI_set_ref = G.FUNCS.hand_text_UI_set
         G.FUNCS.hand_text_UI_set = Porkify_hand_text_UI_set_with_blank_colour
     end
@@ -1874,7 +1878,11 @@ function Porkify_scale_current_blind(mult)
         return
     end
 
-    G.GAME.blind.chips = math.max(1, math.floor((G.GAME.blind.chips or 1) * mult))
+    local scaled_chips = math.floor(to_big(G.GAME.blind.chips or 1) * to_big(mult))
+    if scaled_chips < to_big(1) then
+        scaled_chips = to_big(1)
+    end
+    G.GAME.blind.chips = scaled_chips
     G.GAME.blind.chip_text = number_format(G.GAME.blind.chips)
     if G.HUD_blind then
         G.HUD_blind:recalculate()
@@ -2012,13 +2020,15 @@ function Porkify_pick_random_enhancement_key()
     if G and G.P_CENTER_POOLS and (G.P_CENTER_POOLS.Enhanced or G.P_CENTER_POOLS.Enhancement) then
         local p = G.P_CENTER_POOLS.Enhanced or G.P_CENTER_POOLS.Enhancement
         for _, v in pairs(p) do
-            if v and v.key and v.key ~= 'c_base' then
+            if v and v.key and v.key ~= 'c_base'
+                and Porkify_pool_object_is_available(v, "porkify_random_enhancement") then
                 pool[#pool + 1] = v.key
             end
         end
     elseif G and G.P_CENTERS then
         for k, v in pairs(G.P_CENTERS) do
-            if v and (v.set == 'Enhanced' or v.set == 'Enhancement') and k ~= 'c_base' then
+            if v and (v.set == 'Enhanced' or v.set == 'Enhancement') and k ~= 'c_base'
+                and Porkify_pool_object_is_available(v, "porkify_random_enhancement") then
                 pool[#pool + 1] = k
             end
         end
@@ -2026,6 +2036,7 @@ function Porkify_pick_random_enhancement_key()
     if #pool == 0 then
         return nil
     end
+    table.sort(pool)
     return pseudorandom_element(pool, pseudoseed("porkify_random_enhancement"))
 end
 
@@ -2508,7 +2519,7 @@ function porkify_install_safe_can_use_consumeable_patch()
         end
     end
 
-    if Card.can_use_consumeable == Porkify_safe_can_use_consumeable then
+    if Porkify_can_use_consumeable ~= nil then
         return
     end
 
@@ -2525,11 +2536,11 @@ if love and love.update and not Porkify_love_update then
 
     local function porkify_runtime_patches_ready()
         local funcs = G and G.FUNCS or {}
-        return Card.can_use_consumeable == Porkify_safe_can_use_consumeable
-            and (not funcs.can_buy_and_use or funcs.can_buy_and_use == Porkify_safe_can_buy_and_use)
-            and (not funcs.can_skip_booster or funcs.can_skip_booster == Porkify_safe_can_skip_booster)
-            and (not funcs.can_play or funcs.can_play == Porkify_blank_can_play)
-            and Card.calculate_joker == Porkify_blank_calculate_joker
+        return Porkify_can_use_consumeable ~= nil
+            and (not funcs.can_buy_and_use or Porkify_can_buy_and_use ~= nil)
+            and (not funcs.can_skip_booster or Porkify_can_skip_booster ~= nil)
+            and (not funcs.can_play or Porkify_can_play ~= nil)
+            and Porkify_blank_calculate_joker_ref ~= nil
     end
 
     love.update = function(dt)
@@ -2583,7 +2594,7 @@ function porkify_install_safe_can_buy_and_use_patch()
         end
     end
 
-    if G.FUNCS.can_buy_and_use == Porkify_safe_can_buy_and_use then
+    if Porkify_can_buy_and_use ~= nil then
         return
     end
 
@@ -2612,7 +2623,7 @@ function porkify_install_safe_can_skip_booster_patch()
         end
     end
 
-    if G.FUNCS.can_skip_booster == Porkify_safe_can_skip_booster then
+    if Porkify_can_skip_booster ~= nil then
         return
     end
 
@@ -4226,6 +4237,7 @@ load_vouchers_folder()
 
 assert(SMODS.load_file("achievements.lua"))()
 assert(SMODS.load_file("content_config.lua"))()(PORKIFY_MOD)
+assert(SMODS.load_file("multiplayer_compat.lua"))()
 
 SMODS.current_mod.optional_features = function()
     return {

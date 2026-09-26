@@ -38,19 +38,17 @@ SMODS.Consumable {
         -- no jokers? nothing to rental-ify
         if not (G.jokers and G.jokers.cards and #G.jokers.cards > 0) then return end
 
-        -- pick up to 2 distinct indexes
+        -- Pick up to 2 distinct Jokers with seeded RNG. Using math.random here
+        -- makes equal-seed multiplayer runs and replays diverge.
         local count = math.min(2, #G.jokers.cards)
-        local idx1 = math.random(1, #G.jokers.cards)
-        local idx2 = idx1
-        if #G.jokers.cards > 1 then
-            while idx2 == idx1 do
-                idx2 = math.random(1, #G.jokers.cards)
-            end
+        local shuffled = {}
+        for i, joker in ipairs(G.jokers.cards) do
+            shuffled[i] = joker
         end
+        pseudoshuffle(shuffled, pseudoseed('porkify_carte_blanche'))
 
         local targets = {}
-        targets[1] = G.jokers.cards[idx1]
-        if count == 2 then targets[2] = G.jokers.cards[idx2] end
+        for i = 1, count do targets[i] = shuffled[i] end
 
         -- apply rental to each target with a little animation
         for t = 1, #targets do

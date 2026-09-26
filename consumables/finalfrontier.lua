@@ -66,6 +66,7 @@ SMODS.Consumable {
                 table.insert(hand_pool, hand_key)
             end
         end
+        table.sort(hand_pool)
         local random_hand = pseudorandom_element(hand_pool, 'random_hand_levelup')
         level_up_hand(card, random_hand, true, 3)
         

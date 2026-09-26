@@ -15,6 +15,7 @@ local function porkify_moodswing_visible_hands()
         return { "High Card" }
     end
 
+    table.sort(pool)
     return pool
 end
 

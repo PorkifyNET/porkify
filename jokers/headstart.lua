@@ -43,6 +43,9 @@ SMODS.Joker{ --Headstart
             and G.GAME
             and G.GAME.blind
             and G.GAME.blind.boss
+            -- Nemesis has a live opponent-derived target; applying a starting
+            -- percentage while that target is being established is unstable.
+            and not (type(MP) == "table" and type(MP.is_pvp_boss) == "function" and MP.is_pvp_boss())
         then
             local score_percent = card.ability.extra.score_percent or 0.1
             local headstart_score = to_number(

@@ -32,6 +32,19 @@ def run(source, name, execute=True):
 
 
 try:
+    main_source = (ROOT / "main.lua").read_text(encoding="utf-8")
+    hook_start = main_source.index("function porkify_install_blank_vanilla_joker_patch()")
+    hook_end = main_source.index("\nporkify_install_blank_vanilla_joker_patch()", hook_start)
+    run(main_source[hook_start:hook_end], "blank vanilla Joker hook installer")
+    run((ROOT / "tests/runtime_hook_compat.lua").read_text(encoding="utf-8"),
+        "runtime hook compatibility tests")
+
+    # Keep the compatibility test's deliberately wrapped Card methods out of
+    # the shared state used by the evaluator suite below.
+    lua.lua_close(state)
+    state = lua.luaL_newstate()
+    lua.luaL_openlibs(state)
+
     for filename in ("main.lua", "poker_hands.lua", "seals/blank.lua", "achievements.lua",
                      "consumable_sticker_tools.lua",
                      "jokers/paul.lua", "jokers/glitch.lua", "consumables/excalibur.lua",

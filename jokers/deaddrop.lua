@@ -3,13 +3,20 @@ local function get_planet_key_for_hand(hand_name)
         return nil
     end
 
+    local candidates = {}
     for key, center in pairs(G.P_CENTERS) do
-        if center and center.set == "Planet" and center.config and center.config.hand_type == hand_name then
-            return key
+        if center
+            and center.set == "Planet"
+            and center.config
+            and center.config.hand_type == hand_name
+            and (not Porkify_pool_object_is_available
+                or Porkify_pool_object_is_available(center, "porkify_deaddrop_planet")) then
+            candidates[#candidates + 1] = key
         end
     end
 
-    return nil
+    table.sort(candidates)
+    return candidates[1]
 end
 
 local function get_last_played_hand()

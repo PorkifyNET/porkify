@@ -54,6 +54,20 @@ return {
             porkify_blank_seal_unlimited = {
                 name = 'Blank Seal',
                 text = { 'Can be used', 'as any {C:attention}rank{}' }
+            },
+            mp_sticker_balanced_j_porkify_headstart = {
+                name = 'Balanced',
+                text = {
+                    'Does not score against',
+                    'the {X:purple,C:white}Nemesis{} Blind'
+                }
+            },
+            mp_sticker_balanced_c_porkify_casualwalk = {
+                name = 'Balanced',
+                text = {
+                    'Cannot grant {C:attention}Blind Size{}',
+                    'bonuses in Multiplayer'
+                }
             }
         },
 		Mod = {

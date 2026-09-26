@@ -45,7 +45,22 @@ SMODS.Joker{ --Enamel Pin
                 func = function()
                     G.E_MANAGER:add_event(Event({
                         func = function()
-                            local selected_tag = pseudorandom_element(G.P_TAGS, pseudoseed("create_tag")).key
+                            local eligible_tags = {}
+                            for _, center in pairs(G.P_TAGS or {}) do
+                                if center and center.key
+                                    and Porkify_pool_object_is_available(center, "porkify_enamel_pin") then
+                                    eligible_tags[#eligible_tags + 1] = center
+                                end
+                            end
+                            table.sort(eligible_tags, function(a, b)
+                                return tostring(a.key) < tostring(b.key)
+                            end)
+                            if #eligible_tags == 0 then return true end
+
+                            local selected_tag = pseudorandom_element(
+                                eligible_tags,
+                                pseudoseed("create_tag")
+                            ).key
                             local tag = Tag(selected_tag)
                             if tag.name == "Orbital Tag" then
                                 local _poker_hands = {}
@@ -54,6 +69,7 @@ SMODS.Joker{ --Enamel Pin
                                         _poker_hands[#_poker_hands + 1] = k
                                     end
                                 end
+                                table.sort(_poker_hands)
                                 tag.ability.orbital_hand = pseudorandom_element(_poker_hands, "jokerforge_orbital")
                             end
                             tag:set_ability()

@@ -1,3 +1,28 @@
+local function porkify_loading_joker_is_available(center)
+    if not (center and center.key and center.unlocked) then return false end
+    if center.no_collection then return false end
+
+    if type(Porkify_pool_object_is_available) == "function" then
+        return Porkify_pool_object_is_available(center, "porkify_loading")
+    end
+
+    if G and G.GAME and G.GAME.banned_keys and G.GAME.banned_keys[center.key] then return false end
+
+    -- Steamodded's normal pool eligibility (including a center's in_pool hook).
+    if SMODS.add_to_pool and not SMODS.add_to_pool(center, { source = "porkify_loading" }) then
+        return false
+    end
+
+    -- Multiplayer applies mp_include/default-deny in a Lovely pool patch rather
+    -- than SMODS.add_to_pool, so raw center-pool consumers must mirror it.
+    if type(MP) == "table" and type(MP.should_exclude_from_pool) == "function"
+        and MP.should_exclude_from_pool(center) then
+        return false
+    end
+
+    return true
+end
+
 SMODS.Joker{ -- Patience / Loading
     key = "loading",
     config = {
@@ -69,14 +94,14 @@ SMODS.Joker{ -- Patience / Loading
                 local is_ruleset = (r == "porkify_ruleset")
                 local is_legendary = (type(r) == "number" and r >= 4)
 
-                if center.unlocked
+                if porkify_loading_joker_is_available(center)
                     and not is_ruleset
                     and not is_legendary
-                    and not center.no_collection -- optional: don't roll rule jokers / special hidden ones
                 then
                     possible[#possible + 1] = center
                 end
             end
+            table.sort(possible, function(a, b) return tostring(a.key) < tostring(b.key) end)
 
             if #possible > 0 then
                 local chosen = pseudorandom_element(possible, 'patience_random_joker')
