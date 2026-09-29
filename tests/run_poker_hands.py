@@ -45,6 +45,15 @@ try:
     state = lua.luaL_newstate()
     lua.luaL_openlibs(state)
 
+    run("TEST_ROOT = '" + ROOT.as_posix() + "'", "Arachnid test root")
+    run((ROOT / "tests/arachnid.lua").read_text(encoding="utf-8"), "Arachnid Talisman tests")
+
+    # The focused test replaces core globals with small stubs, so reset before
+    # loading the shared evaluator suite.
+    lua.lua_close(state)
+    state = lua.luaL_newstate()
+    lua.luaL_openlibs(state)
+
     for filename in ("main.lua", "poker_hands.lua", "seals/blank.lua", "achievements.lua",
                      "consumable_sticker_tools.lua",
                      "jokers/paul.lua", "jokers/glitch.lua", "consumables/excalibur.lua",

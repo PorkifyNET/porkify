@@ -29,6 +29,12 @@ G = {
     },
 }
 
+Game = {
+    start_run = function()
+        MP.LoadReworks(MP.SP.ruleset)
+    end,
+}
+
 -- Multiplayer is intentionally absent for the first call: this is Porkify's
 -- normal load order.
 local compat = assert(loadfile("multiplayer_compat.lua"))()
@@ -73,6 +79,15 @@ MP = {
     get_active_gamemode = function()
         return MP.active_gamemode
     end,
+    LoadReworks = function(ruleset)
+        MP.loaded_reworks = ruleset
+    end,
+    LOBBY = { code = nil, config = {} },
+    SP = { ruleset = "ruleset_mp_traditional", practice = false },
+    GHOST = { is_active = function() return false end },
+    is_practice_mode = function()
+        return MP.SP.practice
+    end,
 }
 
 assert(SMODS.injectItems() == "injected")
@@ -85,13 +100,28 @@ assert(MP.DECK.BANNED_VOUCHERS[1] == "v_porkify_pattern")
 assert(MP.DECK.BANNED_VOUCHERS[2] == "v_porkify_tesselation")
 assert(MP.Rulesets.ruleset_mp_traditional.reworked_jokers[1] == "j_porkify_headstart")
 assert(MP.Rulesets.ruleset_mp_traditional.reworked_consumables[1] == "c_porkify_casualwalk")
-assert(MP.Rulesets.ruleset_mp_vanilla.reworked_jokers[1] == "j_porkify_headstart")
+assert(#MP.Rulesets.ruleset_mp_vanilla.reworked_jokers == 0)
+assert(#MP.Rulesets.ruleset_mp_vanilla.reworked_consumables == 0)
 assert(MP.registered_reworks.j_porkify_headstart.layers[1] == "traditional")
-assert(MP.registered_reworks.j_porkify_headstart.layers[2] == "vanilla")
+assert(#MP.registered_reworks.j_porkify_headstart.layers == 1)
 assert(MP.registered_reworks.c_porkify_casualwalk)
 MP:generate_hash()
 assert(MP.MOD_STRING:find(";porkify_config-", 1, true))
 assert(MP.MOD_HASH == hash(MP.MOD_STRING))
+
+MP.active_ruleset = nil
+Game:start_run()
+assert(MP.loaded_reworks == "vanilla", "Ordinary singleplayer must force vanilla centers")
+
+MP.LOBBY.code = "TEST"
+MP.active_ruleset = "ruleset_mp_traditional"
+Game:start_run()
+assert(MP.loaded_reworks == "ruleset_mp_traditional", "Multiplayer must retain its selected reworks")
+assert(Porkify_multiplayer_reworks_enabled())
+
+MP.active_ruleset = "ruleset_mp_vanilla"
+assert(not Porkify_multiplayer_reworks_enabled(), "Vanilla ruleset must disable Porkify reworks")
+MP.LOBBY.code = nil
 
 local function apply_for(ruleset, gamemode)
     G.GAME.banned_keys = {}

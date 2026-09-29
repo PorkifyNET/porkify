@@ -12,6 +12,7 @@ PORKIFY_FOOD_JOKERS = { j_egg = true, j_porkify_pizza = true }
 SMODS.Achievement = function(def) definitions[def.key] = def end
 SMODS.PokerHands = {}
 SMODS.PokerHand = function(def) SMODS.PokerHands['porkify_' .. def.key] = def end
+SMODS.current_mod = { config = { bypass_unlock_all = true } }
 SMODS.has_enhancement = function(card, id) return card.enhancement == id end
 SMODS.is_playing_card = function(card) return card.base ~= nil end
 SMODS.calculate_context = function() return { preserved = true } end
@@ -74,7 +75,7 @@ for _, def in pairs(definitions) do
     count = count + 1
     assert(type(def.loc_txt.description) == 'string' and def.hidden_name == false)
 end
-assert(count == 49)
+assert(count == 50)
 local function reset()
     earned = {}
     G.STAGE = G.STAGES.RUN
@@ -751,4 +752,4 @@ check_for_unlock { type = 'discard_custom', cards = bulwark }
 expect('built_different', false)
 check_for_unlock { type = 'hand', handname = 'porkify_bulwark' }
 expect('built_different', false)
-print('Passed ' .. checks .. ' achievement checks and all 36 registrations.')
+print('Passed ' .. checks .. ' achievement checks and all 50 registrations.')

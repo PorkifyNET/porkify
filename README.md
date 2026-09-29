@@ -10,7 +10,7 @@ the game while keeping the pace and feel of a normal Balatro run.
 - New decks, Boss Blinds, Booster Packs, Vouchers, Stakes, and Challenges
 - New Enhancements, Editions, Seals, and Stickers
 - 22 secret poker hands that reveal themselves when first played
-- 36 custom achievements
+- 50 custom achievements
 - Optional balance tweaks and gameplay settings
 
 Individual cards include their art and idea credits in-game.

@@ -3,6 +3,7 @@
 local registered = false
 local reworks_registered = false
 local ban_exemptions_installed = false
+local singleplayer_rework_guard_installed = false
 
 -- Multiplayer's built-in mod hash includes versions, but not per-mod configs.
 -- Capture only settings that alter gameplay/pools; cosmetic preferences may
@@ -59,6 +60,22 @@ local REWORKS = {
         "c_porkify_casualwalk",
     },
 }
+
+function Porkify_multiplayer_reworks_enabled()
+    if type(MP) ~= "table" then return false end
+
+    local active = type(MP.LOBBY) == "table" and MP.LOBBY.code ~= nil
+    if not active and type(MP.is_practice_mode) == "function" then
+        active = not not MP.is_practice_mode()
+    end
+    if not active and type(MP.GHOST) == "table" and type(MP.GHOST.is_active) == "function" then
+        active = not not MP.GHOST.is_active()
+    end
+    if not active then return false end
+
+    local ruleset = type(MP.get_active_ruleset) == "function" and MP.get_active_ruleset() or nil
+    return ruleset ~= "ruleset_mp_vanilla"
+end
 
 local function append_unique(list, key)
     if type(list) ~= "table" then return end
@@ -161,6 +178,35 @@ local function install_ban_exemptions()
     return true
 end
 
+local function install_singleplayer_rework_guard()
+    if singleplayer_rework_guard_installed
+        or type(MP) ~= "table"
+        or type(MP.LoadReworks) ~= "function"
+        or type(Game) ~= "table"
+        or type(Game.start_run) ~= "function" then
+        return false
+    end
+
+    local force_vanilla = false
+    local load_reworks_ref = MP.LoadReworks
+    function MP.LoadReworks(ruleset, key)
+        return load_reworks_ref(force_vanilla and "vanilla" or ruleset, key)
+    end
+
+    local start_run_ref = Game.start_run
+    function Game:start_run(...)
+        local previous = force_vanilla
+        force_vanilla = previous or not Porkify_multiplayer_reworks_enabled()
+        local results = { pcall(start_run_ref, self, ...) }
+        force_vanilla = previous
+        if not results[1] then error(results[2], 0) end
+        return results[2]
+    end
+
+    singleplayer_rework_guard_installed = true
+    return true
+end
+
 local function register_multiplayer_reworks()
     if reworks_registered
         or type(MP) ~= "table"
@@ -173,7 +219,7 @@ local function register_multiplayer_reworks()
     for ruleset_key, ruleset in pairs(MP.Rulesets) do
         if type(ruleset) == "table" then
             local layer = tostring(ruleset.key or ruleset_key):gsub("^ruleset_mp_", "")
-            if layer ~= "" then
+            if layer ~= "" and layer ~= "vanilla" then
                 layers[#layers + 1] = layer
                 append_unique(ruleset.reworked_jokers, REWORKS.jokers[1])
                 append_unique(ruleset.reworked_consumables, REWORKS.consumables[1])
@@ -201,6 +247,7 @@ local function register_multiplayer_bans()
     register_multiplayer_reworks()
     install_config_hash()
     install_ban_exemptions()
+    install_singleplayer_rework_guard()
     if registered then return false end
 
     -- Write to the category tables directly. Multiplayer 0.5.5's ban_card

@@ -207,6 +207,13 @@ local function current_stake()
     return G.P_CENTER_POOLS and G.P_CENTER_POOLS.Stake and G.P_CENTER_POOLS.Stake[G.GAME.stake]
 end
 
+register('once_more_unto_the_breach', 'Once More Unto The Breach', 'Start a run above Gold Stake', function(args)
+    if args.type ~= 'porkify_run_started' then return false end
+    local stake = current_stake()
+    local gold = G.P_STAKES and G.P_STAKES.stake_gold
+    return stake and gold and stake.order and gold.order and stake.order > gold.order
+end)
+
 register('bffs', 'BFFs!', 'Win a run with a companion by your side', function(args)
     return args.type == 'win' and owns(args, 'j_porkify_kitty')
 end)

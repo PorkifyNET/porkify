@@ -177,14 +177,8 @@ SMODS.Consumable {
         -- A Nemesis Blind uses the opponent's live score as its target. Card
         -- bonuses that mutate G.GAME.blind.chips corrupt that moving target,
         -- so keep Casual Walk's ordinary score/economy bonuses in MP matches.
-        local in_multiplayer_match = false
-        if type(MP) == "table" then
-            if type(MP.is_mp_or_ghost) == "function" then
-                in_multiplayer_match = not not MP.is_mp_or_ghost()
-            else
-                in_multiplayer_match = type(MP.LOBBY) == "table" and MP.LOBBY.code ~= nil
-            end
-        end
+        local in_multiplayer_match = type(Porkify_multiplayer_reworks_enabled) == "function"
+            and Porkify_multiplayer_reworks_enabled()
         if in_multiplayer_match then
             local safe_buffs = {}
             for _, buff in ipairs(buffs) do

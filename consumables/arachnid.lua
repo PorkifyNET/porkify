@@ -1,3 +1,16 @@
+local function arachnid_dollar_value()
+    local dollars = G and G.GAME and G.GAME.dollars or 0
+
+    if type(to_number) == 'function' then
+        local ok, value = pcall(to_number, dollars)
+        if ok and type(value) == 'number' then
+            return value
+        end
+    end
+
+    return tonumber(dollars) or 0
+end
+
 SMODS.Consumable {
     key = 'arachnid',
     set = 'porkify',
@@ -39,7 +52,7 @@ SMODS.Consumable {
         local used_card = copier or card
         local dollar_cost = (self.config.extra and self.config.extra.dollars) or 8
         local target_rank = pseudorandom_element(SMODS.Ranks, pseudoseed('porkify_arachnid_rank')).card_key
-        local affordable = math.floor(math.max(0, tonumber(G.GAME.dollars) or 0) / dollar_cost)
+        local affordable = math.floor(math.max(0, arachnid_dollar_value()) / dollar_cost)
         local eligible_cards = {}
 
         for _, playing_card in ipairs(G.hand.cards) do
@@ -115,6 +128,6 @@ SMODS.Consumable {
         return G.hand
             and G.GAME
             and #G.hand.cards > 0
-            and (tonumber(G.GAME.dollars) or 0) >= dollar_cost
+            and arachnid_dollar_value() >= dollar_cost
     end
 }

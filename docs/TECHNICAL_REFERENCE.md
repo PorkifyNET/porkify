@@ -84,7 +84,8 @@ The following content is banned:
 - Vouchers: Pattern and Tesselation
 
 These Porkify bans do not apply to the Survival gamemode or the Vanilla
-ruleset. Their Banned screens omit Porkify's entries as well.
+ruleset. Their Banned screens omit Porkify's entries as well. The Vanilla
+ruleset also applies no Porkify reworks.
 
 The first six effects can end or disable a live PvP Blind, alter its target, or
 rewind the Ante. Pattern and Tesselation depend on usage statistics from each
