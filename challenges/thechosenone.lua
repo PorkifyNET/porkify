@@ -12,7 +12,7 @@ SMODS.Challenge{
     },
 
     jokers = {
-		{ id = "j_porkify_joker2", eternal = true },
+		{ id = "j_porkify_joker2", omega = true },
     },
 	vouchers = {
 		
@@ -31,7 +31,6 @@ SMODS.Challenge{
 			{id = 'p_buffoon_normal_1', ids = {
 				'p_buffoon_normal_1','p_buffoon_normal_2','p_buffoon_jumbo_1','p_buffoon_mega_1',
 			}},
-			{id = 'c_porkify_excalibur'},
 		},
         banned_tags = {
 			

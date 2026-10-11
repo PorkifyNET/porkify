@@ -251,8 +251,13 @@ return function(mod, save, defaults)
                     return build()
                 end }
         end
+        -- General's preview makes it the widest and tallest page. Keep every
+        -- page at those dimensions so the shared bars remain stationary.
+        local config_width = 19.1
+        local config_height = 7.45
         local nodes = {
-            create_tabs { snap_to_nav = true, colour = HEX('8f205f'), tab_w = 17, tab_alignment = 'cm', tabs = {
+            create_tabs { snap_to_nav = true, colour = HEX('8f205f'), tab_w = config_width,
+                tab_h = config_height, tab_alignment = 'tm', tabs = {
                 tab('General', general), tab('Content', content), tab('Experimental', experimental)
             } }
         }
@@ -279,7 +284,8 @@ return function(mod, save, defaults)
             } }
         end
         nodes[#nodes + 1] = { n = G.UIT.R,
-            config = { align = 'cm', padding = 0.06, r = 0.1, colour = HEX('24202e') }, nodes = footer }
+            config = { align = 'cm', minw = config_width, padding = 0.06,
+                r = 0.1, colour = HEX('24202e') }, nodes = footer }
         return { n = G.UIT.ROOT, config = { align = 'cm', colour = G.C.CLEAR }, nodes = nodes }
     end
 

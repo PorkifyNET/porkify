@@ -2,7 +2,17 @@ local function noop() end
 function copy_table(t) local r = {}; for k,v in pairs(t) do r[k] = v end; return r end
 function HEX(s) return s end
 local definitions = {}
-SMODS = {Sticker = {}, Stickers = {perishable = {loc_vars = noop}, rental = {loc_vars = noop}}}
+SMODS = {Sticker = {}, Stickers = {
+    perishable = {loc_vars = noop},
+    rental = {loc_vars = noop},
+    pinned = {key = 'pinned'},
+}}
+function SMODS.Sticker:take_ownership(key, changes)
+    local sticker = SMODS.Stickers[key]
+    for field, value in pairs(changes) do sticker[field] = value end
+    return sticker
+end
+SMODS.is_eternal = function(card) return card.ability.eternal == true end
 SMODS.Stake = function(t) definitions[#definitions + 1] = t end
 SMODS.load_file = loadfile
 SMODS.add_to_pool = function() return true end
@@ -15,6 +25,8 @@ G = {GAME = {modifiers = {}, round = 1, dollars = 100, blind = {boss = false}},
     pack_cards = {}, shop_vouchers = {}, shop_booster = {}}
 function G.hand:change_size(n) self.size = self.size + n end
 Card = {set_cost = noop, open = noop, redeem = noop, use_consumeable = noop}
+function Card:set_eternal(value) self.ability.eternal = value end
+function Card:set_perishable(value) self.ability.perishable = value end
 function Card:add_to_deck() self.added_to_deck = true end
 function Card:can_use_consumeable() return true end
 function Card:start_dissolve() self.destroyed = true end
@@ -49,7 +61,7 @@ assert(G.GAME.modifiers.scaling == 5 and G.GAME.win_ante == 10)
 assert(G.GAME.modifiers.no_blind_reward.Big)
 roll = 0.8
 local eternal = create_card('Default', G.shop_jokers)
-assert(eternal.ability.eternal and eternal.ability.rental)
+assert(eternal.ability.eternal and not eternal.ability.perishable and eternal.ability.rental)
 eternal:start_dissolve(); eternal:shatter(); assert(not eternal.destroyed)
 local ordinary = create_card('Default', G.hand)
 assert(not ordinary.ability.eternal)
@@ -124,4 +136,29 @@ cramped_def:apply(cramped, true)
 assert(G.hand.size == 6)
 cramped_def:apply(cramped, false)
 assert(G.hand.size == 7)
+assert(SMODS.Stickers.pinned.atlas == 'CustomStickers')
+assert(SMODS.Stickers.pinned.pos.x == 4 and SMODS.Stickers.pinned.pos.y == 1)
+local pinned = create_card('Joker', G.hand)
+SMODS.Stickers.pinned:apply(pinned, true)
+assert(pinned.pinned and pinned.ability.pinned)
+local omega_def = SMODS.Stickers.omega
+local omega = create_card('Joker', G.hand)
+omega.config.center.key = 'j_test'
+omega.config.center.eternal_compat = true
+omega_def:apply(omega, true)
+assert(SMODS.is_eternal(omega))
+omega:set_eternal(true)
+omega:set_perishable(true)
+assert(not omega.ability.eternal and not omega.ability.perishable)
+omega_def:apply(omega, false)
+G.GAME.porkify_omega_eternal_ante = 4
+G.GAME.round_resets = {ante = 4}
+omega:set_eternal(true)
+assert(omega.ability.omega and not omega.ability.eternal)
+G.GAME.modifiers.all_omega = true
+assert(omega_def:should_apply(omega, omega.config.center, G.hand))
+G.GAME.modifiers.all_omega = nil
+G.GAME.porkify_omega_starters = {j_test = 1}
+assert(omega_def:should_apply(omega, omega.config.center, G.hand))
+assert(G.GAME.porkify_omega_starters.j_test == 0)
 print('Stake inheritance, sticker lifecycle, tax, hidden shop and Showdown checks passed')

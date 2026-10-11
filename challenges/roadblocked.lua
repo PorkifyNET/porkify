@@ -14,9 +14,9 @@ SMODS.Challenge{
     },
 
     jokers = {
-		{ id = "j_porkify_roadblock", eternal = true, pinned = true },
-		{ id = "j_shortcut", eternal = true, edition = "negative" },
-		{ id = "j_four_fingers", eternal = true, edition = "negative" },
+		{ id = "j_porkify_roadblock", omega = true, pinned = true },
+		{ id = "j_shortcut", omega = true, edition = "negative" },
+		{ id = "j_four_fingers", omega = true, edition = "negative" },
     },
 	vouchers = {
 		
@@ -37,7 +37,6 @@ SMODS.Challenge{
 			{ id = "j_porkify_cairn" },
 			{ id = "c_saturn" },
 			{ id = "c_neptune" },
-			{ id = "c_porkify_excalibur" },
 		},
         banned_tags = {
 			

@@ -12,8 +12,8 @@ SMODS.Challenge{
     },
 
     jokers = {
-		{ id = "j_pareidolia", eternal = true, edition = "negative" },
-		{ id = "j_porkify_pridebanner", eternal = true },
+		{ id = "j_pareidolia", omega = true, edition = "negative" },
+		{ id = "j_porkify_pridebanner", omega = true },
 		{ id = "j_porkify_pacifist" },
     },
 	vouchers = {

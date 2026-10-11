@@ -13,34 +13,53 @@ local function porkify_bounty_rank_label(rank)
     return labels[rank] or tostring(rank or 2)
 end
 
-local function porkify_bounty_pick_rank(round_index)
-    local index = tonumber(round_index) or 0
+local function porkify_bounty_pick_rank(ante)
+    local index = tonumber(ante) or 0
     return pseudorandom_element(
         PORKIFY_BOUNTY_RANKS,
         pseudoseed("porkify_bounty_" .. tostring(index))
     ) or 2
 end
 
+local function porkify_bounty_current_ante()
+    return tonumber(G and G.GAME and G.GAME.round_resets and G.GAME.round_resets.ante) or 0
+end
+
+local function porkify_bounty_sync_ante(card, ante_override)
+    local extra = card and card.ability and card.ability.extra
+    if not extra then return false end
+
+    local ante = tonumber(ante_override) or porkify_bounty_current_ante()
+    if extra.target_ante == ante and extra.target_rank then return false end
+
+    extra.target_ante = ante
+    extra.target_rank = porkify_bounty_pick_rank(ante)
+    return true
+end
+
 SMODS.Joker{ -- Bounty
     key = "bounty",
     config = {
         extra = {
-            target_rank = 2,
-            dollars = 2
+            dollars = 2,
+            pending_payout = 0,
+            reset_after_payout = false
         }
     },
     loc_txt = {
         ["name"] = "Bounty",
         ["text"] = {
-            [1] = "Earn {C:money}$#2#{} for every played",
-            [2] = "{C:attention}#1#{} when scored",
-            [3] = "{s:0.75}Rank changes every round{}",
+            [1] = "Earn {C:money}$#2#{} at end of round",
+            [2] = "for each {C:attention}#1#{}",
+            [3] = "scored this {C:attention}Ante{}",
+            [4] = "{s:0.75}Rank changes each Ante{}",
+            [5] = "{C:inactive}(Currently {C:money}$#3#{C:inactive})",
         }
     },
     pos = { x = 3, y = 9 },
     display_size = { w = 71, h = 95 },
     cost = 6,
-    rarity = 1,
+    rarity = 2,
     blueprint_compat = false,
     eternal_compat = true,
     perishable_compat = false,
@@ -51,36 +70,84 @@ SMODS.Joker{ -- Bounty
 
     loc_vars = function(self, info_queue, card)
         local extra = (card and card.ability and card.ability.extra) or self.config.extra
+        if card and (not extra.target_rank or extra.target_ante == nil)
+            and porkify_bounty_sync_ante(card) then
+            extra.pending_payout = 0
+        end
         return {
             vars = {
-                porkify_bounty_rank_label(extra.target_rank or 2),
-                extra.dollars or 2
+                porkify_bounty_rank_label(extra.target_rank or porkify_bounty_pick_rank(
+                    porkify_bounty_current_ante()
+                )),
+                extra.dollars or 2,
+                extra.pending_payout or 0
             }
         }
     end,
 
     set_ability = function(self, card, initial)
-        local extra = card.ability.extra or {}
-        extra.round_index = extra.round_index or 0
-        extra.target_rank = extra.target_rank or porkify_bounty_pick_rank(extra.round_index)
-        card.ability.extra = extra
+        card.ability.extra = card.ability.extra or {}
+        porkify_bounty_sync_ante(card)
     end,
 
     calculate = function(self, card, context)
         local extra = card.ability.extra
-        if context.end_of_round and context.main_eval and not context.game_over and not context.blueprint then
-            extra.round_index = (extra.round_index or 0) + 1
-            extra.target_rank = porkify_bounty_pick_rank(extra.round_index)
+
+        local changed_ante
+        if context.ante_change and not context.blueprint then
+            changed_ante = porkify_bounty_current_ante() + (tonumber(context.ante_change) or 0)
         end
 
-        if context.individual and context.cardarea == G.play then
-            local played_card = context.other_card
-            if porkify_card_matches_rank(played_card, extra.target_rank or 2) then
+        if changed_ante and not context.blueprint then
+            if porkify_bounty_sync_ante(card, changed_ante) then
+                -- Ante changes before Boss Blind round evaluation. Preserve
+                -- the old Ante's bank until calc_dollar_bonus pays it out.
+                extra.reset_after_payout = true
                 return {
-                    dollars = extra.dollars or 2
+                    message = porkify_bounty_rank_label(extra.target_rank) .. "!",
+                    colour = G.C.IMPORTANT
+                }
+            end
+        elseif context.setting_blind and not context.blueprint then
+            local changed = porkify_bounty_sync_ante(card)
+            if changed or extra.reset_after_payout then
+                -- If Bounty was debuffed during round evaluation, its dollar
+                -- callback was skipped; discard the stale bank before play.
+                extra.pending_payout = 0
+                extra.reset_after_payout = false
+            end
+            if changed then
+                return {
+                    message = porkify_bounty_rank_label(extra.target_rank) .. "!",
+                    colour = G.C.IMPORTANT
                 }
             end
         end
+
+        if context.individual and context.cardarea == G.play and not context.blueprint then
+            if porkify_bounty_sync_ante(card) then
+                extra.pending_payout = 0
+            end
+            local played_card = context.other_card
+            if played_card and not played_card.debuff
+                and porkify_card_matches_rank(played_card, extra.target_rank or 2) then
+                extra.pending_payout = (extra.pending_payout or 0) + (extra.dollars or 2)
+                return {
+                    message = "+$" .. tostring(extra.dollars or 2),
+                    colour = G.C.MONEY
+                }
+            end
+        end
+    end,
+
+    calc_dollar_bonus = function(self, card)
+        local extra = card.ability.extra
+        local payout = tonumber(extra.pending_payout) or 0
+        if extra.reset_after_payout then
+            extra.pending_payout = 0
+            extra.reset_after_payout = false
+        end
+        if payout > 0 then return payout end
     end,
 
     joker_display_def = function(JokerDisplay)
@@ -96,19 +163,7 @@ SMODS.Joker{ -- Bounty
 
             calc_function = function(card)
                 local extra = (card.ability and card.ability.extra) or {}
-                local hits = 0
-                local text, _, scoring_hand = JokerDisplay.evaluate_hand()
-
-                if text ~= "Unknown" and scoring_hand then
-                    for _, c in pairs(scoring_hand) do
-                        if not c.debuff and c.facing ~= "back"
-                            and porkify_card_matches_rank(c, extra.target_rank or 2) then
-                            hits = hits + JokerDisplay.calculate_card_triggers(c, scoring_hand)
-                        end
-                    end
-                end
-
-                card.joker_display_values.payout_text = "+$" .. tostring(hits * (extra.dollars or 2))
+                card.joker_display_values.payout_text = "+$" .. tostring(extra.pending_payout or 0)
                 card.joker_display_values.rank_text = porkify_bounty_rank_label(extra.target_rank or 2)
             end
         }

@@ -37,7 +37,7 @@ SMODS.Consumable {
             },
             {
                 apply = function(c)
-                    c.ability.perma_h_bonus = (c.ability.perma_h_bonus or 0) + 15
+                    c.ability.perma_h_chips = (c.ability.perma_h_chips or 0) + 15
                 end,
                 message = "+15 Chips when Held",
                 colour = G.C.CHIPS
@@ -102,7 +102,7 @@ SMODS.Consumable {
                 apply = function(c)
                     c.ability.perma_h_x_chips = (c.ability.perma_h_x_chips or 0) + 0.25
                 end,
-                message = "X1.25 Chips when Held",
+                message = "X1.25 Chips Held",
                 colour = G.C.CHIPS
             },
             {
@@ -123,14 +123,14 @@ SMODS.Consumable {
                 apply = function(c)
                     c.ability.perma_h_score = (c.ability.perma_h_score or 0) + 1000
                 end,
-                message = "+1000 Score when Held",
+                message = "+1000 Score Held",
                 colour = G.C.PURPLE
             },
             {
                 apply = function(c)
                     c.ability.perma_h_x_score = (c.ability.perma_h_x_score or 0) + 0.05
                 end,
-                message = "+5% Score when Held",
+                message = "+5% Score Held",
                 colour = G.C.PURPLE
             },
             {
@@ -153,7 +153,7 @@ SMODS.Consumable {
                 apply = function(c)
                     c.ability.perma_h_blind_size = (c.ability.perma_h_blind_size or 1) - 500
                 end,
-                message = "-500 Blind Size when Held",
+                message = "-500 Blind Size Held",
                 colour = G.C.DYN_UI.DARK,
                 multiplayer_unsafe = true
             },
@@ -161,7 +161,7 @@ SMODS.Consumable {
                 apply = function(c)
                     c.ability.perma_h_x_blind_size = (c.ability.perma_h_x_blind_size or 1) - 0.02
                 end,
-                message = "-2% Blind Size when Held",
+                message = "-2% Blind Size Held",
                 colour = G.C.DYN_UI.DARK,
                 multiplayer_unsafe = true
             },

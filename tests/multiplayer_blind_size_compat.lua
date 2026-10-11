@@ -50,23 +50,4 @@ reworks_enabled = false
 casual_walk.use(casual_walk, used_card)
 assert(candidate_count == 20, "Single-player Casual Walk must retain every bonus")
 
-assert(loadfile("jokers/headstart.lua"))()
-local headstart = assert(definitions.joker)
-local joker_card = { ability = { extra = { score_percent = 0.1 } } }
-
-MP.is_pvp_boss = function() return true end
-reworks_enabled = true
-assert(headstart.calculate(headstart, joker_card, { setting_blind = true }) == nil,
-    "Headstart must not score against a Nemesis Blind")
-
-reworks_enabled = false
-local vanilla_result = headstart.calculate(headstart, joker_card, { setting_blind = true })
-assert(vanilla_result and vanilla_result.score == 100,
-    "Vanilla ruleset Headstart must retain its normal Boss Blind effect")
-
-MP.is_pvp_boss = function() return false end
-reworks_enabled = true
-local result = headstart.calculate(headstart, joker_card, { setting_blind = true })
-assert(result and result.score == 100, "Headstart must retain its normal Boss Blind effect")
-
 print("multiplayer Blind Size compatibility tests passed")

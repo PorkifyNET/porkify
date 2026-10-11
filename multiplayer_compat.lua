@@ -39,6 +39,8 @@ local BANS = {
     jokers = {
         "j_porkify_rewind", -- rewinds the ante instead of losing a life
         "j_porkify_swoon",  -- disables the PvP/Nemesis blind
+        "j_porkify_blackcard", -- permanently changes every local Blind target
+        "j_porkify_headstart", -- has almost no valid Boss Blinds after Ante 1
     },
     consumables = {
         "c_porkify_emergencyexit", -- ends the current blind immediately
@@ -53,9 +55,6 @@ local BANS = {
 }
 
 local REWORKS = {
-    jokers = {
-        "j_porkify_headstart",
-    },
     consumables = {
         "c_porkify_casualwalk",
     },
@@ -221,7 +220,6 @@ local function register_multiplayer_reworks()
             local layer = tostring(ruleset.key or ruleset_key):gsub("^ruleset_mp_", "")
             if layer ~= "" and layer ~= "vanilla" then
                 layers[#layers + 1] = layer
-                append_unique(ruleset.reworked_jokers, REWORKS.jokers[1])
                 append_unique(ruleset.reworked_consumables, REWORKS.consumables[1])
             end
         end
@@ -233,7 +231,6 @@ local function register_multiplayer_reworks()
     -- These calls make Multiplayer apply its Balanced sticker only while a
     -- Multiplayer ruleset is active. The mechanics themselves live on the
     -- original Porkify centers because they are compatibility safeguards.
-    MP.ReworkCenter(REWORKS.jokers[1], { layers = layers })
     MP.ReworkCenter(REWORKS.consumables[1], { layers = layers })
     reworks_registered = true
     return true

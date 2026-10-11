@@ -53,7 +53,7 @@ SMODS.Joker{ --Refridgerator
 
             for _, v in pairs(G.jokers.cards or {}) do
                 local key = v.config and v.config.center and v.config.center.key
-                if key and food_keys[key] and not (v.ability and v.ability.eternal) then
+                if key and food_keys[key] and not SMODS.is_eternal(v, card) then
                     valid_food_jokers[#valid_food_jokers + 1] = v
                 end
             end
@@ -145,7 +145,7 @@ SMODS.Joker{ --Refridgerator
 		  local count = 0
 		  for _, v in ipairs(G.jokers and G.jokers.cards or {}) do
 			local key = v and v.config and v.config.center and v.config.center.key
-			if key and food_keys[key] and not (v.ability and v.ability.eternal) then count = count + 1 end
+			if key and food_keys[key] and not SMODS.is_eternal(v, card) then count = count + 1 end
 		  end
 
 		  card.joker_display_values.chips_text = tostring(stored)

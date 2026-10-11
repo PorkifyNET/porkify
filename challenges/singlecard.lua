@@ -7,7 +7,7 @@ SMODS.Challenge{
 			{id = 'discards', value = 0},
 		},
         custom = {
-		
+			{ id = "no_porkify_yes" },
         },
     },
 

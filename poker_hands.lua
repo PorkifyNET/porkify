@@ -209,6 +209,10 @@ register('yes', 'Yes', 1000, 100, 100, 10,
     { 'Play your entire deck', 'in a single hand' },
     example({ 'A', 'K', 'Q', 'J', 'T', '9', '8', '7' }),
     function(hand)
+        if G and G.GAME and G.GAME.modifiers
+            and G.GAME.modifiers.no_porkify_yes then
+            return {}
+        end
         local deck = G and G.playing_cards
         if not deck or #hand == 0 or #hand ~= #deck then return {} end
         local played = {}

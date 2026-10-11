@@ -18,7 +18,7 @@ SMODS.Challenge{
     },
 
     jokers = {
-		{ id = "j_raised_fist", eternal = true },
+		{ id = "j_raised_fist", omega = true },
     },
 	vouchers = {
 		

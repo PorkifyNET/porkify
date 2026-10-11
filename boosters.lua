@@ -102,7 +102,7 @@ local function porkify_create_fixed_deck_pack_joker(pack_card, index)
             joker:remove_sticker("perishable")
         end
 
-        if eternal_compat and joker.add_sticker and not (joker.ability and joker.ability.eternal) then
+        if eternal_compat and joker.add_sticker and not SMODS.is_eternal(joker) then
             joker:add_sticker("eternal", true)
         end
     end

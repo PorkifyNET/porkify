@@ -40,7 +40,7 @@ SMODS.Consumable {
         if not (j and j.ability) then return end
 
         -- block if already eternal
-        if j.ability.eternal then return end
+        if SMODS.is_eternal(j, card) then return end
 
         -- block if Negative (edition)
         -- (Negative is an EDITION; safest check is edition key)
@@ -109,7 +109,7 @@ SMODS.Consumable {
     can_use = function(self, card)
         local j = Porkify_get_sticker_tool_target(card)
         if not (j and j.ability) then return false end
-        if j.ability.eternal then return false end
+        if SMODS.is_eternal(j, card) then return false end
         if j.edition and j.edition.key == 'e_negative' then return false end
         return true
     end

@@ -45,10 +45,12 @@ function create_card(kind, area, ...)
     local card = create(kind, area, ...)
     if enabled('porkify_sulfur') and source(area) and (playing(card) or consumable(card)) then
         local center = card.config.center
-        local roll = pseudorandom('porkify_sulfur_stickers')
-        if roll > 0.7 and center.eternal_compat ~= false and not card.ability.perishable then
+        -- Eternal and Perishable each occupy 30% of one shared roll so they
+        -- retain equal odds without ever appearing together.
+        local eternal_perishable_roll = pseudorandom('porkify_sulfur_eternal_perishable')
+        if eternal_perishable_roll > 0.7 and center.eternal_compat ~= false then
             card.ability.eternal = true
-        elseif roll > 0.4 and roll <= 0.7 and center.perishable_compat ~= false and not card.ability.eternal then
+        elseif eternal_perishable_roll > 0.4 and center.perishable_compat ~= false then
             card.ability.perishable = true
             card.ability.perish_tally = playing(card) and 5 or 1
         end

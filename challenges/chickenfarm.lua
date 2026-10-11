@@ -4,7 +4,7 @@ SMODS.Challenge{
 
     rules = {
 		modifiers = {
-			dollars = 0,
+			{ id = "dollars", value = 0 },
 		},
         custom = {
             { id = "no_extra_hand_money", value = true },
@@ -14,7 +14,7 @@ SMODS.Challenge{
     },
 
     jokers = {
-        { id = "j_porkify_farmland", eternal = true },
+        { id = "j_porkify_farmland", omega = true },
         { id = "j_porkify_paul" },
         { id = "j_porkify_paul" },
         { id = "j_porkify_hatchedegg" },

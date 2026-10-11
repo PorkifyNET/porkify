@@ -12,7 +12,7 @@ SMODS.Challenge{
     },
 
     jokers = {
-		{ id = "j_oops", eternal = true, edition = "negative"},
+		{ id = "j_oops", omega = true, edition = "negative"},
 		{ id = "j_sixth_sense" },
     },
 	vouchers = {

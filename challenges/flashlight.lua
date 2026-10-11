@@ -17,7 +17,7 @@ SMODS.Challenge{
     },
 	consumeables = {
 		{ id = "c_porkify_trainingwheels" },
-		{ id = "c_porkify_trainingwheels" },
+		{ id = "c_porkify_revolver" },
 	},
 	vouchers = {
 		{ id = "v_grabber" },

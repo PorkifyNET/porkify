@@ -11,8 +11,8 @@ SMODS.Joker{ --Rewind
     loc_txt = {
         ['name'] = 'Rewind',
         ['text'] = {
-            [1] = 'Prevents Death and sets you',
-			[2] = 'back to the start of the {C:attention}Ante{}',
+            [1] = 'Prevents Death',
+			[2] = 'and {C:attention}-1{} Ante',
 			[3] = '{C:red,E:1}Self-destructs{}'
         },
         ['unlock'] = {

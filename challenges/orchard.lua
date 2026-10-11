@@ -18,9 +18,9 @@ SMODS.Challenge{
 		type = 'Challenge Deck'
 	},
 
-    -- Start with the Orchard Spirit (eternal+pinned so it can’t be removed)
+    -- Start with the Orchard Spirit (Omega+pinned so it cannot be removed)
     jokers = {
-        { id = "j_porkify_orchard_spirit", eternal = true, pinned = true },
+        { id = "j_porkify_orchard_spirit", omega = true, pinned = true },
     },
 
     -- Try hard to ensure “no other ways to obtain Jokers”
@@ -40,7 +40,6 @@ SMODS.Challenge{
 			{id = 'j_porkify_hatchedegg'},
 			{id = 'j_porkify_paul'},
 			{id = 'j_porkify_doppelganger'},
-			{id = 'c_porkify_excalibur'},
 			{id = 'c_porkify_freezer'},
 			{id = 'c_porkify_fountainofyouth'},
             {id = 'c_porkify_mephiles'},

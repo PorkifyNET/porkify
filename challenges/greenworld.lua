@@ -7,14 +7,14 @@ SMODS.Challenge{
 			{id = 'discards', value = 1},
 		},
         custom = {
-			{ id = "all_eternal", value = true },
+			{ id = "all_omega", value = true },
 			{ id = "discard_cost", value = 3 },
         },
     },
 
     jokers = {
-		{ id = "j_green_joker", eternal = true },
-		{ id = "j_porkify_recycler", eternal = true },
+		{ id = "j_green_joker", omega = true },
+		{ id = "j_porkify_recycler", omega = true },
     },
 	vouchers = {
 		

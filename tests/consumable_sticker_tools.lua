@@ -1,5 +1,10 @@
 local definitions = {}
-SMODS = {Consumable = function(def) definitions[def.key] = def end}
+SMODS = {
+    Consumable = function(def) definitions[def.key] = def end,
+    is_eternal = function(card)
+        return card.ability.eternal or card.ability.porkify_omega
+    end,
+}
 HEX = function(value) return value end
 to_big = function(value) return value end
 local unlocks = {}
@@ -75,4 +80,15 @@ G.consumeables.highlighted = {source}; G.hand.highlighted = {negative}
 assert(not definitions.fountainofyouth:can_use(source))
 G.jokers.highlighted = {object('Joker', 'second_target')}
 assert(not definitions.fountainofyouth:can_use(source), 'Multiple targets must be rejected')
+
+-- Excalibur only removes vanilla Eternal. Omega remains protected and cannot
+-- be selected by the card on its own.
+local omega = object('Joker', 'omega_target')
+omega.ability.porkify_omega = true
+G.hand.highlighted, G.jokers.highlighted, G.consumeables.highlighted = {}, {omega}, {object('porkify', 'c_porkify_excalibur')}
+assert(not definitions.excalibur:can_use(G.consumeables.highlighted[1]))
+omega.ability.eternal = true
+assert(definitions.excalibur:can_use(G.consumeables.highlighted[1]))
+definitions.excalibur:use(G.consumeables.highlighted[1])
+assert(not omega.ability.eternal and omega.ability.porkify_omega)
 print('Sticker consumables accept Joker, playing-card and consumable targets')

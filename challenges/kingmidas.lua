@@ -4,7 +4,7 @@ SMODS.Challenge{
 
     rules = {
 		modifiers = {
-			dollars = 0,
+			{ id = "dollars", value = 0 },
 		},
         custom = {
             { id = "no_extra_hand_money", value = true },
@@ -14,8 +14,8 @@ SMODS.Challenge{
     },
 
     jokers = {
-        { id = "j_midas_mask", eternal = true, edition = "negative" },
-        { id = "j_ticket", eternal = true, edition = "negative" },
+        { id = "j_midas_mask", omega = true, edition = "negative" },
+        { id = "j_ticket", omega = true, edition = "negative" },
     },
 	deck = {
 		type = 'Challenge Deck'

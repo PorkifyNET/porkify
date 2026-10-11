@@ -65,6 +65,9 @@ return function()
 
         preview(ai_art_center, G.P_CARDS.empty, 'AI art disclosure')
         preview(G.P_CENTERS.j_egg, G.P_CARDS.empty, 'Category: Food')
+        preview(G.P_CENTERS.j_red_card or G.P_CENTERS.j_porkify_greencard
+                or G.P_CENTERS.j_porkify_bluecard,
+            G.P_CARDS.empty, 'Category: Color Card')
         preview(G.P_CENTERS.c_base, G.P_CARDS.H_A, 'Favorite indicator', true)
 
         local rows = { label('Hover to preview') }

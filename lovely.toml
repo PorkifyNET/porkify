@@ -1,0 +1,25 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 8
+
+# Apply Omega directly when the vanilla challenge bootstrap creates a
+# protected starting Joker.
+[[patches]]
+[patches.pattern]
+target = "game.lua"
+pattern = "if v.eternal then _joker:set_eternal(true) end"
+position = "after"
+payload = "if v.omega or v.porkify_omega then _joker:add_sticker('porkify_omega', true) end"
+match_indent = true
+times = 1
+
+# Challenge previews use separate Card objects and need the same sticker.
+[[patches]]
+[patches.pattern]
+target = "functions/UI_definitions.lua"
+pattern = "if v.eternal then card:set_eternal(true) end"
+position = "after"
+payload = "if v.omega or v.porkify_omega then card:add_sticker('porkify_omega', true) end"
+match_indent = true
+times = 1

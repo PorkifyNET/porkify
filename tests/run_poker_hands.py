@@ -32,6 +32,23 @@ def run(source, name, execute=True):
 
 
 try:
+    run("TEST_ROOT = '" + ROOT.as_posix() + "'", "challenge compatibility test root")
+    run((ROOT / "tests/challenge_compat.lua").read_text(encoding="utf-8"),
+        "challenge compatibility tests")
+
+    # The focused challenge test replaces G with small registration stubs.
+    lua.lua_close(state)
+    state = lua.luaL_newstate()
+    lua.luaL_openlibs(state)
+
+    run("TEST_ROOT = '" + ROOT.as_posix() + "'", "Single Card test root")
+    run((ROOT / "tests/singlecard.lua").read_text(encoding="utf-8"),
+        "Single Card challenge tests")
+
+    lua.lua_close(state)
+    state = lua.luaL_newstate()
+    lua.luaL_openlibs(state)
+
     main_source = (ROOT / "main.lua").read_text(encoding="utf-8")
     hook_start = main_source.index("function porkify_install_blank_vanilla_joker_patch()")
     hook_end = main_source.index("\nporkify_install_blank_vanilla_joker_patch()", hook_start)
@@ -76,5 +93,8 @@ try:
     run(destroy_helper + "\nTEST_destroy_cards = SMODS.destroy_cards", "Steamodded destruction helper")
     run((ROOT / "tests/jester_pickaxe.lua").read_text(encoding="utf-8"), "Jester and Pickaxe tests")
     run((ROOT / "tests/phantom.lua").read_text(encoding="utf-8"), "Phantom tests")
+    run((ROOT / "tests/skip_cards.lua").read_text(encoding="utf-8"), "Color Card skip tests")
+    run((ROOT / "tests/bounty.lua").read_text(encoding="utf-8"), "Bounty tests")
+    run((ROOT / "tests/tags.lua").read_text(encoding="utf-8"), "Tag definition tests")
 finally:
     lua.lua_close(state)

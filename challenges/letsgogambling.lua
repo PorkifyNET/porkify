@@ -15,7 +15,7 @@ SMODS.Challenge{
     },
 
     jokers = {
-		{ id = "j_lucky_cat", eternal = true },
+		{ id = "j_lucky_cat", omega = true },
     },
 	vouchers = {
 		

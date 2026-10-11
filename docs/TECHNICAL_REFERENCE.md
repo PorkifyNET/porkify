@@ -5,10 +5,14 @@ for debugging and compatibility work but too specific for the main README.
 
 ## Secret Poker Hands
 
-Porkify defines 22 secret poker hands in `poker_hands.lua`: Three Pair, Four
-Pair, Straighter, Straightest, Straighterest, their Flush variants, Fuller
-House, Fullest House, Six/Seven/Eight of a Kind, Flush Six/Seven/Eight,
-Bulwark, and Yes. Their base Chips, Mult, and per-level gains are defined there.
+Porkify defines 34 secret poker hands in `poker_hands.lua`, including expanded
+pairs, straights, flushes, houses, grouped rank hands, Six/Seven/Eight of a
+Kind and their Flush variants, Bulwark, and Yes. Their base Chips, Mult, and
+per-level gains are defined there.
+
+Every Porkify poker hand has a corresponding softlocked Planet card registered
+in `consumables/planets.lua`. A card enters the normal Planet pool after its
+hand has been played once, matching the vanilla secret-hand Planet behavior.
 
 Flushier, Flushiest, and Flushiester require six, seven, and eight cards sharing
 a suit. Two By Fours requires two groups of four matching ranks. The extended
@@ -79,7 +83,7 @@ Multiplayer remains optional.
 
 The following content is banned:
 
-- Jokers: Rewind and Swoon
+- Jokers: Rewind, Swoon, Headstart, and Black Card
 - Consumables: Emergency Exit, Time Machine, Training Wheels, and Tranquilizer
 - Vouchers: Pattern and Tesselation
 
@@ -87,14 +91,15 @@ These Porkify bans do not apply to the Survival gamemode or the Vanilla
 ruleset. Their Banned screens omit Porkify's entries as well. The Vanilla
 ruleset also applies no Porkify reworks.
 
-The first six effects can end or disable a live PvP Blind, alter its target, or
-rewind the Ante. Pattern and Tesselation depend on usage statistics from each
-player's local profile rather than match state.
+Rewind, Swoon, Headstart, Emergency Exit, Time Machine, Training Wheels, and
+Tranquilizer either assume normal Boss Blinds or can end, disable, alter, or
+rewind a live PvP Blind. Black Card permanently changes every local Blind
+target. Pattern and Tesselation depend on usage statistics from each player's
+local profile rather than match state.
 
 The following content is marked as reworked and receives Multiplayer's Balanced
 sticker:
 
-- Headstart does not apply against a Nemesis Blind.
 - Casual Walk cannot roll its four Blind Size modifiers in Multiplayer.
 
 Loading only selects Jokers allowed by the active pool, ban list, and ruleset.

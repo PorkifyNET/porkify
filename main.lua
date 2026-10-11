@@ -1513,6 +1513,14 @@ SMODS.Atlas({
 })
 
 SMODS.Atlas({
+    key = "CustomPlanets",
+    path = "CustomPlanets.png",
+    px = 71,
+    py = 95,
+    atlas_table = "ASSET_ATLAS"
+})
+
+SMODS.Atlas({
     key = "CustomBoosters", 
     path = "CustomBoosters.png", 
     px = 71,
@@ -1666,6 +1674,29 @@ local function porkify_apply_food_badge(obj, badges)
     )
 end
 
+local function porkify_apply_color_card_badge(obj, badges)
+    local key = type(obj) == "table" and obj.key
+    local is_color_card = type(obj) == "table" and (
+        obj.porkify_color_card
+        or key == "j_red_card"
+        or key == "red_card"
+    )
+
+    if type(obj) ~= "table"
+        or type(badges) ~= "table"
+        or not is_color_card
+        or not porkify_show_category_badges() then
+        return
+    end
+
+    badges[#badges + 1] = create_badge(
+        "Color Card",
+        HEX("3A8F70"),
+        G.C.WHITE,
+        0.9
+    )
+end
+
 local function porkify_apply_ai_art_badge(obj, badges)
     if type(obj) ~= "table"
         or type(badges) ~= "table"
@@ -1675,7 +1706,7 @@ local function porkify_apply_ai_art_badge(obj, badges)
     end
 
     badges[#badges + 1] = create_badge(
-        "AI Art",
+        "AI Placeholder :(",
         HEX("6B7280"),
         G.C.WHITE,
         0.9
@@ -1698,6 +1729,7 @@ function Porkify_attach_credit_badges(obj)
             original_set_badges(self, card, badges)
         end
         porkify_apply_food_badge(self, badges)
+        porkify_apply_color_card_badge(self, badges)
         porkify_apply_ai_art_badge(self, badges)
         porkify_apply_credit_badges(self, badges)
     end
@@ -2015,7 +2047,7 @@ function Porkify_create_negative_mr_bones()
     return new_joker
 end
 
-function Porkify_pick_random_enhancement_key()
+function Porkify_pick_random_enhancement_key(seed_suffix)
     local pool = {}
     if G and G.P_CENTER_POOLS and (G.P_CENTER_POOLS.Enhanced or G.P_CENTER_POOLS.Enhancement) then
         local p = G.P_CENTER_POOLS.Enhanced or G.P_CENTER_POOLS.Enhancement
@@ -2037,14 +2069,112 @@ function Porkify_pick_random_enhancement_key()
         return nil
     end
     table.sort(pool)
-    return pseudorandom_element(pool, pseudoseed("porkify_random_enhancement"))
+    local seed = "porkify_random_enhancement"
+    if seed_suffix ~= nil then
+        seed = seed .. "_" .. tostring(seed_suffix)
+    end
+    return pseudorandom_element(pool, pseudoseed(seed))
+end
+
+local porkify_apply_tag_card_free_state
+
+function Porkify_apply_enhanced_deck_tag(tag, context, amount)
+    if not (tag and context and context.type == "new_blind_choice") or tag.triggered then
+        return
+    end
+
+    local candidates = {}
+    for _, card in ipairs((G and G.playing_cards) or {}) do
+        local center = card and card.config and card.config.center
+        local center_key = center and center.key or (card and card.config and card.config.center_key)
+        if center_key == "c_base" and card.set_ability then
+            candidates[#candidates + 1] = card
+        end
+    end
+
+    local count = math.min(math.max(0, math.floor(tonumber(amount) or 3)), #candidates)
+    if count <= 0 then
+        if tag.nope then tag:nope() end
+        tag.triggered = true
+        return true
+    end
+
+    local selected = {}
+    local tag_seed = tag.ID or "fallback"
+    for i = 1, count do
+        local target = pseudorandom_element(
+            candidates,
+            pseudoseed("porkify_enhanced_tag_card_" .. tostring(tag_seed) .. "_" .. tostring(i))
+        )
+        if not target then break end
+        selected[#selected + 1] = target
+        for j = #candidates, 1, -1 do
+            if candidates[j] == target then
+                table.remove(candidates, j)
+                break
+            end
+        end
+    end
+
+    tag:yep("+", G.C.GREEN, function()
+        for i, card in ipairs(selected) do
+            local enhancement_key = Porkify_pick_random_enhancement_key(
+                tostring(tag_seed) .. "_" .. tostring(i)
+            )
+            local enhancement = enhancement_key and G.P_CENTERS and G.P_CENTERS[enhancement_key]
+            if enhancement then
+                card:set_ability(enhancement, nil, true)
+                if card.juice_up then card:juice_up(0.3, 0.3) end
+            end
+        end
+        return true
+    end)
+    tag.triggered = true
+    return true
+end
+
+function Porkify_apply_gold_shop_joker_tag(tag, context)
+    if not (tag and context and context.type == "store_joker_create") or tag.triggered then
+        return
+    end
+
+    local area = context.area
+    if not (area and SMODS and SMODS.create_card and create_shop_card_ui) then
+        return
+    end
+
+    local shop_card = SMODS.create_card({
+        set = "Joker",
+        area = area,
+        no_edition = true,
+        key_append = "gold_tag_" .. tostring(tag.ID or "fallback")
+    })
+    if not shop_card then
+        if tag.nope then tag:nope() end
+        tag.triggered = true
+        return
+    end
+
+    if shop_card.set_edition then
+        shop_card:set_edition("e_porkify_gilded", true)
+    end
+    porkify_apply_tag_card_free_state(shop_card)
+    create_shop_card_ui(shop_card, "Joker", area)
+    shop_card.states.visible = false
+
+    tag:yep("+", G.C.GOLD, function()
+        if shop_card.start_materialize then shop_card:start_materialize() end
+        return true
+    end)
+    tag.triggered = true
+    return shop_card
 end
 
 local function porkify_shop_tag_card_type(kind)
     return "Base"
 end
 
-local function porkify_apply_tag_card_free_state(card)
+porkify_apply_tag_card_free_state = function(card)
     if not card then
         return
     end
@@ -4234,6 +4364,10 @@ load_editions_folder()
 load_enhancements_folder()
 load_seals_folder()
 load_vouchers_folder()
+
+-- Challenges are registered before some content categories above. Apply the
+-- compatibility pass only after every center it may reference is available.
+assert(SMODS.load_file("challenge_compat.lua"))().apply()
 
 assert(SMODS.load_file("achievements.lua"))()
 assert(SMODS.load_file("content_config.lua"))()(PORKIFY_MOD)

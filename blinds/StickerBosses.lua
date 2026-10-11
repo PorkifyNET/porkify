@@ -26,8 +26,9 @@ local function register_sticker_boss(key, name, sticker, colour, row, chance)
             for _, card in ipairs(G.jokers.cards) do
                 local ability, center = card.ability, card.config.center
                 local compatible = property == 'rental'
-                    or (property == 'perishable' and center.perishable_compat and not ability.eternal)
-                    or (property == 'eternal' and center.eternal_compat and not ability.perishable)
+                    or (property == 'perishable' and center.perishable_compat and not SMODS.is_eternal(card, blind))
+                    or (property == 'eternal' and center.eternal_compat and not ability.perishable
+                        and not SMODS.is_eternal(card, blind))
                 -- Materialized cards keep dissolve = 0, which is truthy in Lua.
                 if compatible and not ability[property] and not card.getting_sliced
                     and not card.removed and not card.destroyed and not card.shattered

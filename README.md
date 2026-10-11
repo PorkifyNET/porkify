@@ -9,7 +9,7 @@ the game while keeping the pace and feel of a normal Balatro run.
 - A large collection of custom Jokers and Consumables
 - New decks, Boss Blinds, Booster Packs, Vouchers, Stakes, and Challenges
 - New Enhancements, Editions, Seals, and Stickers
-- 22 secret poker hands that reveal themselves when first played
+- 34 secret poker hands that reveal themselves when first played, each with a Planet card
 - 50 custom achievements
 - Optional balance tweaks and gameplay settings
 

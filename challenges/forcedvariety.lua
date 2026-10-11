@@ -12,7 +12,7 @@ SMODS.Challenge{
     },
 
     jokers = {
-		{ id = "j_porkify_forced_variety", eternal = true, pinned = true },
+		{ id = "j_porkify_forced_variety", omega = true, pinned = true },
     },
 	vouchers = {
 		
@@ -24,7 +24,6 @@ SMODS.Challenge{
     restrictions = {
 		banned_cards = {
 			{ id = "j_brainstorm" },
-			{ id = "c_porkify_excalibur" },
 		},
         banned_tags = {
 			

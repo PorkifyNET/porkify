@@ -9,6 +9,7 @@ SMODS.Joker {
     } },
     atlas = 'CustomJokers', pos = { x = 1, y = 10 }, -- Placeholder artwork.
     cost = 5, rarity = 1,
+    porkify_color_card = true,
     blueprint_compat = true, eternal_compat = true, perishable_compat = false,
     unlocked = true, discovered = false,
     pools = { ['modprefix_porkify_jokers'] = true },

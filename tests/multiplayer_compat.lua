@@ -91,19 +91,17 @@ MP = {
 }
 
 assert(SMODS.injectItems() == "injected")
-assert(#MP.DECK.BANNED_JOKERS == 2)
+assert(#MP.DECK.BANNED_JOKERS == 4)
 assert(#MP.DECK.BANNED_CONSUMABLES == 4)
 assert(#MP.DECK.BANNED_VOUCHERS == 2)
 assert(MP.DECK.BANNED_JOKERS[1] == "j_porkify_rewind")
 assert(MP.DECK.BANNED_CONSUMABLES[1] == "c_porkify_emergencyexit")
 assert(MP.DECK.BANNED_VOUCHERS[1] == "v_porkify_pattern")
 assert(MP.DECK.BANNED_VOUCHERS[2] == "v_porkify_tesselation")
-assert(MP.Rulesets.ruleset_mp_traditional.reworked_jokers[1] == "j_porkify_headstart")
 assert(MP.Rulesets.ruleset_mp_traditional.reworked_consumables[1] == "c_porkify_casualwalk")
 assert(#MP.Rulesets.ruleset_mp_vanilla.reworked_jokers == 0)
 assert(#MP.Rulesets.ruleset_mp_vanilla.reworked_consumables == 0)
-assert(MP.registered_reworks.j_porkify_headstart.layers[1] == "traditional")
-assert(#MP.registered_reworks.j_porkify_headstart.layers == 1)
+assert(MP.registered_reworks.j_porkify_headstart == nil)
 assert(MP.registered_reworks.c_porkify_casualwalk)
 MP:generate_hash()
 assert(MP.MOD_STRING:find(";porkify_config-", 1, true))
@@ -133,16 +131,22 @@ end
 
 local competitive_bans = apply_for("ruleset_mp_traditional", "gamemode_mp_attrition")
 assert(competitive_bans.j_porkify_rewind)
+assert(competitive_bans.j_porkify_blackcard)
+assert(competitive_bans.j_porkify_headstart)
 assert(competitive_bans.c_porkify_emergencyexit)
 assert(competitive_bans.v_porkify_pattern)
 
 local survival_bans = apply_for("ruleset_mp_traditional", "gamemode_mp_survival")
 assert(not survival_bans.j_porkify_rewind)
+assert(not survival_bans.j_porkify_blackcard)
+assert(not survival_bans.j_porkify_headstart)
 assert(not survival_bans.c_porkify_emergencyexit)
 assert(not survival_bans.v_porkify_pattern)
 
 local vanilla_bans = apply_for("ruleset_mp_vanilla", "gamemode_mp_attrition")
 assert(not vanilla_bans.j_porkify_rewind)
+assert(not vanilla_bans.j_porkify_blackcard)
+assert(not vanilla_bans.j_porkify_headstart)
 assert(not vanilla_bans.c_porkify_emergencyexit)
 assert(not vanilla_bans.v_porkify_pattern)
 
@@ -151,16 +155,17 @@ local survival_screen = G.UIDEF.lobby_setup_tabs_definition(
     { key = "gamemode_mp_survival" },
     "banned"
 )
-assert(#survival_screen.JOKERS == 1 and survival_screen.JOKERS[1] == "j_other_mod_ban")
+assert(#survival_screen.JOKERS == 1)
+assert(survival_screen.JOKERS[1] == "j_other_mod_ban")
 assert(#survival_screen.CONSUMABLES == 0)
 assert(#survival_screen.VOUCHERS == 0)
 
 -- Re-injection must not duplicate entries.
 SMODS.injectItems()
-assert(#MP.DECK.BANNED_JOKERS == 3)
+assert(#MP.DECK.BANNED_JOKERS == 5)
 assert(#MP.DECK.BANNED_CONSUMABLES == 4)
 assert(#MP.DECK.BANNED_VOUCHERS == 2)
-assert(#MP.Rulesets.ruleset_mp_traditional.reworked_jokers == 1)
+assert(#MP.Rulesets.ruleset_mp_traditional.reworked_jokers == 0)
 assert(#MP.Rulesets.ruleset_mp_traditional.reworked_consumables == 1)
 assert(compat.register() == false)
 

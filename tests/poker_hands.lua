@@ -1,5 +1,5 @@
 -- Minimal game fixtures; get_straight and get_X_same are loaded from the installation.
-local hands, checks = {}, 0
+local hands, planets, checks = {}, {}, 0
 G = { handlist = {}, playing_cards = {} }
 local shortcut, wrap = false, false
 SMODS = {
@@ -13,6 +13,7 @@ SMODS = {
         hands[def.key] = def
         G.handlist[#G.handlist + 1] = 'porkify_' .. def.key
     end,
+    Consumable = function(def) planets[def.key] = def end,
     Seal = function() end,
 }
 for rank = 2, 14 do
@@ -51,6 +52,18 @@ local function check(key, cards, expected)
 end
 dofile(TEST_ROOT .. '/poker_hands.lua')
 assert(#G.handlist == 34)
+dofile(TEST_ROOT .. '/consumables/planets.lua')
+assert(#PORKIFY_PLANET_HANDS == #G.handlist)
+local planet_targets = {}
+for key, def in pairs(planets) do
+    assert(def.set == 'Planet' and def.atlas == 'PorkifyPlanets')
+    assert(def.config.softlock and hands[def.config.hand_type:gsub('^porkify_', '')])
+    assert(not planet_targets[def.config.hand_type], 'Duplicate Planet target: ' .. def.config.hand_type)
+    planet_targets[def.config.hand_type] = key
+end
+for _, hand_key in ipairs(G.handlist) do
+    assert(planet_targets[hand_key], 'Missing Planet for ' .. hand_key)
+end
 local priorities = {}
 for _, def in pairs(hands) do
     assert(def.visible == false and #def.example > 0 and def.l_chips > 0 and def.l_mult > 0)
@@ -188,6 +201,9 @@ check('yes', hand({ 2, 3, 4, 5, 6, 7 }), 0)
 check('yes', { deck[1], deck[2], deck[3], deck[4], deck[5], deck[5] }, 0)
 G.playing_cards = { deck[1] }
 check('yes', G.playing_cards, 1)
+G.GAME = { modifiers = { no_porkify_yes = true } }
+check('yes', G.playing_cards, 0)
+G.GAME = nil
 
 -- Exercise the real Blank Seal wrapper with secret hands in the live hand order.
 G.playing_cards = {}

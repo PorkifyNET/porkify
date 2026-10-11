@@ -25,7 +25,7 @@ SMODS.Joker {
     pools = { ["porkify_porkify_jokers"] = true },
 
     credit_badges = {
-        { text = "Idea: Crystal Sirens", colour = "541CBF" },
+        { text = "Idea: Dave", colour = "55AA55" },
      },
 
     loc_vars = function(self, info_queue, card)

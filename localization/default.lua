@@ -1,5 +1,16 @@
 return {
     misc = {
+        v_text = {
+            ch_c_all_omega = {
+                "All Jokers have the {C:attention}Omega{} sticker"
+            },
+            ch_c_porkify_set_omega_ante = {
+                "After Ante {C:attention}#1#{}, all Jokers gain {C:attention}Omega{}"
+            },
+            ch_c_no_porkify_yes = {
+                "The {C:attention}Yes{} poker hand cannot be played"
+            },
+        },
         dictionary = {
             porkify_discount_ex = 'Discount!',
             porkify_voucher_ready = 'Ready!',
@@ -54,13 +65,6 @@ return {
             porkify_blank_seal_unlimited = {
                 name = 'Blank Seal',
                 text = { 'Can be used', 'as any {C:attention}rank{}' }
-            },
-            mp_sticker_balanced_j_porkify_headstart = {
-                name = 'Balanced',
-                text = {
-                    'Does not score against',
-                    'the {X:purple,C:white}Nemesis{} Blind'
-                }
             },
             mp_sticker_balanced_c_porkify_casualwalk = {
                 name = 'Balanced',

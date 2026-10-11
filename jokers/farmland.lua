@@ -8,9 +8,9 @@ SMODS.Joker{ -- Farmland
     loc_txt = {
         ['name'] = 'Farmland',
         ['text'] = {
-            [1] = 'This Joker gains {C:blue}+4{} Chips',
+            [1] = 'This Joker gains {C:red}+1{} Mult',
             [2] = 'whenever a {C:attention}Jack{} is scored',
-            [3] = '{C:inactive}(Currently {C:blue}+#1#{} {C:inactive}Chips){}'
+            [3] = '{C:inactive}(Currently {C:red}+#1#{} {C:inactive}Mult){}'
         },
         ['unlock'] = {
             [1] = 'Play {C:attention}75{} {C:attention}face{} cards'
@@ -47,11 +47,11 @@ SMODS.Joker{ -- Farmland
         if context.individual and context.cardarea == G.play and not context.blueprint then
             local c = context.other_card
             if porkify_card_matches_rank(c, 11) then -- 11 = Jack
-                card.ability.extra.FarmerChips = (card.ability.extra.FarmerChips or 0) + 4
+                card.ability.extra.FarmerChips = (card.ability.extra.FarmerChips or 0) + 1
 
                 card_eval_status_text(
 					card, 'extra', nil, nil, nil,
-					{ message = "Harvest!", colour = G.C.BLUE }
+					{ message = "Harvest!", colour = G.C.RED }
 				)
             end
         end
@@ -61,7 +61,7 @@ SMODS.Joker{ -- Farmland
         ----------------------------------------------------------------
         if context.cardarea == G.jokers and context.joker_main then
             return {
-                chips = card.ability.extra.FarmerChips or 0
+                mult = card.ability.extra.FarmerChips or 0
             }
         end
     end,
@@ -69,7 +69,7 @@ SMODS.Joker{ -- Farmland
 	joker_display_def = function(JokerDisplay)
 	  return {
 		text = {
-		  { ref_table = "card.joker_display_values", ref_value = "chips_text", colour = G.C.BLUE }
+		  { ref_table = "card.joker_display_values", ref_value = "chips_text", colour = G.C.RED }
 		},
 		reminder_text = {
 			{ text = "(" },

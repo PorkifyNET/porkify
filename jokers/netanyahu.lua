@@ -23,6 +23,10 @@ SMODS.Joker {
     atlas = "CustomJokers",
     pools = { ["porkify_porkify_jokers"] = true },
 
+    credit_badges = {
+        { text = "Idea: Onomis", colour = "00AA00" }
+     },
+
     calculate = function(self, card, context)
         if not (context.starting_shop and not context.blueprint and G and G.GAME) then
             return
