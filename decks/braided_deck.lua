@@ -40,11 +40,7 @@ SMODS.Back {
 
                 most_played = most_played or (G.GAME.hands['High Card'] and 'High Card')
                 if most_played then
-                    local current_level = G.GAME.hands[most_played].level or 1
-                    local level_change = 3 - current_level
-                    if level_change ~= 0 then
-                        level_up_hand(nil, most_played, true, level_change)
-                    end
+                    level_up_hand(nil, most_played, true, 2)
                 end
 
                 return true
