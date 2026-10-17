@@ -1,6 +1,6 @@
 SMODS.Back {
     key = 'orange_deck',
-    pos = { x = 0, y = 1 },
+    pos = { x = 6, y = 1 },
     config = {},
     loc_txt = {
         name = 'Orange Deck',

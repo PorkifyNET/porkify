@@ -8,7 +8,6 @@ SMODS.Challenge{
 		},
         custom = {
             { id = "no_extra_hand_money", value = true },
-            { id = "no_interest", value = true },
             { id = "no_reward", value = true },
         },
     },

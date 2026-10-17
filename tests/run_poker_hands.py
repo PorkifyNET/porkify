@@ -32,6 +32,14 @@ def run(source, name, execute=True):
 
 
 try:
+    run("TEST_ROOT = '" + ROOT.as_posix() + "'", "Flashlight test root")
+    run((ROOT / "tests/flashlight.lua").read_text(encoding="utf-8"),
+        "Flashlight challenge tests")
+
+    lua.lua_close(state)
+    state = lua.luaL_newstate()
+    lua.luaL_openlibs(state)
+
     run("TEST_ROOT = '" + ROOT.as_posix() + "'", "challenge compatibility test root")
     run((ROOT / "tests/challenge_compat.lua").read_text(encoding="utf-8"),
         "challenge compatibility tests")

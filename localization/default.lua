@@ -5,7 +5,7 @@ return {
                 "All Jokers have the {C:attention}Omega{} sticker"
             },
             ch_c_porkify_set_omega_ante = {
-                "After Ante {C:attention}#1#{}, all Jokers gain {C:attention}Omega{}"
+                "When ante {C:attention}#1#{} boss is defeated, all Jokers gain {C:attention}Omega{}"
             },
             ch_c_porkify_pandemic = {
                 "Every non-Showdown Boss Blind is {C:attention}The Virus{}"

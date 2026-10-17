@@ -7,7 +7,8 @@ SMODS.Blind {
     press_play = function(self)
         if G.GAME.blind.disabled then return end
         for _, card in ipairs(G.hand.highlighted or {}) do
-            if card.config.center.set == 'Enhanced' then
+            local center = card.config and card.config.center
+            if center and center.set == 'Enhanced' and center.key ~= 'm_porkify_revolving' then
                 card:set_ability(G.P_CENTERS.c_base, nil, true)
             end
         end

@@ -12,7 +12,7 @@ end
 
 SMODS.Joker {
     key = 'greencard',
-    config = { extra = { debt = 0, debt_gain = 2 } },
+    config = { extra = { debt = 20, debt_gain = 2 } },
     loc_txt = { name = 'Green Card', text = {
         'Go up to {C:red}-$#2#{} in debt',
         'Increases by {C:red}-$#1#{} when any',

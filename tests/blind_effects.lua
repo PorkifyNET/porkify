@@ -120,9 +120,11 @@ local function enhanced(key)
     }
 end
 local glass, stone, held = enhanced('m_glass'), enhanced('m_stone'), enhanced('m_porkify_mimic')
-G.hand.highlighted, G.hand.cards = { glass, stone }, { glass, stone, held }
+local resolute = enhanced('m_porkify_revolving')
+G.hand.highlighted, G.hand.cards = { glass, stone, resolute }, { glass, stone, resolute, held }
 blinds.wipe:press_play()
 expect(glass.config.center == G.P_CENTERS.c_base and stone.config.center == G.P_CENTERS.c_base, 'Wipe played enhancements')
+expect(resolute.config.center.key == 'm_porkify_revolving', 'Wipe preserves Resolute cards')
 expect(held.config.center.key == 'm_porkify_mimic', 'Wipe preserves held cards')
 expect(glass.seal == 'Red' and glass.edition.foil, 'Wipe preserves seals and editions')
 blind.disabled = true

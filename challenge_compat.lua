@@ -216,7 +216,7 @@ local STRAIGHT_REWARD_SOURCES = {
 
 local JOKER_SLOT_SOURCES = {
     'j_porkify_kitty',
-    'j_porkify_card_sleeve',
+    'j_porkify_cardsleeve',
 }
 
 local MONEY_JOKERS = {
@@ -344,6 +344,10 @@ local GLASS_DESTRUCTION_SOURCES = {
     'c_porkify_doubleornothing',
 }
 
+local GLASS_REMOVING_BLINDS = {
+    { id = 'bl_porkify_wipe', type = 'blind' },
+}
+
 function M.apply()
     -- Challenge-owned protection must survive Excalibur. This migration is
     -- applied to vanilla and modded challenges alike.
@@ -371,10 +375,6 @@ function M.apply()
         add_restrictions(find_challenge(id), 'banned_cards', EXTRA_HAND_SOURCES)
     end
 
-    -- Monolith excludes alternate hand-leveling routes; Porkify's Planet
-    -- generators and direct level manipulation need to follow that rule.
-    add_restrictions(find_challenge('monolith_1'), 'banned_cards', PLANET_SOURCES)
-
     -- Cover both vanilla Jokerless and Porkify's no-Joker acquisition
     -- challenges. The regular Buffoon Pack and tags are already banned by the
     -- base definitions; these are the Porkify-specific escape hatches.
@@ -393,7 +393,6 @@ function M.apply()
 
     add_restrictions(find_challenge('inflation_1'), 'banned_cards', {
         'j_porkify_yardsale',
-        'j_porkify_greencard',
         'j_porkify_doppelganger',
     })
 
@@ -404,6 +403,7 @@ function M.apply()
     add_restrictions(fragile, 'banned_cards', ENHANCEMENT_REPLACERS)
     add_restrictions(fragile, 'banned_cards', NON_GLASS_CARD_SOURCES)
     add_restrictions(fragile, 'banned_tags', NON_GLASS_TAG_SOURCES)
+    add_restrictions(fragile, 'banned_other', GLASS_REMOVING_BLINDS)
 
     -- These challenges remove alternative income routes while retaining the
     -- named, challenge-specific source of money.
@@ -423,12 +423,6 @@ function M.apply()
     add_restrictions(gambling, 'banned_cards', ENHANCEMENT_REPLACERS)
     add_restrictions(gambling, 'banned_cards', NON_LUCKY_CARD_SOURCES)
     add_restrictions(gambling, 'banned_tags', NON_GLASS_TAG_SOURCES)
-
-    -- Tax is Porkify's only face-down draw Blind; vanilla face-down Blinds
-    -- are already present in Flashlight's own definition.
-    add_restrictions(find_challenge('flashlight'), 'banned_other', {
-        { id = 'bl_porkify_tax', type = 'blind' },
-    })
 
     local green_world = find_challenge('greenworld')
     add_restrictions(green_world, 'banned_cards', PLAYING_CARD_DESTRUCTION_SOURCES)

@@ -4,9 +4,16 @@ local function porkify_booster_display_counts(self, card)
     local choose = cfg.choose or 0
     local extra = cfg.extra or 0
     local modifiers = (G and G.GAME and G.GAME.modifiers) or {}
+    local pack_key = card and card.config and card.config.center and card.config.center.key or self.key
+    if type(pack_key) == 'string' and pack_key:sub(1, 2) ~= 'p_' then
+        pack_key = 'p_porkify_' .. pack_key
+    end
 
     choose = choose + (modifiers.booster_choice_mod or 0)
     extra = extra + (modifiers.booster_size_mod or 0)
+    if type(Porkify_get_rarity_deck_pack_bonus) == 'function' then
+        extra = extra + Porkify_get_rarity_deck_pack_bonus(pack_key)
+    end
 
     if choose < 1 then choose = 1 end
     if extra < 1 then extra = 1 end

@@ -2,7 +2,7 @@ SMODS.Joker {
     key = 'aquacard',
     config = { extra = { hands = 0, gain = 1 } },
     loc_txt = { name = 'Aqua Card', text = {
-        'Gain {C:blue}+#1# Hand{} for the',
+        'Gain {C:blue}+#1#{} Hand for the',
         'next Blind when any',
         '{C:attention}Booster Pack{} is skipped',
         '{C:inactive}(Currently {C:blue}+#2#{C:inactive} Hands)'
