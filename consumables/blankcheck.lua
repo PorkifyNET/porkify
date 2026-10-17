@@ -1,3 +1,36 @@
+if Card and Card.flip and not Porkify_blank_joker_flip_ref then
+    Porkify_blank_joker_flip_ref = Card.flip
+    function Card:flip(...)
+        if self.ability and self.ability.porkify_blank_flipped and self.facing == 'back' then
+            return
+        end
+        return Porkify_blank_joker_flip_ref(self, ...)
+    end
+end
+
+local function shuffle_jokers(seed)
+    local original_order = {}
+    for i, joker in ipairs(G.jokers.cards) do
+        original_order[i] = joker
+    end
+
+    G.jokers:shuffle(seed)
+
+    if #G.jokers.cards > 1 then
+        local unchanged = true
+        for i, joker in ipairs(G.jokers.cards) do
+            if joker ~= original_order[i] then
+                unchanged = false
+                break
+            end
+        end
+        if unchanged then
+            table.insert(G.jokers.cards, 1, table.remove(G.jokers.cards))
+            if G.jokers.set_ranks then G.jokers:set_ranks() end
+        end
+    end
+end
+
 SMODS.Consumable {
     key = 'blankcheck',
     set = 'porkify',
@@ -72,6 +105,10 @@ SMODS.Consumable {
             trigger = 'after',
             delay = 0.55,
             func = function()
+                if target_joker then
+                    target_joker.ability = target_joker.ability or {}
+                    target_joker.ability.porkify_blank_flipped = true
+                end
                 if target_joker and target_joker.facing ~= 'back' then
                     target_joker:flip()
                 end
@@ -83,7 +120,7 @@ SMODS.Consumable {
             trigger = 'after',
             delay = 0.7,
             func = function()
-                G.jokers:shuffle('porkify_blank_jokers')
+                shuffle_jokers('porkify_blank_jokers')
                 play_sound('cardSlide1', 1)
                 return true
             end

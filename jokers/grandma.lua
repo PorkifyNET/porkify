@@ -8,9 +8,9 @@ SMODS.Joker{ --Grandma
     loc_txt = {
         ['name'] = 'Grandma',
         ['text'] = {
-            [1] = 'Scored {C:attention}8{}, {C:attention}9{}, {C:attention}10{},',
-            [2] = 'and {C:attention}Ace{} cards',
-            [3] = 'give {C:money}$1{} when scored'
+            [1] = 'Played {C:attention}8{}, {C:attention}9{}, {C:attention}10{} and',
+            [2] = '{C:attention}Ace{} cards give',
+            [3] = '{C:money}$1{} when scored'
         },
         ['unlock'] = {
             [1] = 'Play a hand where exactly {C:attention}2{} {C:attention}10s{} are scored'

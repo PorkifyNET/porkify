@@ -6,8 +6,7 @@ SMODS.Consumable {
         name = 'Cleanup Crew',
         text = {
             [1] = 'Remove the {C:dark_edition}Edition{} from',
-            [2] = '{C:attention}1{} selected card',
-            [3] = '{s:0.8}Playing cards, Jokers, and Consumables are valid{}'
+            [2] = '{C:attention}1{} selected card'
         }
     },
     cost = 3,

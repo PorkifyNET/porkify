@@ -2,18 +2,21 @@ local definition
 local shuffle_after_flip = false
 local random_seed
 
+Card = {}
+function Card:flip()
+    self.facing = self.facing == 'front' and 'back' or 'front'
+end
+
 SMODS = {
     Consumable = function(def) definition = def end
 }
 
 local function joker(name)
-    return {
+    return setmetatable({
         name = name,
+        ability = {},
         facing = 'front',
-        flip = function(self)
-            self.facing = self.facing == 'front' and 'back' or 'front'
-        end
-    }
+    }, { __index = Card })
 end
 
 local selected = {
@@ -40,7 +43,6 @@ G = {
         shuffle = function(self, seed)
             assert(seed == 'porkify_blank_jokers')
             shuffle_after_flip = second_joker.facing == 'back'
-            self.cards[1], self.cards[2] = self.cards[2], self.cards[1]
         end
     },
     E_MANAGER = {
@@ -70,8 +72,12 @@ assert(random_seed == 'porkify_blank_joker' and second_joker.facing == 'back',
     'Blank must permanently flip one pseudorandom Joker face-down')
 assert(first_joker.facing == 'front', 'Blank must flip only one Joker')
 assert(shuffle_after_flip and G.jokers.cards[1] == second_joker,
-    'Blank must shuffle Jokers after flipping its target')
+    'Blank must change the Joker order even when the random shuffle leaves it unchanged')
 assert(#G.hand.highlighted == 0, 'Blank must clear the playing-card selection')
+
+second_joker:flip()
+assert(second_joker.facing == 'back',
+    'Blank-flipped Jokers must resist the game flipping them face-up later')
 
 G.hand.highlighted = { selected }
 G.jokers.cards = {}
