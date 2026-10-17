@@ -1,4 +1,6 @@
 PORKIFY_STICKER_TOOL_KEYS = {
+    c_porkify_cleanupcrew = true,
+    c_porkify_delegation = true,
     c_porkify_fountainofyouth = true,
     c_porkify_excalibur = true,
     c_porkify_freezer = true,

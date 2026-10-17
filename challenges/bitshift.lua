@@ -9,7 +9,6 @@ SMODS.Challenge{
 			{id = 'hand_size', value = 5},
 			{id = 'joker_slots', value = 2},
 			{id = 'consumable_slots', value = 4},
-			{id = 'dollars', value = 5},
 			{id = 'reroll_cost', value = 4},
 		},
         custom = {
@@ -18,7 +17,8 @@ SMODS.Challenge{
     },
 
     jokers = {
-		
+		{ id = "j_credit_card" },
+		{ id = "j_joker" },
     },
 	vouchers = {
 		

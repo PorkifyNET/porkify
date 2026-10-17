@@ -14,6 +14,26 @@ payload = "if v.omega or v.porkify_omega then _joker:add_sticker('porkify_omega'
 match_indent = true
 times = 1
 
+# Unbreakable replaces the normal Ante victory with Tungsten Cube destruction.
+[[patches]]
+[patches.pattern]
+target = "functions/state_events.lua"
+pattern = "if G.GAME.round_resets.ante == G.GAME.win_ante and G.GAME.blind:get_type() == 'Boss' then"
+position = "at"
+payload = "if not (G.GAME.modifiers and G.GAME.modifiers.porkify_unbreakable_no_winning_ante) and G.GAME.round_resets.ante == G.GAME.win_ante and G.GAME.blind:get_type() == 'Boss' then"
+match_indent = true
+times = 1
+
+# Unbreakable has no target Ante, so show dashes instead of the normal 8.
+[[patches]]
+[patches.pattern]
+target = "functions/UI_definitions.lua"
+pattern = "{n=G.UIT.T, config={ref_table = G.GAME, ref_value='win_ante', scale = scale, colour = G.C.WHITE, shadow = true}}"
+position = "at"
+payload = "{n=G.UIT.T, config=(G.GAME.modifiers and G.GAME.modifiers.porkify_unbreakable_no_winning_ante) and {text = '--', scale = scale, colour = G.C.WHITE, shadow = true} or {ref_table = G.GAME, ref_value='win_ante', scale = scale, colour = G.C.WHITE, shadow = true}}"
+match_indent = true
+times = 1
+
 # Challenge previews use separate Card objects and need the same sticker.
 [[patches]]
 [patches.pattern]

@@ -3,10 +3,12 @@ SMODS.Consumable {
     set = 'porkify',
     pos = { x = 8, y = 4 },
     loc_txt = {
-        name = 'Blank Check',
+        name = 'Blank',
         text = {
             [1] = 'Add a {C:attention}Blank Seal{} to',
-            [2] = '{C:attention}1{} selected card'
+            [2] = '{C:attention}1{} selected card,',
+            [3] = 'shuffle and permanently',
+            [4] = 'flip a random {C:attention}Joker{}'
         }
     },
     config = { min_highlighted = 1, max_highlighted = 1 },
@@ -28,8 +30,13 @@ SMODS.Consumable {
     use = function(self, card, area, copier)
         local used_card = copier or card
         if not (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) == to_big(1)) then return end
+        if not (G.jokers and G.jokers.cards and #G.jokers.cards > 0) then return end
 
         local target = G.hand.highlighted[1]
+        local target_joker = pseudorandom_element(
+            G.jokers.cards,
+            pseudoseed('porkify_blank_joker')
+        )
 
         G.E_MANAGER:add_event(Event({
             trigger = 'after',
@@ -65,6 +72,27 @@ SMODS.Consumable {
             trigger = 'after',
             delay = 0.55,
             func = function()
+                if target_joker and target_joker.facing ~= 'back' then
+                    target_joker:flip()
+                end
+                return true
+            end
+        }))
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.7,
+            func = function()
+                G.jokers:shuffle('porkify_blank_jokers')
+                play_sound('cardSlide1', 1)
+                return true
+            end
+        }))
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.85,
+            func = function()
                 target:flip()
                 play_sound('tarot2', 1.0, 0.6)
                 target:juice_up(0.3, 0.3)
@@ -75,6 +103,8 @@ SMODS.Consumable {
     end,
 
     can_use = function(self, card)
-        return (G.hand and #G.hand.cards > 0 and to_big(#G.hand.highlighted) == to_big(1)) == true
+        return (G.hand and #G.hand.cards > 0
+            and to_big(#G.hand.highlighted) == to_big(1)
+            and G.jokers and G.jokers.cards and #G.jokers.cards > 0) == true
     end
 }

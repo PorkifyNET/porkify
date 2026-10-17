@@ -202,11 +202,12 @@ local JOKER_SOURCE_TAGS = {
 
 local FIXED_HAND_SIZE_BREAKERS = {
     'j_porkify_appletree',
+    'j_porkify_paint',
 }
 
 local EXTRA_HAND_SOURCES = {
     'j_porkify_aquacard',
-    'c_porkify_delegation',
+    'j_porkify_sleightofhand',
 }
 
 local STRAIGHT_REWARD_SOURCES = {
@@ -215,6 +216,7 @@ local STRAIGHT_REWARD_SOURCES = {
 
 local JOKER_SLOT_SOURCES = {
     'j_porkify_kitty',
+    'j_porkify_card_sleeve',
 }
 
 local MONEY_JOKERS = {
@@ -225,7 +227,6 @@ local MONEY_JOKERS = {
     'j_porkify_coupon',
     'j_porkify_deaddrop',
     'j_porkify_grandma',
-    'j_porkify_greencard',
     'j_porkify_luckynumber7s',
     'j_porkify_nu',
     'j_porkify_overspeed',
@@ -318,7 +319,7 @@ local JOKER_DESTRUCTION_SOURCES = {
     'j_mr_bones',
     'j_popcorn',
     'j_ramen',
-    'j_seltzer',
+    'j_selzer',
     'j_turtle_bean',
     'j_sixth_sense',
     'j_trading',

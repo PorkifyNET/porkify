@@ -1,14 +1,6 @@
-local function arachnid_dollar_value()
-    local dollars = G and G.GAME and G.GAME.dollars or 0
-
-    if type(to_number) == 'function' then
-        local ok, value = pcall(to_number, dollars)
-        if ok and type(value) == 'number' then
-            return value
-        end
-    end
-
-    return tonumber(dollars) or 0
+local function arachnid_set_dollars(target)
+    local target_value = type(to_big) == 'function' and to_big(target) or target
+    ease_dollars(target_value - G.GAME.dollars, true)
 end
 
 SMODS.Consumable {
@@ -17,18 +9,16 @@ SMODS.Consumable {
     pos = { x = 0, y = 0 },
     config = {
         extra = {
-            dollars = 8
+            dollars = 8,
+            max_cards = 8
         }
     },
     loc_txt = {
         name = 'Arachnid',
         text = {
-            [1] = 'Convert cards in',
-            [2] = 'hand to a single',
-            [3] = 'random {C:attention}rank{},',
-            [4] = '{C:red}-$#1#{} for each card',
-            [5] = 'converted',
-            [6] = "{s:0.7}Stops if you don't have{} {C:money,s:0.7}$#1#{}"
+            [1] = 'Convert up to {C:attention}#2#{} random',
+            [2] = 'cards in hand to {C:attention}8s{},',
+            [3] = 'set money to {C:money}$#1#{}'
         }
     },
     cost = 3,
@@ -41,7 +31,8 @@ SMODS.Consumable {
     loc_vars = function(self, info_queue, card)
         return {
             vars = {
-                (self.config.extra and self.config.extra.dollars) or 8
+                (self.config.extra and self.config.extra.dollars) or 8,
+                (self.config.extra and self.config.extra.max_cards) or 8
             }
         }
     end,
@@ -50,9 +41,9 @@ SMODS.Consumable {
         if not (G.hand and G.GAME and #G.hand.cards > 0) then return end
 
         local used_card = copier or card
-        local dollar_cost = (self.config.extra and self.config.extra.dollars) or 8
-        local target_rank = pseudorandom_element(SMODS.Ranks, pseudoseed('porkify_arachnid_rank')).card_key
-        local affordable = math.floor(math.max(0, arachnid_dollar_value()) / dollar_cost)
+        local target_dollars = (self.config.extra and self.config.extra.dollars) or 8
+        local max_cards = (self.config.extra and self.config.extra.max_cards) or 8
+        local target_rank = '8'
         local eligible_cards = {}
 
         for _, playing_card in ipairs(G.hand.cards) do
@@ -64,7 +55,7 @@ SMODS.Consumable {
         pseudoshuffle(eligible_cards, pseudoseed('porkify_arachnid_order'))
 
         local converted_cards = {}
-        for i = 1, math.min(affordable, #eligible_cards) do
+        for i = 1, math.min(max_cards, #eligible_cards) do
             converted_cards[#converted_cards + 1] = eligible_cards[i]
         end
 
@@ -100,11 +91,19 @@ SMODS.Consumable {
                 delay = 0.1,
                 func = function()
                     assert(SMODS.change_base(target, nil, target_rank))
-                    ease_dollars(-dollar_cost, true)
                     return true
                 end
             }))
         end
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.1,
+            func = function()
+                arachnid_set_dollars(target_dollars)
+                return true
+            end
+        }))
 
         for i, target in ipairs(converted_cards) do
             local pitch = 0.85 + (i - 0.999) / (#converted_cards - 0.998) * 0.3
@@ -124,10 +123,8 @@ SMODS.Consumable {
     end,
 
     can_use = function(self, card)
-        local dollar_cost = (self.config.extra and self.config.extra.dollars) or 8
         return G.hand
             and G.GAME
             and #G.hand.cards > 0
-            and arachnid_dollar_value() >= dollar_cost
     end
 }

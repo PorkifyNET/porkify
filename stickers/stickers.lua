@@ -272,18 +272,24 @@ SMODS.Sticker:take_ownership("pinned", {
     pos = { x = 4, y = 1 },
     apply = function(self, card, val)
         card.pinned = val
-        card.ability[self.key] = val
+        -- Pinned is stored directly on Card by the base game. Keeping a
+        -- second ability flag makes Steamodded generate an unlocalized,
+        -- duplicate `pinned` badge in addition to `pinned_left`.
+        if card.ability then card.ability[self.key] = nil end
     end,
 }, true)
 
 -- Vanilla challenge setup and several effects assign `card.pinned` directly,
 -- so those cards bypass Steamodded's normal ability-based sticker draw loop.
+-- Running immediately before that loop also migrates the duplicate flag from
+-- cards saved by older Porkify builds.
 if SMODS.DrawStep then
     SMODS.DrawStep {
         key = "visible_pinned_sticker",
-        order = 41,
+        order = 39,
         func = function(card)
-            if not card.pinned or (card.ability and card.ability.pinned) then return end
+            if card.ability then card.ability.pinned = nil end
+            if not card.pinned then return end
             local sprite = G.shared_stickers and G.shared_stickers.pinned
             if not sprite then return end
             sprite.role.draw_major = card

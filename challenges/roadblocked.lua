@@ -4,7 +4,6 @@ SMODS.Challenge{
 
     rules = {
 		modifiers = {
-			{ id = "joker_slots", value = 6 },
 			{ id = "hands", value = 6 },
 			{ id = "discards", value = 0 },
 		},
@@ -14,7 +13,7 @@ SMODS.Challenge{
     },
 
     jokers = {
-		{ id = "j_porkify_roadblock", omega = true, pinned = true },
+		{ id = "j_porkify_roadblock", omega = true },
 		{ id = "j_shortcut", omega = true, edition = "negative" },
 		{ id = "j_four_fingers", omega = true, edition = "negative" },
     },
@@ -33,7 +32,6 @@ SMODS.Challenge{
 			{ id = "j_seance" },
 			{ id = "j_shortcut" },
 			{ id = "j_order" },
-			{ id = "j_brainstorm" },
 			{ id = "j_porkify_cairn" },
 			{ id = "c_saturn" },
 			{ id = "c_neptune" },

@@ -12,6 +12,10 @@
   "badge_colour": "ff0095",
   "badge_text_colour": "ffffff",
   "dependencies": [
-    "Steamodded (>=1.0.0~BETA-1620a)"
+    "Steamodded (>=1.0.0~BETA-1814a)"
+  ],
+  "conflicts": [
+	"Multiplayer (<<0.5.5)",
+    "MultiplayerExperimental (<<0.11.3)"
   ]
 }

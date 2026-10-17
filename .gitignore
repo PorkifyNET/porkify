@@ -48,3 +48,6 @@ ideas.txt
 # Balatro run, profile, progress, and settings data, including backups
 *.jkr
 *.jkr.*
+
+# lovelyignore toggler
+.lovelyignore

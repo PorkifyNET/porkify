@@ -6,7 +6,8 @@ SMODS = {Sticker = {}, Stickers = {
     perishable = {loc_vars = noop},
     rental = {loc_vars = noop},
     pinned = {key = 'pinned'},
-}}
+}, DrawSteps = {}}
+SMODS.DrawStep = function(def) SMODS.DrawSteps[def.key] = def end
 function SMODS.Sticker:take_ownership(key, changes)
     local sticker = SMODS.Stickers[key]
     for field, value in pairs(changes) do sticker[field] = value end
@@ -140,7 +141,18 @@ assert(SMODS.Stickers.pinned.atlas == 'CustomStickers')
 assert(SMODS.Stickers.pinned.pos.x == 4 and SMODS.Stickers.pinned.pos.y == 1)
 local pinned = create_card('Joker', G.hand)
 SMODS.Stickers.pinned:apply(pinned, true)
-assert(pinned.pinned and pinned.ability.pinned)
+assert(pinned.pinned and pinned.ability.pinned == nil)
+G.shared_stickers = {
+    pinned = {role = {}, draw_shader = noop}
+}
+local legacy_pinned = {
+    pinned = true,
+    ability = {pinned = true},
+    children = {center = {}},
+    ARGS = {send_to_shader = {}}
+}
+SMODS.DrawSteps.visible_pinned_sticker.func(legacy_pinned)
+assert(legacy_pinned.pinned and legacy_pinned.ability.pinned == nil)
 local omega_def = SMODS.Stickers.omega
 local omega = create_card('Joker', G.hand)
 omega.config.center.key = 'j_test'

@@ -31,7 +31,6 @@ SMODS.Challenge{
 			{ id = "c_immolate" },
 			{ id = "c_porkify_conjoined" },
 			{ id = "c_porkify_sacrifice" },
-			{ id = "c_porkify_sixthfinger" },
 			{ id = "c_porkify_timemachine" },
 			{ id = "c_porkify_trashmaster" },
 			{ id = "c_porkify_trashtreasure" },

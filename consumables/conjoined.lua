@@ -5,10 +5,9 @@ SMODS.Consumable {
     loc_txt = {
         name = 'Conjoined',
         text = {
-            [1] = 'Permanently add',
-            [2] = '{X:red,C:white}X2{} Mult to selected',
-            [3] = '{C:attention}card{}, destroy a random',
-            [4] = '{C:attention}Joker{}'
+            [1] = 'Permanently add {C:attention}+1{} repetition',
+            [2] = 'to {C:attention}1{} selected card,',
+            [3] = 'destroy a random {C:attention}Joker{}'
         }
     },
     cost = 3,
@@ -25,28 +24,21 @@ SMODS.Consumable {
         local c = G.hand.highlighted[1]
         if not (c and c.ability) then return end
 
-        -- Pick a deletable joker
         local deletable = {}
         for _, j in pairs(G.jokers.cards) do
-            if j.ability and j.ability.set == 'Joker' and not SMODS.is_eternal(j, card) then
+            if j.ability and j.ability.set == 'Joker' and not SMODS.is_eternal(j, used_card) then
                 deletable[#deletable + 1] = j
             end
         end
         if #deletable < 1 then return end
-        pseudoshuffle(deletable, 98765)
+        pseudoshuffle(deletable, pseudoseed('porkify_conjoined_joker'))
         local jdestroy = deletable[1]
 
-        -- perma_x_mult is treated as "extra over 1", so total is (1 + perma_x_mult)
-		local extra = tonumber(c.ability.perma_x_mult) or 0
-		if extra < 0 then extra = 0 end
-
-		local total = 1 + extra
-		total = total * 2
-		c.ability.perma_x_mult = total - 1
+		c.ability.perma_repetitions = (c.ability.perma_repetitions or 0) + 1
 
 		card_eval_status_text(
 			c, 'extra', nil, nil, nil,
-			{ message = string.format("%.4f", total) .. " Mult", colour = G.C.RED }
+			{ message = "+1 Retrigger", colour = G.C.IMPORTANT }
 		)
 
         -- Visuals / sounds

@@ -4,7 +4,7 @@ SMODS.Challenge{
 
     rules = {
 		modifiers = {
-			{ id = "joker_slots", value = 6 },
+			
 		},
         custom = {
 			
@@ -12,7 +12,7 @@ SMODS.Challenge{
     },
 
     jokers = {
-		{ id = "j_porkify_forced_variety", omega = true, pinned = true },
+		{ id = "j_porkify_forced_variety", omega = true },
     },
 	vouchers = {
 		
@@ -23,13 +23,13 @@ SMODS.Challenge{
 
     restrictions = {
 		banned_cards = {
-			{ id = "j_brainstorm" },
+			
 		},
         banned_tags = {
 			
         },
 		banned_other = {
-			{id = 'bl_porkify_ladder', type = 'blind'},
+			
 		},
     },
 	button_colour = HEX("FF0095"),

@@ -7,6 +7,15 @@ return {
             ch_c_porkify_set_omega_ante = {
                 "After Ante {C:attention}#1#{}, all Jokers gain {C:attention}Omega{}"
             },
+            ch_c_porkify_pandemic = {
+                "Every non-Showdown Boss Blind is {C:attention}The Virus{}"
+            },
+            ch_c_porkify_unbreakable_no_winning_ante = {
+                "There is no winning {C:attention}Ante{}"
+            },
+            ch_c_porkify_unbreakable_destroy_cube = {
+                "{C:red}Destroy{} the {C:attention}Tungsten Cube{} to {C:green}win the run{}"
+            },
             ch_c_no_porkify_yes = {
                 "The {C:attention}Yes{} poker hand cannot be played"
             },

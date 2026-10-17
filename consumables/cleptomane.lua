@@ -11,7 +11,7 @@ SMODS.Consumable {
     loc_txt = {
         name = 'Cleptomane',
         text = {
-            [1] = 'Gain {C:attention}Hand Size{} in {C:money}${}.',
+            [1] = 'Gain {C:attention}Hand Size{} in {C:money}${}',
             [2] = '{C:inactive}(Will give{} {C:money}$#1#{}{C:inactive}){}'
         }
     },

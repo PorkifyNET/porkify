@@ -1,9 +1,21 @@
+local function porkify_green_card_sync_debt(card, desired)
+    desired = math.max(0, desired or 0)
+    local applied = card.porkify_green_card_applied_debt or 0
+    local change = desired - applied
+
+    if change ~= 0 and G and G.GAME then
+        G.GAME.bankrupt_at = (G.GAME.bankrupt_at or 0) - change
+        card.porkify_green_card_applied_debt = desired
+    end
+end
+
+
 SMODS.Joker {
     key = 'greencard',
-    config = { extra = { refund_rate = 0.5, pack_cost = 0 } },
+    config = { extra = { debt = 0, debt_gain = 2 } },
     loc_txt = { name = 'Green Card', text = {
-        'Refunds {C:money}#1#%{} of the',
-        'purchase price when a',
+        'Go up to {C:red}-$#2#{} in debt',
+        'Increases by {C:red}-$#1#{} when any',
         '{C:attention}Booster Pack{} is skipped'
     } },
     atlas = 'CustomJokers', pos = { x = 6, y = 10 }, -- Placeholder artwork.
@@ -12,27 +24,40 @@ SMODS.Joker {
     blueprint_compat = false, eternal_compat = true, perishable_compat = true,
     unlocked = true, discovered = false,
     pools = { ['modprefix_porkify_jokers'] = true },
+
     loc_vars = function(self, info_queue, card)
-        return { vars = { math.floor((card.ability.extra.refund_rate or 0.5) * 100) } }
+        local extra = card and card.ability and card.ability.extra or self.config.extra
+        return { vars = { extra.debt_gain or 2, extra.debt or 0 } }
     end,
+
+    add_to_deck = function(self, card, from_debuff)
+        porkify_green_card_sync_debt(card, card.ability.extra.debt or 0)
+    end,
+
+    remove_from_deck = function(self, card, from_debuff)
+        porkify_green_card_sync_debt(card, 0)
+        card.porkify_green_card_applied_debt = nil
+    end,
+
     calculate = function(self, card, context)
-        local extra = card.ability.extra
-
-        if context.open_booster and not context.blueprint and not context.retrigger_joker then
-            local paid = context.card and tonumber(context.card.cost) or 0
-            extra.pack_cost = math.max(0, math.floor(paid))
-        end
-
         if context.skipping_booster and not context.blueprint and not context.retrigger_joker then
-            local refund = math.floor((extra.pack_cost or 0) * (extra.refund_rate or 0.5))
-            extra.pack_cost = 0
-            if refund > 0 then
-                return { dollars = refund, colour = G.C.MONEY }
-            end
-        end
+            local extra = card.ability.extra
+            extra.debt = (extra.debt or 0) + (extra.debt_gain or 2)
+            porkify_green_card_sync_debt(card, extra.debt)
 
-        if context.ending_booster and not context.blueprint then
-            extra.pack_cost = 0
+            return { message = localize('k_upgrade_ex'), colour = G.C.MONEY }
         end
+    end,
+
+    joker_display_def = function(JokerDisplay)
+        return {
+            text = {
+                { ref_table = 'card.joker_display_values', ref_value = 'debt_text', colour = G.C.RED }
+            },
+            calc_function = function(card)
+                local extra = card.ability.extra or {}
+                card.joker_display_values.debt_text = '-$' .. tostring(extra.debt or 0)
+            end
+        }
     end
 }

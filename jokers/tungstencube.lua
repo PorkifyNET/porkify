@@ -26,7 +26,21 @@ SMODS.Joker{
     calculate = function(self, card, context)
         if context.joker_type_destroyed and context.card == card
             and not context.blueprint and not context.retrigger_joker then
-            return { dollars = card.ability.extra.dollars }
+            return {
+                dollars = card.ability.extra.dollars,
+                func = function()
+                    if type(Porkify_unbreakable_check_cube_destroyed) == 'function' then
+                        Porkify_unbreakable_check_cube_destroyed(card)
+                    end
+                    return true
+                end
+            }
         end
-    end
+    end,
+    can_sell = function(self, card)
+        return not (
+            G.GAME.modifiers
+            and G.GAME.modifiers.porkify_unbreakable_destroy_cube
+        )
+    end,
 }

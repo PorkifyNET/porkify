@@ -1,24 +1,17 @@
-local function porkify_coffee_format_xmult(value)
-    local amount = tonumber(value) or 1
-    return amount
-end
-
-SMODS.Joker{ --Cup of Coffee
+SMODS.Joker{ -- Cup of Coffee
     key = "cupofcoffee",
     config = {
         extra = {
-            Xmult = 3,
-            Xmult_loss = 0.3,
-            Xmult_min = 1
+            mult = 15,
+            mult_transfer = 1
         }
     },
     loc_txt = {
         ['name'] = 'Cup of Coffee',
         ['text'] = {
-            [1] = '{X:mult,C:white}X#4#{} Mult,',
-            [2] = 'loses {X:mult,C:white}X#2#{} Mult',
-            [3] = 'per played {C:attention}hand{}',
-            [4] = '{s:0.7}Resets after defeating{} {C:attention,s:0.7}Boss Blind{}'
+            [1] = 'Played cards steal {C:red}+#1#{} Mult',
+            [2] = 'from this Joker when scored',
+            [3] = '{C:inactive}(Currently {C:red}+#2#{} {C:inactive}Mult){}'
         },
         ['unlock'] = {
             [1] = 'Play {C:attention}50{} {C:blue}hands{}'
@@ -33,7 +26,7 @@ SMODS.Joker{ --Cup of Coffee
         h = 95
     },
     cost = 6,
-    rarity = 2,
+    rarity = 1,
     blueprint_compat = true,
     eternal_compat = false,
     perishable_compat = false,
@@ -47,41 +40,39 @@ SMODS.Joker{ --Cup of Coffee
         local extra = (card and card.ability and card.ability.extra) or self.config.extra
         return {
             vars = {
-                porkify_coffee_format_xmult(extra.Xmult_start or 3),
-                porkify_coffee_format_xmult(extra.Xmult_loss or 0.3),
-                porkify_coffee_format_xmult(extra.Xmult_min or 1),
-                porkify_coffee_format_xmult(extra.Xmult or 3)
+                extra.mult_transfer or 1,
+                extra.mult or 15
             }
         }
     end,
 
     set_ability = function(self, card, initial)
         local extra = card.ability.extra or {}
-        extra.Xmult_start = extra.Xmult_start or 3
-        extra.Xmult = extra.Xmult or extra.Xmult_start
-        extra.Xmult_loss = extra.Xmult_loss or 0.3
-        extra.Xmult_min = extra.Xmult_min or 1
+        extra.mult = extra.mult or 15
+        extra.mult_transfer = extra.mult_transfer or 1
         card.ability.extra = extra
     end,
 
     calculate = function(self, card, context)
         local extra = card.ability.extra or {}
 
-        if context.cardarea == G.jokers and context.joker_main then
-            return {
-                Xmult = extra.Xmult or extra.Xmult_start or 3
-            }
-        end
+        if context.individual and context.cardarea == G.play and not context.blueprint then
+            local played_card = context.other_card
+            local available_mult = extra.mult or 15
+            local transfer = math.min(extra.mult_transfer or 1, available_mult)
 
-        if context.after and context.cardarea == G.jokers and not context.blueprint then
-            local current = extra.Xmult or extra.Xmult_start or 3
-            local next_value = current - (extra.Xmult_loss or 0.3)
-            extra.Xmult = math.max(next_value, extra.Xmult_min or 1)
-            card.ability.extra = extra
+            if played_card and played_card.ability and not played_card.debuff and transfer > 0 then
+                played_card.ability.perma_mult = (played_card.ability.perma_mult or 0) + transfer
+                extra.mult = available_mult - transfer
+                card.ability.extra = extra
 
-            if extra.Xmult <= (extra.Xmult_min or 1) then
-                return {
-                    func = function()
+                local effect = {
+                    message = "+" .. tostring(transfer) .. " Mult",
+                    colour = G.C.MULT
+                }
+
+                if extra.mult <= 0 then
+                    effect.func = function()
                         G.E_MANAGER:add_event(Event({
                             trigger = 'after',
                             delay = 0.2,
@@ -101,51 +92,27 @@ SMODS.Joker{ --Cup of Coffee
                         )
                         return true
                     end
-                }
-            end
+                end
 
-            return {
-                message = "Sipped...",
-                colour = G.C.FILTER
-            }
+                return effect
+            end
         end
 
-        if context.end_of_round and context.main_eval and not context.blueprint then
-            local blind = G and G.GAME and G.GAME.blind
-            local is_boss_blind = not not (
-                blind and (
-                    blind.boss
-                    or (blind.config and blind.config.blind and blind.config.blind.boss)
-                )
-            )
-
-            if is_boss_blind then
-                extra.Xmult = extra.Xmult_start or 3
-                card.ability.extra = extra
-
-                return {
-                    message = "Refilled!",
-                    colour = G.C.MULT
-                }
-            end
+        if context.cardarea == G.jokers and context.joker_main then
+            return {
+                mult = extra.mult or 15
+            }
         end
     end,
 
     joker_display_def = function(JokerDisplay)
         return {
             text = {
-                {
-                    border_nodes = {
-                        { text = "X" },
-                        { ref_table = "card.joker_display_values", ref_value = "x_mult" }
-                    }
-                }
+                { ref_table = "card.joker_display_values", ref_value = "mult_text", colour = G.C.MULT }
             },
             calc_function = function(card)
                 local extra = (card.ability and card.ability.extra) or {}
-                card.joker_display_values.x_mult = porkify_coffee_format_xmult(
-                    extra.Xmult or extra.Xmult_start or 3
-                )
+                card.joker_display_values.mult_text = "+" .. tostring(extra.mult or 15)
             end
         }
     end

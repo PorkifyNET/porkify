@@ -7,7 +7,11 @@ SMODS = {
     end
 }
 G = {
-    C = {MONEY = {}, CHIPS = {}, PURPLE = {}, BLUE = {}, IMPORTANT = {}},
+    C = {
+        MONEY = {}, CHIPS = {}, PURPLE = {}, BLUE = {}, IMPORTANT = {}, RED = {},
+        DYN_UI = {DARK = {}}
+    },
+    GAME = {bankrupt_at = 0},
     consumeables = {cards = {}, config = {card_limit = 2}}
 }
 localize = function(key) return key end
@@ -28,7 +32,10 @@ local a = {ability = {extra = {hands = 0, gain = 1}}}
 local k = {ability = {extra = {reduction = 0, gain = 0.01, max_reduction = 0.99}}}
 local y = {ability = {extra = {payout = 0, gain = 1}}}
 local b = {ability = {extra = {chips = 0, gain = 10}}}
-local g = {ability = {extra = {refund_rate = 0.5, pack_cost = 0}}}
+local g = {
+    ability = {extra = {debt = 0, debt_gain = 2}},
+    joker_display_values = {}
+}
 local p = {ability = {extra = {}}, juice_up = function() end}
 assert(aqua.porkify_color_card and black.porkify_color_card
     and yellow.porkify_color_card and blue.porkify_color_card
@@ -55,19 +62,31 @@ assert(blue:loc_vars({}, b).vars[2] == 30)
 assert(yellow.joker_display_def({}).text[2].ref_value == 'payout')
 assert(blue.joker_display_def({}).text[2].ref_value == 'chips')
 
-green:calculate(g, {open_booster = true, card = {cost = 5}})
-local refund = green:calculate(g, {skipping_booster = true})
-assert(refund.dollars == 2, 'Green Card rounds a 50% refund down')
-assert(g.ability.extra.pack_cost == 0, 'Green Card consumes its recorded purchase price')
-assert(green:calculate(g, {skipping_booster = true}) == nil, 'A pack can only be refunded once')
-green:calculate(g, {open_booster = true, card = {cost = 0}})
-assert(green:calculate(g, {skipping_booster = true}) == nil, 'Free packs do not create money')
-green:calculate(g, {open_booster = true, card = {cost = 8}})
-green:calculate(g, {ending_booster = true})
-assert(g.ability.extra.pack_cost == 0, 'Taking a pack reward clears the pending refund')
-green:calculate(g, {open_booster = true, card = {cost = 6}, blueprint = true})
-assert(g.ability.extra.pack_cost == 0, 'Blueprint contexts cannot record a refund')
-assert(green:loc_vars({}, g).vars[1] == 50)
+green:add_to_deck(g, false)
+assert(G.GAME.bankrupt_at == 0, 'Green Card starts with a -$0 debt limit')
+local debt_effect = green:calculate(g, {skipping_booster = true})
+assert(debt_effect and g.ability.extra.debt == 2 and G.GAME.bankrupt_at == -2,
+    'Skipping any Booster Pack must increase the debt limit by -$2')
+green:calculate(g, {skipping_booster = true})
+assert(g.ability.extra.debt == 4 and G.GAME.bankrupt_at == -4,
+    'Green Card must retain and grow its debt limit')
+green:calculate(g, {skipping_booster = true, blueprint = true})
+green:calculate(g, {skipping_booster = true, retrigger_joker = true})
+assert(g.ability.extra.debt == 4 and G.GAME.bankrupt_at == -4,
+    'Blueprint and retrigger contexts must not grow Green Card')
+assert(green:loc_vars({}, g).vars[1] == 2 and green:loc_vars({}, g).vars[2] == 4)
+local green_display = green.joker_display_def({})
+green_display.calc_function(g)
+assert(g.joker_display_values.debt_text == '-$4')
+green:remove_from_deck(g, true)
+assert(G.GAME.bankrupt_at == 0,
+    'Debuffing or removing Green Card must suspend its debt limit')
+green:add_to_deck(g, true)
+assert(G.GAME.bankrupt_at == -4,
+    'Removing a debuff must restore Green Card\'s accumulated debt limit')
+green:remove_from_deck(g, false)
+assert(G.GAME.bankrupt_at == 0,
+    'Selling Green Card must remove its accumulated debt limit')
 
 for _ = 1, 3 do aqua:calculate(a, {skipping_booster = true}) end
 assert(a.ability.extra.hands == 3)
@@ -104,4 +123,4 @@ G.consumeables.cards = {}
 pink:calculate(p, {skipping_booster = true, blueprint = true}).func()
 assert(#created_cards == 2, 'Blueprint can copy Pink Card')
 
-print('Color Card skip, payout, refund, creation, Blind and scoring checks passed')
+print('Color Card skip, payout, debt, creation, Blind and scoring checks passed')

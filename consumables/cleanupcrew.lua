@@ -2,16 +2,12 @@ SMODS.Consumable {
     key = 'cleanupcrew',
     set = 'porkify',
     pos = { x = 2, y = 5 },
-    config = {
-        extra = {
-            discards = 4
-        }
-    },
     loc_txt = {
         name = 'Cleanup Crew',
         text = {
-            [1] = '{C:red}+#1#{} Discards',
-            [2] = 'during this round'
+            [1] = 'Remove the {C:dark_edition}Edition{} from',
+            [2] = '{C:attention}1{} selected card',
+            [3] = '{s:0.8}Playing cards, Jokers, and Consumables are valid{}'
         }
     },
     cost = 3,
@@ -21,31 +17,72 @@ SMODS.Consumable {
     can_repeat_soul = false,
     atlas = 'CustomConsumables',
 
-    loc_vars = function(self, info_queue, card)
-        local extra = (card and card.ability and card.ability.extra) or self.config.extra
-        return { vars = { extra.discards or 4 } }
+    update = function(self, card, dt)
+        Porkify_update_sticker_tool_selection()
     end,
 
     use = function(self, card, area, copier)
         local used_card = copier or card
-        local extra = (used_card and used_card.ability and used_card.ability.extra) or self.config.extra
-        local amount = extra.discards or 4
-        if not (G and G.GAME and G.GAME.blind and G.GAME.blind.in_blind and G.GAME.current_round) then return end
+        local target = Porkify_get_sticker_tool_target(card)
+        if not (target and target.edition) then return end
 
         G.E_MANAGER:add_event(Event({
             trigger = 'after',
             delay = 0.4,
             func = function()
-                card_eval_status_text(used_card, 'extra', nil, nil, nil, { message = "+" .. tostring(amount) .. " Discards", colour = G.C.GREEN })
-                ease_discard(amount)
+                play_sound('tarot1')
+                used_card:juice_up(0.3, 0.5)
                 return true
             end
         }))
 
-        delay(0.6)
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.15,
+            func = function()
+                target:flip()
+                play_sound('card1', 1.0)
+                target:juice_up(0.3, 0.3)
+                return true
+            end
+        }))
+
+        delay(0.2)
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.1,
+            func = function()
+                target:set_edition(nil, true)
+                return true
+            end
+        }))
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.15,
+            func = function()
+                target:flip()
+                play_sound('tarot2', 1.0, 0.6)
+                target:juice_up(0.3, 0.3)
+                return true
+            end
+        }))
+
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.2,
+            func = function()
+                Porkify_clear_sticker_tool_selection()
+                return true
+            end
+        }))
+
+        delay(0.5)
     end,
 
     can_use = function(self, card)
-        return G and G.GAME and G.GAME.blind and G.GAME.blind.in_blind and G.GAME.current_round
+        local target = Porkify_get_sticker_tool_target(card)
+        return target and target.edition ~= nil or false
     end
 }
