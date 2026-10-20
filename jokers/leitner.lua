@@ -3,7 +3,7 @@ SMODS.Joker {
     config = {
         extra = {
             chips = 0,
-            chip_gain = 20
+            chip_gain = 10
         }
     },
     loc_txt = {
@@ -32,14 +32,14 @@ SMODS.Joker {
 
     loc_vars = function(self, info_queue, card)
         local extra = card and card.ability and card.ability.extra or self.config.extra
-        return { vars = { extra.chip_gain or 20, extra.chips or 0 } }
+        return { vars = { extra.chip_gain or 10, extra.chips or 0 } }
     end,
 
     calculate = function(self, card, context)
         local extra = card.ability.extra
 
         if context.reroll_shop and not context.blueprint and not context.retrigger_joker then
-            extra.chips = (extra.chips or 0) + (extra.chip_gain or 20)
+            extra.chips = (extra.chips or 0) + (extra.chip_gain or 10)
             return { message = localize('k_upgrade_ex'), colour = G.C.CHIPS }
         end
 

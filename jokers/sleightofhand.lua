@@ -45,8 +45,9 @@ SMODS.Joker {
         name = 'Sleight of Hand',
         text = {
             'The first {C:blue}hand{} of round',
-            'is {C:green}free{} if it is a',
-            '{C:attention}#1#{}'
+            'is {C:green}free{} if played hand',
+            'is a {C:attention}#1#{}',
+            '{C:inactive}(Hand changes every round){}'
         }
     },
     atlas = 'CustomJokers',
@@ -109,14 +110,27 @@ SMODS.Joker {
 
     joker_display_def = function(JokerDisplay)
         return {
+            text = {
+                { ref_table = 'card.joker_display_values', ref_value = 'active_text' }
+            },
             reminder_text = {
                 { text = '(' },
                 { ref_table = 'card.joker_display_values', ref_value = 'target_text', colour = G.C.IMPORTANT },
                 { text = ')' }
             },
             calc_function = function(card)
+                card.joker_display_values.is_active = G.GAME.current_round.hands_played == 0
+                card.joker_display_values.active_text = localize('jdis_' ..
+                    (card.joker_display_values.is_active and 'active' or 'inactive'))
+
                 local extra = card.ability.extra or {}
                 card.joker_display_values.target_text = porkify_sleight_hand_label(extra.target_hand)
+            end,
+            style_function = function(card, text, extra)
+                if text and text.children and text.children[1] then
+                    text.children[1].config.colour = card.joker_display_values.is_active and G.C.GREEN
+                        or G.C.UI.TEXT_INACTIVE
+                end
             end
         }
     end
