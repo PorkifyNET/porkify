@@ -142,16 +142,7 @@ SMODS.Joker{ -- Discovery
 
 		calc_function = function(card)
 		  local hand = get_least_played_hand()
-		  local planet_key = get_planet_key_for_hand(hand)
-
-		  local out = localize(hand, "poker_hands")
-		  if planet_key and G and G.P_CENTERS and G.P_CENTERS[planet_key] then
-			local center = G.P_CENTERS[planet_key]
-			-- Most builds have center.name; use it if present
-			out = center.name or out
-		  end
-
-		  card.joker_display_values.planet_or_hand = out
+		  card.joker_display_values.planet_or_hand = localize(hand, "poker_hands")
 		end
 	  }
 	end
