@@ -1,6 +1,12 @@
 SMODS.Challenge{
     key = "noheresy",
     loc_txt = { name = "No Heresy!" },
+	apply = function(self)
+		-- Empty Tarot and Spectral pools have banned-card fallbacks, so prevent
+		-- the shop from selecting either consumable type.
+		G.GAME.tarot_rate = 0
+		G.GAME.spectral_rate = 0
+	end,
 
     rules = {
         custom = {

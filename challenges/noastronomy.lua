@@ -1,6 +1,11 @@
 SMODS.Challenge{
     key = "noastronomy",
     loc_txt = { name = "No Astronomy!" },
+	apply = function(self)
+		-- An empty Planet pool falls back to Pluto, so prevent the shop from
+		-- selecting the Planet card type in the first place.
+		G.GAME.planet_rate = 0
+	end,
 
     rules = {
         custom = {

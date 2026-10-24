@@ -116,6 +116,9 @@ try:
     run((ROOT / "tests/pandemic.lua").read_text(encoding="utf-8"), "Pandemic tests")
     run((ROOT / "tests/unbreakable.lua").read_text(encoding="utf-8"), "Unbreakable tests")
     run((ROOT / "tests/feedingfrenzy.lua").read_text(encoding="utf-8"), "Feeding Frenzy tests")
+    run((ROOT / "tests/noastronomy.lua").read_text(encoding="utf-8"), "No Astronomy tests")
+    run((ROOT / "tests/noheresy.lua").read_text(encoding="utf-8"), "No Heresy tests")
+    run((ROOT / "tests/nu.lua").read_text(encoding="utf-8"), "N.U. tests")
     run((ROOT / "tests/tags.lua").read_text(encoding="utf-8"), "Tag definition tests")
 finally:
     lua.lua_close(state)

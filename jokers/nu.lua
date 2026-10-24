@@ -3,18 +3,16 @@ SMODS.Joker{ --N.U.
     key = "nu",
     config = {
         extra = {
-            odds = 4,
-            pb_bonus_a2e27cac = 8,
-            pb_mult_20da8453 = 1,
-            pb_p_dollars_47bc5a39 = 2
+            odds = 2
         }
     },
     loc_txt = {
         ['name'] = 'N.U.',
         ['text'] = {
-            [1] = '{C:green}#1# in 4{} chance to permanently',
-            [2] = 'add {C:blue}+8{} Chips, {C:red}+1{} Mult or',
-            [3] = '{C:money}$2{} to card when scored'
+            [1] = '{C:green}#1# in #2#{} chance to retrigger',
+            [2] = 'the Joker to the {C:attention}left{}',
+            [3] = '{C:green}#1# in #2#{} chance to retrigger',
+            [4] = 'the Joker to the {C:attention}right{}'
         },
         ['unlock'] = {
             [1] = 'Have {C:attention}8{} {C:enhanced}enhanced{} cards in your deck'
@@ -40,39 +38,48 @@ SMODS.Joker{ --N.U.
     unlock_condition = { type = 'modify_deck', extra = { tally = 'total', count = 8 } },
     
     loc_vars = function(self, info_queue, card)
-        
-        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, card.ability.extra.odds, 'j_modprefix_nu')
-        local new_numerator2, new_denominator2 = SMODS.get_probability_vars(card, 1, card.ability.extra.odds2, 'j_modprefix_nu')
-        local new_numerator3, new_denominator3 = SMODS.get_probability_vars(card, 1, card.ability.extra.odds3, 'j_modprefix_nu')
-        return {vars = {new_numerator, new_denominator, new_numerator2, new_denominator2, new_numerator3, new_denominator3}}
+        local extra = (card and card.ability and card.ability.extra) or self.config.extra
+        local numerator, denominator = SMODS.get_probability_vars(
+            card, 1, extra.odds or 2, 'j_porkify_nu')
+        return { vars = { numerator, denominator } }
     end,
     
     calculate = function(self, card, context)
-        if context.individual and context.cardarea == G.play  then
-            if true then
-                if SMODS.pseudorandom_probability(card, 'group_0_5b03fb3c', 1, card.ability.extra.odds, 'j_modprefix_nu', false) then
-                    context.other_card.ability.perma_bonus = context.other_card.ability.perma_bonus or 0
-                    context.other_card.ability.perma_bonus = context.other_card.ability.perma_bonus + 8
-                    SMODS.calculate_effect({extra = { message = localize('k_upgrade_ex'), colour = G.C.CHIPS }, card = card}, card)
+        if not context.retrigger_joker_check or not context.other_card then return end
+
+        local cards = G.jokers and G.jokers.cards or {}
+        local direction
+        for index, joker in ipairs(cards) do
+            if joker == card then
+                if cards[index - 1] == context.other_card then
+                    direction = 'left'
+                elseif cards[index + 1] == context.other_card then
+                    direction = 'right'
                 end
-                if SMODS.pseudorandom_probability(card, 'group_1_e2d37a7f', 1, card.ability.extra.odds, 'j_modprefix_nu', false) then
-                    context.other_card.ability.perma_mult = context.other_card.ability.perma_mult or 0
-                    context.other_card.ability.perma_mult = context.other_card.ability.perma_mult + 1
-                    SMODS.calculate_effect({extra = { message = localize('k_upgrade_ex'), colour = G.C.MULT }, card = card}, card)
-                end
-                if SMODS.pseudorandom_probability(card, 'group_2_33ed1d17', 1, card.ability.extra.odds, 'j_modprefix_nu', false) then
-                    context.other_card.ability.perma_p_dollars = context.other_card.ability.perma_p_dollars or 0
-                    context.other_card.ability.perma_p_dollars = context.other_card.ability.perma_p_dollars + 2
-                    SMODS.calculate_effect({extra = { message = localize('k_upgrade_ex'), colour = G.C.MONEY }, card = card}, card)
-                end
+                break
             end
+        end
+
+        if direction and SMODS.pseudorandom_probability(
+            card,
+            'group_nu_' .. direction,
+            1,
+            card.ability.extra.odds,
+            'j_porkify_nu',
+            false
+        ) then
+            return {
+                repetitions = 1,
+                message = localize('k_again_ex'),
+            }
         end
     end,
 
     joker_display_def = function(JokerDisplay)
 	  return {
         text = {
-            { text = "(1 in 4)", scale = 0.3, colour = G.C.GREEN }
+            { text = "2x", scale = 0.3, colour = G.C.WHITE },
+            { text = "(1 in 2)", scale = 0.3, colour = G.C.GREEN }
         },
 	  }
 	end
